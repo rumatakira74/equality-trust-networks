@@ -13,6 +13,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
@@ -168,17 +169,35 @@ func (t *Tx) Wallet() []byte { return t.tx.Wallet }
 func (t *Tx) Type() string   { return t.tx.Type.String() }
 
 // SolveLight — лёгкий PoW (SHA-256, 7.6): nonce для register/transfer.
+// Правка этапа 7 (латентный баг этапа 6): canonical-кодирование
+// включает pow.nonce, поэтому nonce назначается В tx ДО вычисления
+// preimage — иначе проверка на узле даёт E_POW_LIGHT.
 func (t *Tx) SolveLight(target int64) {
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowLight}
-	t.tx.Pow.Nonce = crypto.SolveLight(t.tx.SigningPreimage(), uint64(target))
+	for n := uint64(0); ; n++ {
+		var nb [8]byte
+		binary.BigEndian.PutUint64(nb[:], n)
+		t.tx.Pow.Nonce = nb[:]
+		if crypto.VerifyLight(t.tx.SigningPreimage(), nb[:], uint64(target)) {
+			return
+		}
+	}
 }
 
-// SolveHard — усиленный PoW (Argon2id, 7.6): выпуск.
+// SolveHard — усиленный PoW (Argon2id, 7.6): выпуск. Nonce назначается
+// в tx до вычисления preimage (см. SolveLight).
 func (t *Tx) SolveHard(target, memKiB, iterations, parallelism int64) {
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowArgon2id}
-	t.tx.Pow.Nonce = crypto.SolveHard(t.tx.SigningPreimage(), uint64(target),
-		crypto.Argon2Params{MemoryKiB: uint32(memKiB), Iterations: uint32(iterations),
-			Parallelism: uint32(parallelism)})
+	ap := crypto.Argon2Params{MemoryKiB: uint32(memKiB), Iterations: uint32(iterations),
+		Parallelism: uint32(parallelism)}
+	for n := uint64(0); ; n++ {
+		var nb [8]byte
+		binary.BigEndian.PutUint64(nb[:], n)
+		t.tx.Pow.Nonce = nb[:]
+		if crypto.VerifyHard(t.tx.SigningPreimage(), nb[:], uint64(target), ap) {
+			return
+		}
+	}
 }
 
 // SigningHash — хеш для подписи (Keystore: SHA256withECDSA, выход DER).
@@ -322,6 +341,15 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 		ListenAddrs: []string{"/ip4/0.0.0.0/udp/0/quic-v1", "/ip4/0.0.0.0/tcp/0"},
 		// несвязанность eclipse-пиров по подсетям (№35): включена
 		LinkGroups: true,
+	}
+	// корни аттестации из genesis (правка этапа 7 — латентный баг этапа 6:
+	// без TrustedRoots узел отвергает любую цепочку, E_ATTEST). Песочница —
+	// синтетический корень (детерминирован от network_id); реальные сети —
+	// корни Google в APK (этап 8, чек-лист).
+	if der := gen.TrustedRootsDER(); len(der) > 0 {
+		if root, err := x509.ParseCertificate(der); err == nil {
+			cfg.TrustedRoots = []*x509.Certificate{root}
+		}
 	}
 	switch level {
 	case "full":
