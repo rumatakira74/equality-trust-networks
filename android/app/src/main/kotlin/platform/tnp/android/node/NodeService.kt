@@ -7,12 +7,14 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import platform.tnp.android.R
 
 /**
  * Foreground service узла сети (12.2): держит Go-узел (AAR) живым,
  * пока приложение в фоне. Уровень full/light выбирает NodeController
  * (зарядка + Wi-Fi); смена уровня — перезапуск узла.
+ *
+ * Этап 7: строки — литералы (не R): этот файл компилируется и в
+ * Flutter-хост (app/), где пакет R другой.
  */
 class NodeService : Service() {
 
@@ -36,17 +38,16 @@ class NodeService : Service() {
 
     private fun createChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID,
-            getString(R.string.node_channel),
-            NotificationManager.IMPORTANCE_LOW,
+            CHANNEL_ID, "Узел сети", NotificationManager.IMPORTANCE_LOW,
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
     private fun notification(): Notification =
         Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.node_notification))
+            .setContentTitle("Сети доверия")
+            // уведомление без сумм и адресов (8.2)
+            .setContentText("Узел сети доверия работает")
             .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
             .setOngoing(true)
             .build()

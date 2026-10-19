@@ -30,11 +30,26 @@ class KeystoreWallet(
     /** Зарегистрирован ли ключ кошелька. */
     fun isRegistered(): Boolean = keyStore.containsAlias(alias)
 
-    /** Публичный ключ кошелька (из сертификата аттестации). */
+    /**
+     * Публичный ключ кошелька: НЕСЖАТАЯ точка P-256 (65 байт, 0x04 ‖ X ‖ Y)
+     * — формат ядра (crypto.ParsePubKey; правка этапа 7: ранее возвращался
+     * X.509 SubjectPublicKeyInfo DER, который ядро не разбирает).
+     */
     fun publicKey(): ByteArray? {
         val cert = keyStore.getCertificate(alias) ?: return null
-        return cert.publicKey.encoded
+        val pk = cert.publicKey as? java.security.interfaces.ECPublicKey
+            ?: return null
+        val x = pad32(pk.w.affineX.toByteArray())
+        val y = pad32(pk.w.affineY.toByteArray())
+        return byteArrayOf(0x04) + x + y
     }
+
+    private fun pad32(b: ByteArray): ByteArray =
+        when {
+            b.size == 32 -> b
+            b.size > 32 -> b.copyOfRange(b.size - 32, b.size)
+            else -> ByteArray(32 - b.size) + b
+        }
 
     /**
      * Генерация ключа с аттестацией (register, 9.3). Возвращает цепочку
@@ -48,7 +63,11 @@ class KeystoreWallet(
             KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY,
         )
             .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
-            .setDigests(KeyProperties.DIGEST_SHA256)
+            // DIGEST_NONE: подпись ГОТОВОГО дайджеста (signing_hash из
+            // ядра; правка этапа 7 — SHA256withECDSA хешировал бы
+            // дайджест повторно, ядро получало бы подпись над
+            // SHA256(signing_hash) и отвергало её с E_SIG)
+            .setDigests(KeyProperties.DIGEST_NONE)
             // challenge задаёт узел (R4): связывает ключ с сетью
             .setAttestationChallenge(challenge)
             // подпись — только после биометрии (BIOMETRIC_STRONG)
@@ -76,11 +95,29 @@ class KeystoreWallet(
         return ChainEncoding.encode(certs.map { it.encoded })
     }
 
-    /** Инициализация подписи (для BiometricPrompt.CryptoObject). */
-    fun newSignature(): Signature =
-        Signature.getInstance("SHA256withECDSA").apply {
-            initSign(keyStore.getKey(alias, null) as java.security.PrivateKey)
+    /**
+     * Инициализация подписи (для BiometricPrompt.CryptoObject).
+     * initSign на ключе с setUserAuthenticationRequired(true) кидает
+     * UserNotAuthenticatedException ДО биометрии (API 35) — это
+     * ожидаемо: авторизация выполняется BiometricPrompt с CryptoObject
+     * (правка этапа 7; на API 36 этапа 6 исключение не возникало).
+     */
+    fun newSignature(): Signature {
+        // подпись готового 32-байтного дайджеста (см. setDigests выше)
+        val sig = Signature.getInstance("NONEwithECDSA")
+        try {
+            sig.initSign(keyStore.getKey(alias, null) as java.security.PrivateKey)
+            sigInitialized = true
+        } catch (_: android.security.keystore.UserNotAuthenticatedException) {
+            // авторизация — BiometricPrompt (окно 30 с)
+            sigInitialized = false
         }
+        return sig
+    }
+
+    /** initSign прошёл (окно авторизации открыто) — CryptoObject валиден. */
+    @Volatile var sigInitialized: Boolean = false
+        private set
 
     /** Подпись хеша (после успешной биометрии). Выход — DER. */
     fun sign(signature: Signature, hash: ByteArray): ByteArray =

@@ -39,10 +39,13 @@ func (n *Node) votePreference(key string) ([]byte, uint64, bool) {
 		return nil, 0, false
 	}
 	weight := uint64(1)
+	// чтение реестра — под applyMu.RLock (data race — net/query.go, этап 7)
+	n.applyMu.RLock()
 	if w := n.wallet(n.Cfg.WalletAddr); w != nil && n.Ledger != nil {
 		strict := n.Ledger.State.Net.Profile.DevicePolicy == wire.DevicePolicyStrict
 		weight = cons.Weight(w, strict, n.Ledger.State.NetTime)
 	}
+	n.applyMu.RUnlock()
 	return st.Pref, weight, true
 }
 
@@ -174,12 +177,15 @@ func (r *remotePeer) VotePreference(key string) ([]byte, uint64, bool) {
 	}
 	// вес пересчитывается локально, если кошелёк известен состоянию:
 	// подписанный вес — атрибуция, локальный — защита от завышения
+	// (чтение реестра — под applyMu.RLock, net/query.go, этап 7)
+	r.n.applyMu.RLock()
 	if w := r.n.wallet(wallet); w != nil && r.n.Ledger != nil {
 		strict := r.n.Ledger.State.Net.Profile.DevicePolicy == wire.DevicePolicyStrict
 		if lw := cons.Weight(w, strict, r.n.Ledger.State.NetTime); lw > 0 {
 			weight = lw
 		}
 	}
+	r.n.applyMu.RUnlock()
 	return pref, weight, true
 }
 
@@ -215,11 +221,15 @@ func (n *Node) voteLoop(ctx context.Context) {
 // branchApplied — txid применённой ветки конфликта (tip кошелька).
 func (n *Node) branchApplied(key string) []byte {
 	wallet := conflictWallet(key)
+	// чтение реестра — под applyMu.RLock (net/query.go, этап 7)
+	n.applyMu.RLock()
 	w := n.wallet(wallet)
-	if w == nil {
-		return nil
+	var tip []byte
+	if w != nil {
+		tip = append([]byte(nil), w.TipTxID...)
 	}
-	return w.TipTxID
+	n.applyMu.RUnlock()
+	return tip
 }
 
 // conflictWallet — адрес кошелька из ключа конфликта (wallet|seq).
@@ -238,10 +248,14 @@ func (n *Node) rebuildToFinality() {
 	if n.Ledger == nil {
 		return
 	}
+	// журнал — под mu; конфликтные ветки — из реестра, под applyMu.RLock
+	// (порядок applyMu → mu, как в postApply; net/query.go, этап 7)
+	n.applyMu.RLock()
 	n.mu.RLock()
 	txs := append([]*wire.Transaction(nil), n.journal...)
 	txs = append(txs, n.Ledger.ConflictBranches()...)
 	n.mu.RUnlock()
+	n.applyMu.RUnlock()
 	view := n.finalityView()
 	l, err := ledger.New(n.Cfg.Genesis, n.Clock, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {
@@ -327,10 +341,14 @@ func (n *Node) cpTick(ctx context.Context) {
 	} else {
 		prevHash = make([]byte, 32)
 	}
+	// состав подписантов и сборка чекпоинта читают реестр — под
+	// applyMu.RLock (data race — net/query.go, этап 7)
+	n.applyMu.RLock()
 	part, thresholdN, err := cons.Participants(
 		n.Cfg.Genesis.Manifest.Profile.CheckpointMode, n.Ledger, n.Cfg.Genesis,
 		n.ConsParams, epoch, prevHash)
 	if err != nil {
+		n.applyMu.RUnlock()
 		return
 	}
 	// finalized_txid_list: принятые с прошлого чекпоинта
@@ -349,6 +367,7 @@ func (n *Node) cpTick(ctx context.Context) {
 	netTime := n.consClock.NetTime()
 	cp, err := cons.Build(n.networkID, epoch, n.Ledger, prev, netTime,
 		n.Cfg.Genesis.Genesis.ProtocolVersion, part, thresholdN, finalized)
+	n.applyMu.RUnlock()
 	if err != nil {
 		return
 	}
@@ -388,12 +407,28 @@ func (n *Node) publishCp(ctx context.Context, cp *wire.Checkpoint, share wire.Si
 
 // onCpMessage — предложение/доля чекпоинта: регистрация, сбор, подпись
 // участником полученного предложения (контент детерминирован).
+//
+// Чтения состояния реестра (hasUnresolvedConflict, pubKeyOf через
+// Collector.Add) вынесены ЗА n.mu: порядок блокировок всегда
+// applyMu → mu (postApply), обратный порядок (mu → applyMu.RLock)
+// дал бы AB-BA (data race — net/query.go, этап 7).
 func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local bool) {
 	if cp == nil {
 		return
 	}
 	h := cp.CheckpointHash()
+	// конфликт и подпись участника — до мьютекса (читают реестр)
+	signIncoming := false
+	if !local && n.Signer != nil && !n.hasUnresolvedConflict() {
+		for _, p := range cp.Participants {
+			if string(p) == string(n.Cfg.WalletAddr) {
+				signIncoming = true
+				break
+			}
+		}
+	}
 	n.mu.Lock()
+	isNew := false
 	if _, ok := n.CpProposals[string(h[:])]; !ok {
 		// эпоха последнего чекпоинта — под уже взятым локом
 		// (lastCPEpock использует RLock — нельзя при живом Lock)
@@ -407,22 +442,20 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 		}
 		n.CpProposals[string(h[:])] = cp
 		n.CpCollectors[string(h[:])] = cons.NewCollector(cp, n.pubKeyOf)
-		// участник подписывает полученное предложение
-		if !local && n.Signer != nil && !n.hasUnresolvedConflict() {
-			for _, p := range cp.Participants {
-				if string(p) == string(n.Cfg.WalletAddr) {
-					myShare, err := n.Signer.Sign(cp)
-					if err == nil {
-						n.CpCollectors[string(h[:])].Add(myShare)
-						_ = n.publishCp(n.ctx, cp, myShare)
-					}
-					break
-				}
-			}
-		}
+		isNew = true
 	}
 	col := n.CpCollectors[string(h[:])]
 	n.mu.Unlock()
+	// подпись участником полученного предложения — после снятия мьютекса
+	// (только для нового предложения, как до выноса из-под лок)
+	if isNew && signIncoming {
+		if myShare, err := n.Signer.Sign(cp); err == nil {
+			if col != nil {
+				col.Add(myShare)
+			}
+			_ = n.publishCp(n.ctx, cp, myShare)
+		}
+	}
 	if len(share.Signer) > 0 && col != nil {
 		col.Add(share)
 	}
@@ -526,11 +559,14 @@ func (n *Node) needsRebuild() bool {
 		if string(st.A) == string(st.Pref) {
 			alt = st.B
 		}
+		// чтение реестра — под applyMu.RLock (net/query.go, этап 7)
+		n.applyMu.RLock()
 		w := n.wallet(conflictWallet(st.Key))
 		tip := []byte(nil)
 		if w != nil {
-			tip = w.TipTxID
+			tip = append([]byte(nil), w.TipTxID...)
 		}
+		n.applyMu.RUnlock()
 		switch {
 		case view.IsFinalized(st.Pref):
 			if string(tip) != string(st.Pref) {
@@ -557,10 +593,18 @@ func cpHashOf(cp *wire.Checkpoint) []byte {
 }
 
 // pubKeyOf — ключ подписанта чекпоинта (кошелёк из состояния или
-// ключ узла из конфигурации).
+// ключ узла из конфигурации). Чтение реестра — под applyMu.RLock
+// (net/query.go, этап 7); вызывается вне mu (Collector.Add).
 func (n *Node) pubKeyOf(addr []byte) (*ecdsa.PublicKey, bool) {
-	if w := n.wallet(addr); w != nil && w.PublicKey != nil {
-		return w.PublicKey, true
+	n.applyMu.RLock()
+	w := n.wallet(addr)
+	var pub *ecdsa.PublicKey
+	if w != nil {
+		pub = w.PublicKey
+	}
+	n.applyMu.RUnlock()
+	if pub != nil {
+		return pub, true
 	}
 	if string(addr) == string(n.Cfg.WalletAddr) && n.Cfg.WalletKey != nil {
 		return &n.Cfg.WalletKey.PublicKey, true

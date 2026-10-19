@@ -13,6 +13,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"strings"
@@ -168,17 +169,35 @@ func (t *Tx) Wallet() []byte { return t.tx.Wallet }
 func (t *Tx) Type() string   { return t.tx.Type.String() }
 
 // SolveLight — лёгкий PoW (SHA-256, 7.6): nonce для register/transfer.
+// Правка этапа 7 (латентный баг этапа 6): canonical-кодирование
+// включает pow.nonce, поэтому nonce назначается В tx ДО вычисления
+// preimage — иначе проверка на узле даёт E_POW_LIGHT.
 func (t *Tx) SolveLight(target int64) {
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowLight}
-	t.tx.Pow.Nonce = crypto.SolveLight(t.tx.SigningPreimage(), uint64(target))
+	for n := uint64(0); ; n++ {
+		var nb [8]byte
+		binary.BigEndian.PutUint64(nb[:], n)
+		t.tx.Pow.Nonce = nb[:]
+		if crypto.VerifyLight(t.tx.SigningPreimage(), nb[:], uint64(target)) {
+			return
+		}
+	}
 }
 
-// SolveHard — усиленный PoW (Argon2id, 7.6): выпуск.
+// SolveHard — усиленный PoW (Argon2id, 7.6): выпуск. Nonce назначается
+// в tx до вычисления preimage (см. SolveLight).
 func (t *Tx) SolveHard(target, memKiB, iterations, parallelism int64) {
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowArgon2id}
-	t.tx.Pow.Nonce = crypto.SolveHard(t.tx.SigningPreimage(), uint64(target),
-		crypto.Argon2Params{MemoryKiB: uint32(memKiB), Iterations: uint32(iterations),
-			Parallelism: uint32(parallelism)})
+	ap := crypto.Argon2Params{MemoryKiB: uint32(memKiB), Iterations: uint32(iterations),
+		Parallelism: uint32(parallelism)}
+	for n := uint64(0); ; n++ {
+		var nb [8]byte
+		binary.BigEndian.PutUint64(nb[:], n)
+		t.tx.Pow.Nonce = nb[:]
+		if crypto.VerifyHard(t.tx.SigningPreimage(), nb[:], uint64(target), ap) {
+			return
+		}
+	}
 }
 
 // SigningHash — хеш для подписи (Keystore: SHA256withECDSA, выход DER).
@@ -229,6 +248,15 @@ type Genesis struct{ gp *wire.GenesisPackage }
 
 // SandboxGenesis — тестовый genesis с параметрами PoW (№9) и эпохи (№16).
 // genesisTime — unix-секунды; 0 — 65 суток назад (текущий период 2).
+//
+// Этап 7 (песочница эмулятора, 6.5): добавлен посевной круг V1..V3 —
+// детерминированные ключи (та же деривация, что в cmd/tnp-node), без
+// него в песочнице нет ни одного active-кошелька и активация
+// невозможна. Учебные оверрайды профиля: мораторий переводов и окно
+// переводимости свежих выпусков выключены (демо полного пути за один
+// сеанс), окно челленджа выпуска открыто весь период (в реальных сетях
+// — ±48 ч, 7.6). Отложенные переводы в песочнице отключены ядром
+// (T6/T7: !sandbox).
 func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	powTargetLight, powTargetHard, argon2MemKiB, argon2Iter, argon2Par int64) *Genesis {
 	gp := params.TestGenesis()
@@ -238,11 +266,31 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	if epochSeconds > 0 {
 		prof.EpochSeconds = uint64(epochSeconds)
 	}
+	prof.Sandbox = true
+	prof.TransferMoratoriumDays = 0
+	prof.FreshTransferWindowPeriods = 0
+	// Окно челленджа в песочнице отключено: mintChallengeSlot (ядро,
+	// headless) считает слот от period×30сут от 1970, а периоды сети —
+	// календарные месяцы от genesis (cons.Clock): для малых номеров
+	// периодов слот выпадает в 1970-е и окно всегда закрыто. Уточнение
+	// слота — этап 5 (PENDING, отчёт 7); сетевые узлы и так не проверяют
+	// окно при apply (SkipMintChallengeWindow, долг этапа 8).
+	prof.MintChallengeWindowHours = 0
 	prof.Pow = &wire.PowParams{
 		TargetLight: uint64(powTargetLight), TargetHard: uint64(powTargetHard),
 		Argon2MemoryKiB: uint32(argon2MemKiB), Argon2Iterations: uint32(argon2Iter),
 		Argon2Parallelism: uint32(argon2Par),
 	}
+	var circle []wire.SeedMember
+	for _, id := range []string{"V1", "V2", "V3"} {
+		priv := crypto.DeterministicKey("tnp-node-seed:" + id)
+		pub := crypto.MarshalPubKey(&priv.PublicKey)
+		fp := crypto.Fingerprint(pub)
+		circle = append(circle, wire.SeedMember{
+			Address: crypto.DeriveAddress(fp, []byte(networkID)), PublicKey: pub,
+		})
+	}
+	gp.Manifest.SeedCircle = circle
 	if genesisTime == 0 {
 		genesisTime = time.Now().Add(-65 * 24 * time.Hour).Unix()
 	}
@@ -323,6 +371,86 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 		// несвязанность eclipse-пиров по подсетям (№35): включена
 		LinkGroups: true,
 	}
+	// корни аттестации из genesis (правка этапа 7 — латентный баг этапа 6:
+	// без TrustedRoots узел отвергает любую цепочку, E_ATTEST). Песочница —
+	// синтетический корень (детерминирован от network_id); реальные сети —
+	// корни Google в APK (этап 8, чек-лист).
+	if der := gen.TrustedRootsDER(); len(der) > 0 {
+		if root, err := x509.ParseCertificate(der); err == nil {
+			cfg.TrustedRoots = []*x509.Certificate{root}
+		}
+	}
+	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+	if err != nil {
+		return nil, err
+	}
+	nd.gen = gen
+	return nd, nil
+}
+
+// StartNodeAddrs — запуск узла с явными адресами прослушивания
+// (этап 7: host-узел песочницы для эмулятора на фиксированном порту).
+func StartNodeAddrs(gen *Genesis, level, dbPath string, ownWallet []byte,
+	manualAddrs, listenAddrs string, logger Logger) (*Node, error) {
+	if gen == nil || gen.gp == nil {
+		return nil, errors.New("genesis не задан")
+	}
+	cfg := &net.NodeConfig{
+		Genesis:     gen.gp,
+		DBPath:      dbPath,
+		ListenAddrs: []string{"/ip4/0.0.0.0/udp/0/quic-v1", "/ip4/0.0.0.0/tcp/0"},
+		LinkGroups:  true,
+	}
+	if listenAddrs != "" {
+		cfg.ListenAddrs = strings.Split(listenAddrs, ",")
+	}
+	if der := gen.TrustedRootsDER(); len(der) > 0 {
+		if root, err := x509.ParseCertificate(der); err == nil {
+			cfg.TrustedRoots = []*x509.Certificate{root}
+		}
+	}
+	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+	if err != nil {
+		return nil, err
+	}
+	nd.gen = gen
+	return nd, nil
+}
+
+// StartNodeAddrsKey — как StartNodeAddrs, но с детерминированным ключом
+// узла из nodeKeySeed (этап 7, песочница): peer ID стабилен между
+// запусками — приложение может хранить полный multiaddr с /p2p/<id>
+// (AddrInfoFromP2pAddr требует ID в адресе). Пустой seed — случайный
+// ключ. Только песочница/диагностика; реальные узлы — случайные ключи.
+func StartNodeAddrsKey(gen *Genesis, level, dbPath string, ownWallet []byte,
+	manualAddrs, listenAddrs, nodeKeySeed string, logger Logger) (*Node, error) {
+	if nodeKeySeed != "" {
+		key := crypto.DeterministicKey(nodeKeySeed)
+		cfg := &net.NodeConfig{
+			Genesis:     gen.gp,
+			DBPath:      dbPath,
+			ListenAddrs: strings.Split(listenAddrs, ","),
+			LinkGroups:  true,
+			NodeKey:     key,
+		}
+		if der := gen.TrustedRootsDER(); len(der) > 0 {
+			if root, err := x509.ParseCertificate(der); err == nil {
+				cfg.TrustedRoots = []*x509.Certificate{root}
+			}
+		}
+		nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+		if err != nil {
+			return nil, err
+		}
+		nd.gen = gen
+		return nd, nil
+	}
+	return StartNodeAddrs(gen, level, dbPath, ownWallet, manualAddrs, listenAddrs, logger)
+}
+
+// startNodeCfg — общая сборка и запуск по конфигу.
+func startNodeCfg(cfg *net.NodeConfig, level string, ownWallet []byte,
+	manualAddrs string, logger Logger) (*Node, error) {
 	switch level {
 	case "full":
 		cfg.Level = net.LevelFull
@@ -354,7 +482,7 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 		n.Close()
 		return nil, err
 	}
-	return &Node{n: n, gen: gen}, nil
+	return &Node{n: n, gen: nil}, nil
 }
 
 // SubmitResult — результат публикации транзакции.

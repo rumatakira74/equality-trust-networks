@@ -24,6 +24,14 @@ object NodeController {
     var manualAddrs: String? = null
     var log: Logger? = null
 
+    /**
+     * Этап 7 (вопрос №38): true — узел без SQLite (в памяти).
+     * Причина: modernc/sqlite -> libc.Xlstat -> raw SYS_LSTAT — SIGSYS
+     * под app-seccopp (эмуляторы API 35/36 подтверждены); фикс —
+     * upstream (fstatat в modernc.org/libc) или замена драйвера.
+     */
+    @Volatile var inMemoryDb: Boolean = false
+
     /** Условия полного узла (12.2): зарядка И Wi-Fi. */
     fun shouldBeFull(context: Context): Boolean {
         val bm = context.getSystemService(BatteryManager::class.java) ?: return false
@@ -42,15 +50,21 @@ object NodeController {
             if (current.get() != null) return
             val gen = genesis ?: return
             val full = shouldBeFull(context)
-            val node = tnp.Tnp.startNode(
-                gen,
-                if (full) "full" else "light",
-                context.getDatabasePath(DB_NAME).absolutePath,
-                ownWallet ?: ByteArray(0),
-                manualAddrs ?: "",
-                log,
-            )
-            current.set(node)
+            try {
+                val node = tnp.Tnp.startNode(
+                    gen,
+                    if (full) "full" else "light",
+                    if (inMemoryDb) "" else context.getDatabasePath(DB_NAME).absolutePath,
+                    ownWallet ?: ByteArray(0),
+                    manualAddrs ?: "",
+                    log,
+                )
+                current.set(node)
+                // диагностика этапа 7: состояние узла сразу после старта
+                android.util.Log.d("TnpNode", "запущен: " + node.statsText())
+            } catch (e: Throwable) {
+                android.util.Log.e("TnpNode", "запуск узла: " + e.message, e)
+            }
         }
     }
 

@@ -29,22 +29,50 @@ class WalletFlow(
 
     /**
      * Регистрация кошелька (9.3): challenge задаёт узел (R4),
-     * аттестационная цепочка — из Keystore, PoW — лёгкий (register).
+     * аттестационная цепочка — из Keystore, PoW — усиленный Argon2id
+     * (7.6, C10/C11; правка этапа 7: этап 6 решал лёгкий PoW — узел
+     * всегда отвергал бы транзакцию с E_POW_HARD).
      * Требует настроенной биометрии (BIOMETRIC_STRONG) — проверка
      * вызывающим экраном до генерации ключа.
+     *
+     * guardiansJSON: ["hex", ...] — личные гардианы при создании
+     * кошелька (11, вопрос №6); максимум 3, адреса известны реестру.
+     *
+     * Песочница (sandbox = true в манифесте): цепочка синтетическая
+     * (SandboxAttestationChain, 6.5) — реальная цепочка KeyMint на
+     * эмуляторе не сойдётся с синтетическими корнями; ключ всё равно
+     * в Keystore (подпись — только биометрией).
      */
-    fun buildRegisterTx(genesis: Genesis, androidId: String): Tx? {
-        val pub = wallet.publicKey() ?: return null
+    fun buildRegisterTx(genesis: Genesis, androidId: String,
+                        guardiansJSON: String = "[]"): Tx? {
+        // генерация ключа ДО чтения публичного ключа (правка этапа 7:
+        // на первой регистрации publicKey() ещё null — латентный баг
+        // порядка этапа 6)
         val networkId = genesis.networkID()
+        val pub0 = wallet.publicKey()
+        val challenge0 =
+            if (pub0 != null) tnp.Tnp.attestationChallengeFor(pub0, networkId)
+            else ByteArray(0)
+        wallet.generateWithAttestation(challenge0)
+        val pub = wallet.publicKey() ?: return null
         val challenge = tnp.Tnp.attestationChallengeFor(pub, networkId)
-        // генерация ключа с аттестацией ДО сборки транзакции
-        val chain = wallet.generateWithAttestation(challenge)
+        val sandbox = org.json.JSONObject(genesis.manifestJSON())
+            .optBoolean("sandbox", false)
+        val chain = if (sandbox) {
+            tnp.Tnp.sandboxAttestationChain(pub, networkId, challenge)
+        } else {
+            wallet.attestationChain()
+        }
         val addr = tnp.Tnp.addressFromPublicKey(pub, networkId) ?: return null
-        val tx = tnp.Tnp.newRegister(
-            networkId, addr, pub, chain, challenge, androidId,
+        val tx = tnp.Tnp.newRegisterGuardians(
+            networkId, addr, pub, chain, challenge, androidId, guardiansJSON,
             genesis.protocolVersion(), System.currentTimeMillis() / 1000,
+        ) ?: return null
+        // register — усиленный PoW (Argon2id, 7.6)
+        tx.solveHard(
+            genesis.powTargetHard(), genesis.argon2MemKiB(),
+            genesis.argon2Iterations(), genesis.argon2Par(),
         )
-        tx.solveLight(genesis.powTargetLight())
         return tx
     }
 
