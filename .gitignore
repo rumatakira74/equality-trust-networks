@@ -5,8 +5,10 @@ tnp-node.exe
 # Go
 *.test
 *.out
+*.prof
 *.so
 coverage/
+coverage.out
 
 # Android/Flutter (этапы 6–7): сборки и кэши в git не попадают —
 # глобальные шаблоны на всех уровнях вложенности (AAR — gomobile bind,
@@ -15,20 +17,34 @@ coverage/
 android/libs/
 build/
 .gradle/
-.dart_tool/
+.kotlin/
+.externalNativeBuild/
 .cxx/
 captures/
 local.properties
 .flutter-plugins*
+ephemeral/
+.dart_tool/
 .idea/
 *.iml
 *.apk
 *.aab
 *.aar
+
+# IDE/редакторы
+.vscode/
+*.swp
+*.swo
+
+# ОС
 .DS_Store
+Thumbs.db
+desktop.ini
 
 # Локальные артефакты
 *.log
+tmp/
+.cache/
 
 # Flutter (этап 7)
 app/.metadata.bak
