@@ -411,6 +411,37 @@ func StartNodeAddrs(gen *Genesis, level, dbPath string, ownWallet []byte,
 	return nd, nil
 }
 
+// StartNodeAddrsKey — как StartNodeAddrs, но с детерминированным ключом
+// узла из nodeKeySeed (этап 7, песочница): peer ID стабилен между
+// запусками — приложение может хранить полный multiaddr с /p2p/<id>
+// (AddrInfoFromP2pAddr требует ID в адресе). Пустой seed — случайный
+// ключ. Только песочница/диагностика; реальные узлы — случайные ключи.
+func StartNodeAddrsKey(gen *Genesis, level, dbPath string, ownWallet []byte,
+	manualAddrs, listenAddrs, nodeKeySeed string, logger Logger) (*Node, error) {
+	if nodeKeySeed != "" {
+		key := crypto.DeterministicKey(nodeKeySeed)
+		cfg := &net.NodeConfig{
+			Genesis:     gen.gp,
+			DBPath:      dbPath,
+			ListenAddrs: strings.Split(listenAddrs, ","),
+			LinkGroups:  true,
+			NodeKey:     key,
+		}
+		if der := gen.TrustedRootsDER(); len(der) > 0 {
+			if root, err := x509.ParseCertificate(der); err == nil {
+				cfg.TrustedRoots = []*x509.Certificate{root}
+			}
+		}
+		nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+		if err != nil {
+			return nil, err
+		}
+		nd.gen = gen
+		return nd, nil
+	}
+	return StartNodeAddrs(gen, level, dbPath, ownWallet, manualAddrs, listenAddrs, logger)
+}
+
 // startNodeCfg — общая сборка и запуск по конфигу.
 func startNodeCfg(cfg *net.NodeConfig, level string, ownWallet []byte,
 	manualAddrs string, logger Logger) (*Node, error) {

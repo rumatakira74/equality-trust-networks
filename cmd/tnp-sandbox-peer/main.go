@@ -60,14 +60,18 @@ func main() {
 	gen := tnp.SandboxGenesis(sandboxNetworkID, sandboxGenesisT, sandboxEpochSec,
 		sandboxPowLight, sandboxPowHard, sandboxArgon2MiB, sandboxArgon2Iter, sandboxArgon2Par)
 	listen := fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic-v1,/ip4/0.0.0.0/tcp/%d", *port, *port)
-	node, err := tnp.StartNodeAddrs(gen, "full", *db, nil, "",
-		listen, loggerFunc(func(l string) { log("узел: %s", l) }))
+	// детерминированный ключ узла: стабильный peer ID — приложение
+	// подключается по полному multiaddr с /p2p/<id> (без ID адрес
+	// молча отбрасывается AddrInfoFromP2pAddr)
+	node, err := tnp.StartNodeAddrsKey(gen, "full", *db, nil, "",
+		listen, "tnp-sandbox-peer-node-key", loggerFunc(func(l string) { log("узел: %s", l) }))
 	if err != nil {
 		log("запуск: %v", err)
 		os.Exit(1)
 	}
 	defer node.Close()
 	log("слушает udp/tcp %d; genesis-время %d", *port, sandboxGenesisT)
+	log("peer: %s", node.StatsText())
 
 	// ключи посевного круга (деривация как в cmd/tnp-node)
 	seeds := map[string][]byte{}
@@ -104,6 +108,8 @@ func main() {
 			log("остановка")
 			return
 		case <-ticker.C:
+			// диагностика этапа 7: видно, подключается ли узел приложения
+			log("статус: %s", node.StatsText())
 			for _, cand := range registeredWallets(node) {
 				if vouched[cand] {
 					continue

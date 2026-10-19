@@ -50,15 +50,21 @@ object NodeController {
             if (current.get() != null) return
             val gen = genesis ?: return
             val full = shouldBeFull(context)
-            val node = tnp.Tnp.startNode(
-                gen,
-                if (full) "full" else "light",
-                if (inMemoryDb) "" else context.getDatabasePath(DB_NAME).absolutePath,
-                ownWallet ?: ByteArray(0),
-                manualAddrs ?: "",
-                log,
-            )
-            current.set(node)
+            try {
+                val node = tnp.Tnp.startNode(
+                    gen,
+                    if (full) "full" else "light",
+                    if (inMemoryDb) "" else context.getDatabasePath(DB_NAME).absolutePath,
+                    ownWallet ?: ByteArray(0),
+                    manualAddrs ?: "",
+                    log,
+                )
+                current.set(node)
+                // диагностика этапа 7: состояние узла сразу после старта
+                android.util.Log.d("TnpNode", "запущен: " + node.statsText())
+            } catch (e: Throwable) {
+                android.util.Log.e("TnpNode", "запуск узла: " + e.message, e)
+            }
         }
     }
 

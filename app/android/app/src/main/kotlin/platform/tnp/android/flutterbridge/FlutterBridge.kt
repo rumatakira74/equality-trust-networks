@@ -86,7 +86,11 @@ object FlutterBridge {
         genesis = gen
         NodeController.genesis = gen
         NodeController.ownWallet = address()
-        NodeController.manualAddrs = "/ip4/10.0.2.2/udp/4001/quic-v1"
+        // полный multiaddr с /p2p/<id>: без ID компонента адрес молча
+        // отбрасывается AddrInfoFromP2pAddr (bootstrap не подключается);
+        // ID стабилен — детерминированный ключ узла песочницы
+        NodeController.manualAddrs =
+            "/ip4/10.0.2.2/udp/4001/quic-v1/p2p/QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP"
         NodeController.log = tnp.Logger { line ->
             android.util.Log.d("TnpNode", line)
         }
