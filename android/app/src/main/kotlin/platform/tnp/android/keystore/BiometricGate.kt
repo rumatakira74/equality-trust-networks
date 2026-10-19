@@ -46,13 +46,21 @@ object BiometricGate {
         hash: ByteArray,
         onResult: (ByteArray?) -> Unit,
     ) {
-        val signature = wallet.newSignature()
-        val prompt = BiometricPrompt(
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setNegativeButtonText("Отмена")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .build()
+
+        fun newPrompt() = BiometricPrompt(
             activity,
             ContextCompat.getMainExecutor(activity),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val sig = result.cryptoObject?.signature ?: signature
+                    val sig = result.cryptoObject?.signature
+                        // plain-режим (API 35+): initSign повторно — уже
+                        // внутри 30-секундного окна авторизации
+                        ?: wallet.newSignature()
                     onResult(wallet.sign(sig, hash))
                 }
 
@@ -61,13 +69,29 @@ object BiometricGate {
                 }
             },
         )
-        prompt.authenticate(
-            BiometricPrompt.PromptInfo.Builder()
-                .setTitle(title)
-                .setNegativeButtonText("Отмена")
-                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-                .build(),
-            BiometricPrompt.CryptoObject(signature),
-        )
+
+        val signature = wallet.newSignature()
+        if (wallet.sigInitialized) {
+            // initSign прошёл (окно авторизации открыто) — CryptoObject
+            // валиден: биометрия криптографически связана с операцией
+            try {
+                android.util.Log.d("TnpBridge", "prompt.authenticate с CryptoObject")
+                newPrompt().authenticate(info, BiometricPrompt.CryptoObject(signature))
+            } catch (e: Exception) {
+                android.util.Log.e("TnpBridge", "CryptoObject не принялся: " + e.message)
+                android.util.Log.d("TnpBridge", "prompt.authenticate plain")
+                newPrompt().authenticate(info)
+            }
+        } else {
+            // API 35+: initSign на auth-bound ключе кидает
+            // UserNotAuthenticatedException ДО старта операции —
+            // CryptoObject невалиден ("Crypto primitive not
+            // initialized"). Plain-биометрия: успешная аутентификация
+            // открывает 30-с окно ключа (setUserAuthenticationParameters,
+            // этап 6), подпись — в onAuthenticationSucceeded
+            // (правка этапа 7).
+            android.util.Log.d("TnpBridge", "prompt.authenticate plain (UNA)")
+            newPrompt().authenticate(info)
+        }
     }
 }

@@ -45,11 +45,17 @@ class WalletFlow(
      */
     fun buildRegisterTx(genesis: Genesis, androidId: String,
                         guardiansJSON: String = "[]"): Tx? {
-        val pub = wallet.publicKey() ?: return null
+        // генерация ключа ДО чтения публичного ключа (правка этапа 7:
+        // на первой регистрации publicKey() ещё null — латентный баг
+        // порядка этапа 6)
         val networkId = genesis.networkID()
+        val pub0 = wallet.publicKey()
+        val challenge0 =
+            if (pub0 != null) tnp.Tnp.attestationChallengeFor(pub0, networkId)
+            else ByteArray(0)
+        wallet.generateWithAttestation(challenge0)
+        val pub = wallet.publicKey() ?: return null
         val challenge = tnp.Tnp.attestationChallengeFor(pub, networkId)
-        // генерация ключа с аттестацией ДО сборки транзакции
-        wallet.generateWithAttestation(challenge)
         val sandbox = org.json.JSONObject(genesis.manifestJSON())
             .optBoolean("sandbox", false)
         val chain = if (sandbox) {
