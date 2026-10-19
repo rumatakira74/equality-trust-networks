@@ -86,7 +86,11 @@ type Node struct {
 
 	relayReserved int
 
-	applyMu sync.Mutex // сериализация Apply (ядро этапа 3 без мьютексов)
+	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).
+	// RWMutex — read-only запросы UI (net/query.go, этап 7; исключение
+	// из правила 3 промпта этапа 7, авторизовано 19.10.2026):
+	// Lock — везде Apply, RLock — геттеры состояния.
+	applyMu sync.RWMutex
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -471,8 +475,13 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 	}
 	n.applyMu.Lock()
 	res := n.applyWithClock(tx, n.Clock)
-	n.applyMu.Unlock()
+	// postApply читает реестр (Snowball.Observe, isFutureSeq) — под тем же
+	// локом, как в sync-цикле (data race — net/query.go, этап 7)
 	n.postApply(tx, res)
+	n.applyMu.Unlock()
+	// повтор буфера внеочередных — строго вне applyMu (retryPending
+	// берёт RLock; из-под Lock — self-deadlock)
+	n.retryPending(tx.Wallet)
 }
 
 // applyWithClock — Apply с подменой часов (вызывающий держит applyMu).
@@ -544,16 +553,30 @@ func (n *Node) retryPending(wallet []byte) {
 	n.pending[string(wallet)] = nil
 	n.pendingN -= len(list)
 	n.mu.Unlock()
+	// отбор готовых — чтение реестра под applyMu.RLock (net/query.go,
+	// этап 7); applyLive берёт Lock — вне RLock
+	n.applyMu.RLock()
+	ready := make([]*wire.Transaction, 0, len(list))
+	later := make([]*wire.Transaction, 0, len(list))
 	for _, tx := range list {
 		if n.isFutureSeq(tx) {
-			n.bufferPending(tx)
-			continue
+			later = append(later, tx)
+		} else {
+			ready = append(ready, tx)
 		}
+	}
+	n.applyMu.RUnlock()
+	for _, tx := range later {
+		n.bufferPending(tx)
+	}
+	for _, tx := range ready {
 		n.applyLive(tx)
 	}
 }
 
-// commitTx — фиксация принятой транзакции: индексы, store, pending.
+// commitTx — фиксация принятой транзакции: индексы, store.
+// retryPending вызывающий делает САМ и только ВНЕ applyMu
+// (retryPending берёт applyMu.RLock; из-под Lock — self-deadlock).
 func (n *Node) commitTx(tx *wire.Transaction) {
 	n.indexTx(tx)
 	if n.Store != nil {
@@ -565,7 +588,6 @@ func (n *Node) commitTx(tx *wire.Transaction) {
 			}
 		}
 	}
-	n.retryPending(tx.Wallet)
 }
 
 // SubmitTx — локальная публикация: полный apply, затем gossip. Конфликтные
@@ -579,6 +601,8 @@ func (n *Node) SubmitTx(ctx context.Context, tx *wire.Transaction) (ledger.Resul
 		switch res.Outcome {
 		case ledger.Accepted:
 			n.commitTx(tx)
+			// повтор буфера внеочередных — вне applyMu (см. commitTx)
+			n.retryPending(tx.Wallet)
 		case ledger.Conflict:
 			// доставляем обе ветки (выбор — финализация, этап 5)
 		case ledger.Rejected:

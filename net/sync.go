@@ -169,9 +169,19 @@ func (n *Node) sendWalletRange(s network.Stream, wallet []byte, from, to uint64)
 
 func (n *Node) sendTip(s network.Stream, wallet []byte) {
 	var e enc
-	if w := n.wallet(wallet); w != nil {
-		e.u64(w.Seq)
-		e.blob(w.TipTxID)
+	// чтение реестра — под applyMu.RLock (net/query.go, этап 7)
+	n.applyMu.RLock()
+	w := n.wallet(wallet)
+	var seq uint64
+	var tip []byte
+	if w != nil {
+		seq = w.Seq
+		tip = append([]byte(nil), w.TipTxID...)
+	}
+	n.applyMu.RUnlock()
+	if w != nil {
+		e.u64(seq)
+		e.blob(tip)
 	} else {
 		e.u64(0)
 		e.blob(nil)
@@ -211,6 +221,8 @@ func (n *Node) sendProof(s network.Stream, addr []byte) {
 		_, _ = s.Write(encodeProof(&balanceProofMsg{}))
 		return
 	}
+	// чтение реестра — под applyMu.RLock (net/query.go, этап 7)
+	n.applyMu.RLock()
 	tree := smt.New()
 	for _, w := range n.Ledger.State.Wallets {
 		leaf := stateLeafOf(w)
@@ -223,6 +235,7 @@ func (n *Node) sendProof(s network.Stream, addr []byte) {
 	copy(idx[:], addr)
 	siblings, leaf, ok := tree.Prove(idx)
 	if !ok {
+		n.applyMu.RUnlock()
 		_, _ = s.Write(encodeProof(&balanceProofMsg{}))
 		return
 	}
@@ -231,6 +244,7 @@ func (n *Node) sendProof(s network.Stream, addr []byte) {
 	if w := n.wallet(addr); w != nil {
 		p.LeafData = stateLeafOf(w).Encode()
 	}
+	n.applyMu.RUnlock()
 	for _, sb := range siblings {
 		p.Siblings = append(p.Siblings, sb[:])
 	}
@@ -315,6 +329,7 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64) (in
 			return applied, err
 		}
 		if len(txs) > 0 {
+			touched := make([][]byte, 0, len(txs))
 			n.applyMu.Lock()
 			for _, tx := range txs {
 				// corroboration: журнал доставлен этим пиром (eclipse, 12.3)
@@ -323,9 +338,15 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64) (in
 				rc.Pin(tx.TimestampClaim)
 				res := n.applyWithClock(tx, rc)
 				n.postApply(tx, res)
+				touched = append(touched, tx.Wallet)
 				applied++
 			}
 			n.applyMu.Unlock()
+			// повтор буфера внеочередных — строго вне applyMu
+			// (retryPending берёт RLock; из-под Lock — self-deadlock)
+			for _, w := range touched {
+				n.retryPending(w)
+			}
 		}
 		if next == after || len(txs) == 0 {
 			break
