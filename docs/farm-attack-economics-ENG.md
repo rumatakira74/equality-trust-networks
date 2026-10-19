@@ -1,6 +1,6 @@
 # Farm-Attack Economics — Interpreting the Simulation Results
 
-An addition to section 7.7 of KNOWLEDGE.md (v9.2). Basis: `equality-simulation` (https://github.com/rumatakira74/equality-simulation), base scenario: K = 3, slots 3/5/10, seed circle 100, farm 20 devices/mo., 8 runs × 60 months.
+An addition to section 7.7 of KNOWLEDGE.md (v9.2). Basis: `equality-anti-farm-simulation` (https://github.com/rumatakira74/equality-anti-farm-simulation), base scenario: K = 3, slots 3/5/10, seed circle 100, farm 20 devices/mo., 8 runs × 60 months.
 Date: October 18, 2026.
 
 ---

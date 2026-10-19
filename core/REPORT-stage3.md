@@ -1,7 +1,7 @@
 # REPORT-stage3.md — этап 3: ядро реестра на Go (без сети)
 
 Ветка `stage3-core`. Источники: spec/ + proto/ + vectors/ + QUESTIONS.md
-(этап 0), equality-simulation/Mistral/REPORT.md (значения 1.2). Подэтап 3.0
+(этап 0), equality-anti-farm-simulation/Mistral/REPORT.md (значения 1.2). Подэтап 3.0
 (криптофундамент этапа 2) выполнен здесь, т.к. в репозиториях отсутствовал.
 
 ## 1. Что сделано

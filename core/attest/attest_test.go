@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 )
 
 func goodExt() Extension {

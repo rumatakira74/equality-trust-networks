@@ -5,8 +5,8 @@ package net
 import (
 	"encoding/binary"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // SolveTxPoW — подбирает nonce и заполняет tx.Pow (усиленный Argon2id для

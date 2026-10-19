@@ -10,9 +10,9 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/rumatakira74/trust-networks-platform/cons"
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/cons"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // buildTx — сборка валидной транзакции от узла from (seq/prev по состоянию

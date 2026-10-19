@@ -9,7 +9,7 @@ package cons
 import (
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Clock — консенсусные часы узла (ledger.EpochSource).

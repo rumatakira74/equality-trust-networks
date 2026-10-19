@@ -18,11 +18,11 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 
-	"github.com/rumatakira74/trust-networks-platform/core/attest"
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
-	"github.com/rumatakira74/trust-networks-platform/core/params"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/attest"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // testEnv — общее окружение сети (genesis, ключи, корень аттестации).

@@ -4,8 +4,8 @@ package ledger
 import (
 	"crypto/ecdsa"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 func parsePub(b []byte) (*ecdsa.PublicKey, error) { return crypto.ParsePubKey(b) }

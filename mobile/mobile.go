@@ -18,11 +18,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/attest"
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/params"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
-	"github.com/rumatakira74/trust-networks-platform/net"
+	"github.com/rumatakira74/equality-trust-networks/core/attest"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/net"
 )
 
 // Logger — приём журнала узла из Go (реализуется в Kotlin).

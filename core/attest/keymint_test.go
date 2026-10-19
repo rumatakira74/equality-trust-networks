@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 )
 
 // derWrap — DER-элемент с идентификатором (включая длинную форму тега).

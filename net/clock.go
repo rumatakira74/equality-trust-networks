@@ -6,7 +6,7 @@ package net
 import (
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 )
 
 // RealClock — реальное время узла (ledger.EpochSource).

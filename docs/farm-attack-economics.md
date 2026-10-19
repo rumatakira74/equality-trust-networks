@@ -1,7 +1,7 @@
 # Экономика фермерской атаки — интерпретация результатов симуляции
 
-Дополнение к разделу 7.7 KNOWLEDGE.md (v9.2). Основа: `equality-simulation`
-(https://github.com/rumatakira74/equality-simulation), базовый сценарий:
+Дополнение к разделу 7.7 KNOWLEDGE.md (v9.2). Основа: `equality-anti-farm-simulation`
+(https://github.com/rumatakira74/equality-anti-farm-simulation), базовый сценарий:
 K = 3, слоты 3/5/10, посев 100, ферма 20 устройств/мес., 8 прогонов × 60 мес.
 Дата: 18 октября 2026 г.
 

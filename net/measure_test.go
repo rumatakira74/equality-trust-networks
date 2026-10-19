@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // TestMeasureGossipThroughput — распространение M транзакций через gossip

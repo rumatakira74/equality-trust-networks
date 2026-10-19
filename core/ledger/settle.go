@@ -3,7 +3,7 @@
 package ledger
 
 import (
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // settleEpoch — проверки на границе эпохи: истечение registered (7.3),

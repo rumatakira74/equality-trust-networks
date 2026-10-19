@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/store"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/store"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 func TestMeasurements(t *testing.T) {

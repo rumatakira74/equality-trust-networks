@@ -9,8 +9,8 @@ import (
 	"encoding/binary"
 	"math/rand"
 
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Poller — опрос пиров (реализация: net — потоки, sim — виртуальная сеть).

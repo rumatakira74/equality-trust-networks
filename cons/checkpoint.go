@@ -10,10 +10,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
-	"github.com/rumatakira74/trust-networks-platform/core/smt"
-	"github.com/rumatakira74/trust-networks-platform/core/threshold"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/smt"
+	"github.com/rumatakira74/equality-trust-networks/core/threshold"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // StateRoot — корень sparse Merkle-дерева состояния (spec/07 7.1.1;

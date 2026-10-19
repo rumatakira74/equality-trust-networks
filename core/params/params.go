@@ -3,7 +3,7 @@
 // Источники (правило: в коде — из манифеста, не зашиты; здесь только дефолты):
 //   - зафиксировано этапом 1.1 (не трогать): K = 3, слоты 3/5/10, R = 10%,
 //     посевной круг >= 300 (раздел 17);
-//   - выбрано этапом 1.2 (equality-simulation/Mistral/REPORT.md, раздел 5):
+//   - выбрано этапом 1.2 (equality-anti-farm-simulation/Mistral/REPORT.md, раздел 5):
 //     демередж 1%/мес + floor 3000; комиссия fee_min = 1, [0,5%; 2%], старт
 //     1%, fee_mode = BURN; окно переводимости 3 мес.; мораторий 14 дней;
 //     P = 3000, P_max = 30000;
@@ -12,7 +12,7 @@
 package params
 
 import (
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Network — параметры сети, извлечённые из манифеста (spec/02) и дополненные

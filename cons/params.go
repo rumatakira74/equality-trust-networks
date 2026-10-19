@@ -6,7 +6,7 @@
 package cons
 
 import (
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Params — параметры консенсуса. Решения №15/№16/№17 утверждены

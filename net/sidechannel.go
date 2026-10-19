@@ -9,7 +9,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // OfflineStatus — статус транзакции офлайн-канала (12.4).

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Participants — состав подписантов M и порог N для эпохи:

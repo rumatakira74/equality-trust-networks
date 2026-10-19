@@ -1,5 +1,5 @@
 ---
-name: "trust-networks-platform"
+name: "equality-trust-networks"
 description: "Trust Networks Platform — a constructor of isolated networks without servers or an administrator, running on participants' phones: one person ≈ one wallet (vouching plus hardware attestation), equal periodic issuance, publicly verifiable history; seven application scenarios"
 ---
 
@@ -20,7 +20,7 @@ Contacts: rumatakira74@gmail.com, Telegram @rumatakira
 
 The document has been reworked: rejected decisions were moved to a short appendix at the end.
 
-Version 9.2: added Section 7.7 — results of the farming-economy simulation ([equality-simulation](https://github.com/rumatakira74/equality-simulation)); K = 3, slots 3/5/10, R = 10%, and a seed circle ≥ 300 confirmed quantitatively.
+Version 9.2: added Section 7.7 — results of the farming-economy simulation ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, slots 3/5/10, R = 10%, and a seed circle ≥ 300 confirmed quantitatively.
 
 Version 9.3: working title — Equality Project; v1.0.0 published on Zenodo (DOI [10.5281/zenodo.23458917](https://zenodo.org/records/23458917)).
 
@@ -363,7 +363,7 @@ Relevant for the profiles where units acquire external value (3, 5, 7).
 
 ### 7.7 Farm-economy simulation results ✅
 
-The model: [equality-simulation](https://github.com/rumatakira74/equality-simulation) (Python; averaged over 8 runs, a 60-month horizon). Modeled: the growth of an honest network and of a farm: slots, age thresholds, K, the R reward, the cost of devices, and purchased vouches. Signatures, the network, the registry, PoW, the moratorium, demurrage, and the fee **were not modeled** — the farm economy in the model is overstated rather than understated.
+The model: [equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation) (Python; averaged over 8 runs, a 60-month horizon). Modeled: the growth of an honest network and of a farm: slots, age thresholds, K, the R reward, the cost of devices, and purchased vouches. Signatures, the network, the registry, PoW, the moratorium, demurrage, and the fee **were not modeled** — the farm economy in the model is overstated rather than understated.
 
 **The base scenario:** K = 3, slots 3/5/10, a seed circle of 100, a farm of 20 devices/month (a cap of 2000 wallets).
 

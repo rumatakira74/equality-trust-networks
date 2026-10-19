@@ -4,8 +4,8 @@
 
 ## Репозитории и источники
 
-- **trust-networks-platform** (GitHub): спецификация этапа 0 — `spec/00-overview.md` (коды `E_*`, решения D1–D10), `spec/01-wire-format.md` (конверт, signing_hash, PoW), `spec/02-genesis-manifest.md` (манифест, genesis, параметры профиля), `spec/03-validation.md` (таблицы «условие → принять/отклонить»), `spec/04-invariants.md` (INV-1..INV-14, формат property-тестов), `spec/06-wallet-statemachine.md` (статусы, слоты), `spec/07-checkpoint-threshold.md` (чекпоинт, sparse Merkle, N-из-M); `proto/*.proto` (wire-формат); `vectors/*.json` (тестовые векторы); `QUESTIONS.md` (34 вопроса с предположениями v1).
-- **equality-simulation** (GitHub), `Mistral/REPORT.md` — зафиксированные значения этапа 1.2 (раздел 5 отчёта).
+- **equality-trust-networks** (GitHub): спецификация этапа 0 — `spec/00-overview.md` (коды `E_*`, решения D1–D10), `spec/01-wire-format.md` (конверт, signing_hash, PoW), `spec/02-genesis-manifest.md` (манифест, genesis, параметры профиля), `spec/03-validation.md` (таблицы «условие → принять/отклонить»), `spec/04-invariants.md` (INV-1..INV-14, формат property-тестов), `spec/06-wallet-statemachine.md` (статусы, слоты), `spec/07-checkpoint-threshold.md` (чекпоинт, sparse Merkle, N-из-M); `proto/*.proto` (wire-формат); `vectors/*.json` (тестовые векторы); `QUESTIONS.md` (34 вопроса с предположениями v1).
+- **equality-anti-farm-simulation** (GitHub), `Mistral/REPORT.md` — зафиксированные значения этапа 1.2 (раздел 5 отчёта).
 - `docs/KNOWLEDGE.md` v9.2 — документ платформы; **не редактировать**.
 
 ## Задача
@@ -55,11 +55,11 @@ SQLite, pure-Go драйвер (`modernc.org/sqlite`, без CGo): цепочк�
 
 ## Правила
 
-1. Единственные источники: `spec/` + `proto/` + `vectors/` + `QUESTIONS.md` репозитория trust-networks-platform и `Mistral/REPORT.md` (equality-simulation) для значений. Ничего из документа не додумывать: если механизма нет — отметить в отчёте как PENDING с номером вопроса.
+1. Единственные источники: `spec/` + `proto/` + `vectors/` + `QUESTIONS.md` репозитория equality-trust-networks и `Mistral/REPORT.md` (equality-anti-farm-simulation) для значений. Ничего из документа не додумывать: если механизма нет — отметить в отчёте как PENDING с номером вопроса.
 2. Закрытые перечни (типы транзакций, инварианты, последствия evidence) не расширять.
 3. `KNOWLEDGE.md` не редактировать. В `spec/`/`proto/` — только добавление `fresh_transfer_window_periods` и сопутствующие правки (см. 3.3); при расхождении кода со спецификацией чинить код, не спецификацию; найденные противоречия — в отчёт, не молча.
 4. PENDING-вопросы использовать по предположениям v1 из QUESTIONS.md; каждое использование — в отчёте. Вопросы №2, №9, №23 — блокеры, требующие решения пользователя: в отчёте дать рекомендации, код — с заменяемыми функциями и пометками.
-5. Вся работа — в новой ветке `stage3-core` репозитория trust-networks-platform (код в `core/`, каркас от `go.mod` в корне). Чужие незакоммиченные изменения не трогать, в main не вливать, пуш — только по решению пользователя.
+5. Вся работа — в новой ветке `stage3-core` репозитория equality-trust-networks (код в `core/`, каркас от `go.mod` в корне). Чужие незакоммиченные изменения не трогать, в main не вливать, пуш — только по решению пользователя.
 6. Отчёт `core/REPORT-stage3.md`: что сделано, задетые PENDING-вопросы с рекомендациями, отклонения от спецификации (если есть), замеры (размер транзакции против ориентира ~250 байт, скорость apply/верификации, размер БД после сквозного сценария).
 
 ## Критерий готовности (development-plan, этап 3)

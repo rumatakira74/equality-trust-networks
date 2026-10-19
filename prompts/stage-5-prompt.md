@@ -4,7 +4,7 @@
 
 ## Репозитории и источники
 
-- **trust-networks-platform**, ветка `stage4-network`: `core/` (ledger — валидация и сеттлемент, store — SQLite и replay INV-3, smt, threshold — N-из-M, wire, params), `net/` (gossip — заготовка темы `checkpoint/<network_id>`, node, clock, sync, eclipse), `cmd/tnp-node`, `spec/07-checkpoint-threshold.md` (чекпоинт, StateRootHash, пороги), `spec/04-invariants.md` (INV-1..14), `QUESTIONS.md`.
+- **equality-trust-networks**, ветка `stage4-network`: `core/` (ledger — валидация и сеттлемент, store — SQLite и replay INV-3, smt, threshold — N-из-M, wire, params), `net/` (gossip — заготовка темы `checkpoint/<network_id>`, node, clock, sync, eclipse), `cmd/tnp-node`, `spec/07-checkpoint-threshold.md` (чекпоинт, StateRootHash, пороги), `spec/04-invariants.md` (INV-1..14), `QUESTIONS.md`.
 - `docs/KNOWLEDGE.md` — **раздел 9.1** (голосование, режимы чекпоинтов, переходный режим), **9.2** (время и эпохи), **7.5** (последствия evidence — ветка выбирается финализацией, судей нет), **10.1** (офлайн-конфликт: побеждает первая по порядку финализации), **13** (seed_sunset, protocolVersion), **15** (малые сети). **Не редактировать.**
 - `reports/REPORT-STAGE-4.md` — два долга этапа 5 (каузальный `AcceptedTxs()`, пробел `SeedMembers`) и зафиксированные отклонения.
 

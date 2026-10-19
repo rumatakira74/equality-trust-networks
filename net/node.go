@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/cons"
+	"github.com/rumatakira74/equality-trust-networks/cons"
 
 	"github.com/ipfs/go-cid"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -22,11 +22,11 @@ import (
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/ledger"
-	"github.com/rumatakira74/trust-networks-platform/core/smt"
-	"github.com/rumatakira74/trust-networks-platform/core/store"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/smt"
+	"github.com/rumatakira74/equality-trust-networks/core/store"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // maxPending — буфер внеочередных транзакций (спам: не переполнять очередь).

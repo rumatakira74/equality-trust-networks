@@ -16,10 +16,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rumatakira74/trust-networks-platform/core/attest"
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/params"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/attest"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // ---------------------------------------------------------------------------

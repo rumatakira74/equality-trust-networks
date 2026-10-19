@@ -1,4 +1,4 @@
-module github.com/rumatakira74/trust-networks-platform
+module github.com/rumatakira74/equality-trust-networks
 
 go 1.27
 

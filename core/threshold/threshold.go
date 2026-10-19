@@ -5,7 +5,7 @@ package threshold
 import (
 	"crypto/ecdsa"
 
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // Verify проверяет набор: >= threshold валидных подписей от подписантов из

@@ -4,7 +4,7 @@
 
 ## Репозитории и источники
 
-- **trust-networks-platform**, ветка `stage5-consensus`: `core/` (attest — разбор X.509-цепочек, параметризуемый challenge, синтетические корни для тестов; crypto — ECDSA P-256, PoW, Argon2id; wire — protobuf-кодек; smt; threshold), `net/` (node, sync, gossip, bootstrap-каскад, SideChannel «ожидает публикации», eclipse), `cons/` (голосование, чекпоинты), `cmd/tnp-node`, `QUESTIONS.md`, `proto/`.
+- **equality-trust-networks**, ветка `stage5-consensus`: `core/` (attest — разбор X.509-цепочек, параметризуемый challenge, синтетические корни для тестов; crypto — ECDSA P-256, PoW, Argon2id; wire — protobuf-кодек; smt; threshold), `net/` (node, sync, gossip, bootstrap-каскад, SideChannel «ожидает публикации», eclipse), `cons/` (голосование, чекпоинты), `cmd/tnp-node`, `QUESTIONS.md`, `proto/`.
 - `docs/KNOWLEDGE.md` — **раздел 8.2** (тревожный PIN, режим-приманка), **12.1** (замеры ресурсов), **12.2** (уровни узлов full/light, переключение «зарядка + Wi-Fi»), **12.3** (bootstrap-каскад), **12.4** (Bluetooth-канал), **13** (protocolVersion, ключи), **18** (открытые вопросы; вопрос 7 — аттестация на устройствах). **Не редактировать.**
 - `reports/REPORT-STAGE-5.md` — кандидаты в этап 6: подпись ответов голосования; риск несбора чекпоинта при f = 20% (смещение выборки); замеры.
 - Официальная документация Android (Keystore attestation, BiometricPrompt) — источник требований, код не копировать вслепую.

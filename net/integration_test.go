@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // TestNodesSyncFromScratch — 3 узла: A публикует, B и C подключаются и

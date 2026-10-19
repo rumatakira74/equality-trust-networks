@@ -11,7 +11,7 @@
 
 ## Репозитории и источники
 
-- **trust-networks-platform**, ветка `stage3-core`: `core/` (пакеты `wire`, `crypto`, `attest`, `smt`, `threshold`, `ledger`, `store`, `params` — валидация C1–C11 + типовые таблицы, сеттлемент, INV-1..14, SQLite, replay из журнала); `spec/00–07`; `proto/`; `vectors/`; `QUESTIONS.md` (предположения v1).
+- **equality-trust-networks**, ветка `stage3-core`: `core/` (пакеты `wire`, `crypto`, `attest`, `smt`, `threshold`, `ledger`, `store`, `params` — валидация C1–C11 + типовые таблицы, сеттлемент, INV-1..14, SQLite, replay из журнала); `spec/00–07`; `proto/`; `vectors/`; `QUESTIONS.md` (предположения v1).
 - `docs/KNOWLEDGE.md` v9.2 — **раздел 12 (Сеть и клиент)** — главный источник этапа: 12.1 (выбор Go/libp2p), 12.2 (уровни узлов, CGNAT), 12.3 (bootstrap-каскад, eclipse), 12.4 (Bluetooth-канал), 12.5 (хранение). **Не редактировать.**
 - Development-plan, этап 4 — объём работ и критерий готовности.
 

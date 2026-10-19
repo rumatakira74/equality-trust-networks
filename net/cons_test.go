@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/cons"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/cons"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // consNodeOpts — узел-подписант (кошелёк из посевного круга) с короткими

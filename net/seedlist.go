@@ -19,9 +19,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/rumatakira74/trust-networks-platform/core/crypto"
-	"github.com/rumatakira74/trust-networks-platform/core/threshold"
-	"github.com/rumatakira74/trust-networks-platform/core/wire"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/threshold"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
 // cryptoMarshalPub — несжатая точка P-256 (65 байт).
