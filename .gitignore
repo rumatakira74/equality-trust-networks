@@ -29,3 +29,5 @@ app/build/
 app/android/.gradle/
 app/android/local.properties
 app/android/app/build/
+app/android/build/
+app/.metadata.bak

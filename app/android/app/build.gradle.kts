@@ -27,15 +27,6 @@ android {
         versionName = flutter.versionName
     }
 
-    sourceSets {
-        getByName("main") {
-            // общий платформенный слой (Keystore, PIN, узел, BT, NSD)
-            java.srcDir("../../android/app/src/main/kotlin")
-            // экран этапа 6 не входит в Flutter-приложение
-            java.exclude("platform/tnp/android/ui/MainActivity.kt")
-        }
-    }
-
     buildTypes {
         release {
             // подпись debug — релизная подпись отдельно (этап 8)
@@ -50,14 +41,26 @@ kotlin {
     }
 }
 
+// общий платформенный слой этапа 6 компилируется прямо в хост
+// (без дублирования); экран этапа 6 (ui/MainActivity.kt) исключён —
+// его заменил Flutter-UI, файл ссылается на R этапа 6.
+// AGP 9 (newDsl): источник добавляется в Kotlin-задачу напрямую.
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    source(
+        fileTree("${rootProject.projectDir}/../../android/app/src/main/kotlin") {
+            exclude("platform/tnp/android/ui/**")
+        },
+    )
+}
+
 flutter {
     source = "../.."
 }
 
 dependencies {
     // ядро (Go, gomobile bind) — собирается: gomobile bind ... -o android/libs/tnp.aar ./mobile
-    implementation(files("../../android/libs/tnp.aar"))
+    implementation(files("${rootProject.projectDir}/../../android/libs/tnp.aar"))
     // платформенный слой
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.biometric:biometric:1.4.0-alpha07")
 }

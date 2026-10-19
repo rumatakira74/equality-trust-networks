@@ -82,44 +82,51 @@ object BtExchange {
     fun receiveAddress(timeoutMs: Long, onResult: (ByteArray?, String?) -> Unit) {
         stop()
         val adapter = BluetoothAdapter.getDefaultAdapter()
-            ?: return onResult(null, "нет Bluetooth")
+        if (adapter == null) {
+            onResult(null, "нет Bluetooth")
+            return
+        }
         Thread {
+            var error: String? = null
+            var received: ByteArray? = null
             try {
-                val serverSocket = adapter.listenUsingRfcommWithServiceRecord(SDP_NAME, SDP_UUID)
+                val serverSocket =
+                    adapter.listenUsingRfcommWithServiceRecord(SDP_NAME, SDP_UUID)
                 server.set(serverSocket)
                 adapter.cancelDiscovery()
-                val socket: BluetoothSocket? = try {
-                    serverSocket.accept(timeoutMs)
+                val socket = try {
+                    serverSocket.accept(timeoutMs.toInt())
                 } finally {
-                    // accept с таймаутом закрывает сокет сервера; снимаем ссылку
+                    // accept с таймаутом закрывает сокет сервера
                     server.set(null)
                 }
                 if (socket == null) {
-                    onResult(null, "таймаут ожидания")
-                    return
-                }
-                try {
-                    DataInputStream(socket.inputStream).use { input ->
-                        val head = ByteArray(4)
-                        input.readFully(head)
-                        val len = ((head[0].toInt() and 0xff) shl 24) or
-                            ((head[1].toInt() and 0xff) shl 16) or
-                            ((head[2].toInt() and 0xff) shl 8) or
-                            (head[3].toInt() and 0xff)
-                        if (len <= 0 || len > 64) {
-                            onResult(null, "некорректный кадр")
-                            return
+                    error = "таймаут ожидания"
+                } else {
+                    try {
+                        DataInputStream(socket.inputStream).use { input ->
+                            val head = ByteArray(4)
+                            input.readFully(head)
+                            val len = ((head[0].toInt() and 0xff) shl 24) or
+                                ((head[1].toInt() and 0xff) shl 16) or
+                                ((head[2].toInt() and 0xff) shl 8) or
+                                (head[3].toInt() and 0xff)
+                            if (len <= 0 || len > 64) {
+                                error = "некорректный кадр"
+                            } else {
+                                val addr = ByteArray(len)
+                                input.readFully(addr)
+                                received = addr
+                            }
                         }
-                        val addr = ByteArray(len)
-                        input.readFully(addr)
-                        onResult(addr, null)
+                    } finally {
+                        runCatching { socket.close() }
                     }
-                } finally {
-                    runCatching { socket.close() }
                 }
             } catch (e: Exception) {
-                onResult(null, e.message ?: "bt")
+                error = e.message ?: "bt"
             }
+            onResult(received, error)
         }.apply {
             isDaemon = true
             start()

@@ -20,6 +20,15 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   int _step = 0; // 0 биометрия, 1 PIN, 2 гардианы, 3 регистрация
 
+  @override
+  void initState() {
+    super.initState();
+    // узел нужен ДО выбора гардианов (реестр синхронизируется с пиром)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppState>().startNode();
+    });
+  }
+
   /// гардианы, выбранные на шаге 2 (передаются в register)
   final List<String> guardians = [];
 
@@ -279,23 +288,30 @@ class _GuardiansStepState extends State<_GuardiansStep> {
   }
 
   Future<void> _load() async {
-    try {
-      // гардианы — известные адреса реестра (R6); на старте сети это
-      // посевной круг и уже зарегистрированные участники
-      final rows = await context.read<PlatformService>().registry();
-      if (mounted) {
-        setState(() {
-          _candidates = rows;
-          _loading = false;
-        });
+    // гардианы — известные адреса реестра (R6); узел только что
+    // подключился к сети — синхронизация занимает время: повторяем
+    final platform = context.read<PlatformService>();
+    for (var attempt = 0; attempt < 10; attempt++) {
+      try {
+        final rows = await platform.registry();
+        if (rows.isNotEmpty || attempt == 9) {
+          if (mounted) {
+            setState(() {
+              _candidates = rows;
+              _loading = false;
+            });
+          }
+          return;
+        }
+      } catch (e) {
+        if (attempt == 9 && mounted) {
+          setState(() {
+            _error = '$e';
+            _loading = false;
+          });
+        }
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = '$e';
-          _loading = false;
-        });
-      }
+      await Future.delayed(const Duration(seconds: 2));
     }
   }
 
@@ -355,6 +371,13 @@ class _GuardiansStepState extends State<_GuardiansStep> {
               TextButton(
                 onPressed: () => widget.onDone(const []),
                 child: const Text('Пропустить'),
+              ),
+              OutlinedButton(
+                onPressed: () {
+                  setState(() => _loading = true);
+                  _load();
+                },
+                child: const Text('Обновить'),
               ),
               FilledButton(
                 onPressed: () => widget.onDone(_selected.toList()),

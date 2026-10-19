@@ -1,8 +1,13 @@
 package platform.tnp.android.flutterbridge
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.os.Build
 import androidx.fragment.app.FragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
@@ -33,6 +38,11 @@ import java.util.concurrent.atomic.AtomicLong
 object FlutterBridge {
     private const val CHANNEL = "platform.tnp/app"
 
+    // песочница эмулятора: те же константы, что в cmd/tnp-sandbox-peer
+    // (идентичный genesis -> одинаковый manifest_hash)
+    private const val SANDBOX_NETWORK_ID = "tnp-sandbox-0001"
+    private const val SANDBOX_GENESIS_TIME = 1_760_000_000L
+
     private lateinit var appContext: Context
     private lateinit var activity: FragmentActivity
     private lateinit var pin: PinManager
@@ -58,17 +68,33 @@ object FlutterBridge {
             .setMethodCallHandler { call, result -> handle(call, result) }
     }
 
-    /** Genesis песочницы + адрес своего кошелька для узла. */
+    /**
+     * Genesis песочницы + адрес своего кошелька для узла.
+     *
+     * Genesis-время ФИКСИРОВАНО: приложение и host-узел песочницы
+     * (cmd/tnp-sandbox-peer, эмулятор подключается через 10.0.2.2)
+     * обязаны строить идентичный genesis (manifest_hash совпадает).
+     * Пир host-узла — только для песочницы эмулятора; реальные сети —
+     * bootstrap-каскад (12.3).
+     */
     private fun ensureGenesis() {
         if (genesis != null) return
         val gen = tnp.Tnp.sandboxGenesis(
-            "tnp-sandbox-0001", 0, 3600,
+            SANDBOX_NETWORK_ID, SANDBOX_GENESIS_TIME, 3600,
             0x0010_0000_0000_0000L, 0x0010_0000_0000_0000L, 8, 1, 1,
         )
         genesis = gen
         NodeController.genesis = gen
         NodeController.ownWallet = address()
-        NodeController.log = tnp.Logger { }
+        NodeController.manualAddrs = "/ip4/10.0.2.2/udp/4001/quic-v1"
+        NodeController.log = tnp.Logger { line ->
+            android.util.Log.d("TnpNode", line)
+        }
+        // SQLite узла на Android отключён (в памяти): modernc/sqlite
+        // вызывает raw SYS_LSTAT (libc.Xlstat), app-seccomp эмуляторов
+        // API 35/36 даёт SIGSYS (вопрос №38, отчёт этапа 7); проверка
+        // на живом телефоне — чек-лист
+        NodeController.inMemoryDb = true
     }
 
     // ------------------------------------------------------------------
@@ -155,7 +181,8 @@ object FlutterBridge {
     // Обработчик
     // ------------------------------------------------------------------
 
-    private fun handle(call: MethodChannel.MethodCall, result: MethodChannel.Result) {
+    private fun handle(call: MethodCall, result: MethodChannel.Result) {
+        android.util.Log.d("TnpBridge", "-> " + call.method)
         try {
             when (call.method) {
                 // -- манифест и устройство --
@@ -419,6 +446,7 @@ object FlutterBridge {
                         return
                     }
                     BiometricGate.signWithBiometric(activity, wallet, title, tx.signingHash()) { sig ->
+                        android.util.Log.d("TnpBridge", "signTx callback sig=" + (sig != null))
                         if (sig == null) {
                             result.success(mapOf("ok" to false))
                         } else {
@@ -637,7 +665,9 @@ object FlutterBridge {
 
                 else -> result.notImplemented()
             }
+            android.util.Log.d("TnpBridge", "<- " + call.method + " done")
         } catch (e: Exception) {
+            android.util.Log.e("TnpBridge", "<- " + call.method + " err: " + e.message)
             result.error("ERR", e.message ?: e.javaClass.simpleName, null)
         }
     }
@@ -660,10 +690,17 @@ object FlutterBridge {
 
     private fun buildRegister(guardians: List<String>): String? {
         val gen = genesis!!
+        // генерация ключа ДО чтения публичного ключа (латентный баг
+        // порядка этапа 6: publicKey() до generateWithAttestation
+        // возвращал null на первой регистрации)
+        val pub0 = wallet.publicKey()
+        val challenge0 = if (pub0 != null) {
+            tnp.Tnp.attestationChallengeFor(pub0, gen.networkID())
+        } else ByteArray(0)
+        wallet.generateWithAttestation(challenge0)
         val pub = wallet.publicKey() ?: return null
         val networkId = gen.networkID()
         val challenge = tnp.Tnp.attestationChallengeFor(pub, networkId)
-        wallet.generateWithAttestation(challenge)
         val sandbox = JSONObject(gen.manifestJSON()).optBoolean("sandbox", false)
         val chain = if (sandbox) {
             tnp.Tnp.sandboxAttestationChain(pub, networkId, challenge)
