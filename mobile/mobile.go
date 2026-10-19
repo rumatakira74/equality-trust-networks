@@ -248,6 +248,15 @@ type Genesis struct{ gp *wire.GenesisPackage }
 
 // SandboxGenesis — тестовый genesis с параметрами PoW (№9) и эпохи (№16).
 // genesisTime — unix-секунды; 0 — 65 суток назад (текущий период 2).
+//
+// Этап 7 (песочница эмулятора, 6.5): добавлен посевной круг V1..V3 —
+// детерминированные ключи (та же деривация, что в cmd/tnp-node), без
+// него в песочнице нет ни одного active-кошелька и активация
+// невозможна. Учебные оверрайды профиля: мораторий переводов и окно
+// переводимости свежих выпусков выключены (демо полного пути за один
+// сеанс), окно челленджа выпуска открыто весь период (в реальных сетях
+// — ±48 ч, 7.6). Отложенные переводы в песочнице отключены ядром
+// (T6/T7: !sandbox).
 func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	powTargetLight, powTargetHard, argon2MemKiB, argon2Iter, argon2Par int64) *Genesis {
 	gp := params.TestGenesis()
@@ -257,11 +266,25 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	if epochSeconds > 0 {
 		prof.EpochSeconds = uint64(epochSeconds)
 	}
+	prof.Sandbox = true
+	prof.TransferMoratoriumDays = 0
+	prof.FreshTransferWindowPeriods = 0
+	prof.MintChallengeWindowHours = 24 * 31
 	prof.Pow = &wire.PowParams{
 		TargetLight: uint64(powTargetLight), TargetHard: uint64(powTargetHard),
 		Argon2MemoryKiB: uint32(argon2MemKiB), Argon2Iterations: uint32(argon2Iter),
 		Argon2Parallelism: uint32(argon2Par),
 	}
+	var circle []wire.SeedMember
+	for _, id := range []string{"V1", "V2", "V3"} {
+		priv := crypto.DeterministicKey("tnp-node-seed:" + id)
+		pub := crypto.MarshalPubKey(&priv.PublicKey)
+		fp := crypto.Fingerprint(pub)
+		circle = append(circle, wire.SeedMember{
+			Address: crypto.DeriveAddress(fp, []byte(networkID)), PublicKey: pub,
+		})
+	}
+	gp.Manifest.SeedCircle = circle
 	if genesisTime == 0 {
 		genesisTime = time.Now().Add(-65 * 24 * time.Hour).Unix()
 	}
@@ -351,6 +374,46 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 			cfg.TrustedRoots = []*x509.Certificate{root}
 		}
 	}
+	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+	if err != nil {
+		return nil, err
+	}
+	nd.gen = gen
+	return nd, nil
+}
+
+// StartNodeAddrs — запуск узла с явными адресами прослушивания
+// (этап 7: host-узел песочницы для эмулятора на фиксированном порту).
+func StartNodeAddrs(gen *Genesis, level, dbPath string, ownWallet []byte,
+	manualAddrs, listenAddrs string, logger Logger) (*Node, error) {
+	if gen == nil || gen.gp == nil {
+		return nil, errors.New("genesis не задан")
+	}
+	cfg := &net.NodeConfig{
+		Genesis:     gen.gp,
+		DBPath:      dbPath,
+		ListenAddrs: []string{"/ip4/0.0.0.0/udp/0/quic-v1", "/ip4/0.0.0.0/tcp/0"},
+		LinkGroups:  true,
+	}
+	if listenAddrs != "" {
+		cfg.ListenAddrs = strings.Split(listenAddrs, ",")
+	}
+	if der := gen.TrustedRootsDER(); len(der) > 0 {
+		if root, err := x509.ParseCertificate(der); err == nil {
+			cfg.TrustedRoots = []*x509.Certificate{root}
+		}
+	}
+	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
+	if err != nil {
+		return nil, err
+	}
+	nd.gen = gen
+	return nd, nil
+}
+
+// startNodeCfg — общая сборка и запуск по конфигу.
+func startNodeCfg(cfg *net.NodeConfig, level string, ownWallet []byte,
+	manualAddrs string, logger Logger) (*Node, error) {
 	switch level {
 	case "full":
 		cfg.Level = net.LevelFull
@@ -382,7 +445,7 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 		n.Close()
 		return nil, err
 	}
-	return &Node{n: n, gen: gen}, nil
+	return &Node{n: n, gen: nil}, nil
 }
 
 // SubmitResult — результат публикации транзакции.

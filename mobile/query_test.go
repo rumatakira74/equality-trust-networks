@@ -208,7 +208,7 @@ func TestQueryJSONSnapshots(t *testing.T) {
 		t.Fatalf("WalletInfo: %v", wi)
 	}
 	if wi["vouch_depth"] != float64(-1) {
-		t.Errorf("vouch_depth = %v, хочу -1 (нет посевных)", wi["vouch_depth"])
+		t.Errorf("vouch_depth = %v, хочу -1 (нет vouch-рёбер до B)", wi["vouch_depth"])
 	}
 	guardians, _ := wi["personal_guardians"].([]any)
 	if len(guardians) != 1 {
@@ -276,13 +276,13 @@ func TestQueryJSONSnapshots(t *testing.T) {
 		t.Errorf("FeeQuote(1) = %d, хочу 1 (fee_min)", f)
 	}
 
-	// реестр: кошелёк есть; публичных гардианов нет
+	// реестр: посевной круг (3) + A + B; публичных гардианов нет
 	var reg2 []map[string]any
 	if err := json.Unmarshal([]byte(node.RegistryJSON()), &reg2); err != nil {
 		t.Fatal(err)
 	}
-	if len(reg2) != 2 || reg2[0]["status"] != "REGISTERED" {
-		t.Fatalf("Registry: %v", reg2)
+	if len(reg2) != 5 {
+		t.Fatalf("Registry: %d кошельков, хочу 5 (3 посевных + A + B)", len(reg2))
 	}
 	var offers []map[string]any
 	if err := json.Unmarshal([]byte(node.GuardianOffersJSON()), &offers); err != nil {
