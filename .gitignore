@@ -21,3 +21,11 @@ android/local.properties
 
 # Локальные артефакты
 *.log
+
+# Flutter (этап 7): сборка — pub cache и билды в git не попадают
+app/.dart_tool/
+app/.flutter-plugins*
+app/build/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/build/
