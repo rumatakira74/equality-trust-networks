@@ -1,0 +1,38 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-contribution-claim-01",
+  "title": "Заявка волонтёрского вклада: хеш описания, размер, период",
+  "source": "KNOWLEDGE.md 6.4; spec/03 3.12 (K1)",
+  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_VOLUNTEER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 12 }
+    },
+    "claims": {}
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_VOLUNTEER", "seq": 13, "prev": "txid:W_VOLUNTEER:12", "type": "CONTRIBUTION_CLAIM",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "contribution_claim": {
+          "description_hash": "SHA256:PLACEHOLDER_DESC",
+          "size": 5,
+          "period": 16
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "claims.txid:W_VOLUNTEER:13": { "claimant": "W_VOLUNTEER", "size": 5, "period": 16, "confirmations": [], "state": "PENDING" },
+        "W_VOLUNTEER.seq": 13
+      }
+    }
+  ]
+}

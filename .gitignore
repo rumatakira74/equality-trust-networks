@@ -1,0 +1,23 @@
+# Собранные бинарники (headless-раннер этапов 4-5)
+tnp-node
+tnp-node.exe
+
+# Go
+*.test
+*.out
+*.so
+coverage/
+
+# Android (этап 6): AAR ядра собирается gomobile bind, APK — gradle;
+# бинарники в git не попадают
+android/libs/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+*.aar
+
+# Локальные артефакты
+*.log

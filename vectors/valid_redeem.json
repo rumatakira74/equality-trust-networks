@@ -1,0 +1,37 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-redeem-01",
+  "title": "Погашение: перевод единицы поставщику из параметров сети (restricted)",
+  "source": "KNOWLEDGE.md 6.2; spec/03 3.11",
+  "network": { "params": { "transfer_mode": "RESTRICTED", "providers": ["W_PROVIDER"], "fee_mode": "NONE", "transfer_moratorium_days": 7, "demurrage_rate_micros": 0, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_USER":     { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 100, "seq": 10 },
+      "W_PROVIDER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 20 }
+    },
+    "notes": ["W_PROVIDER указан в параметрах сети (D1); resource_id из списка ресурсов"]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_USER", "seq": 11, "prev": "txid:W_USER:10", "type": "REDEEM",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "redeem": {
+          "provider": "W_PROVIDER", "resource_id": "water",
+          "slot": { "start": 1790100000, "end": 1790200000 },
+          "amount": 30
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": { "W_USER.balance": 70, "W_PROVIDER.balance": 30, "W_USER.seq": 11 }
+    }
+  ],
+  "postscript": "Для физического доступа получатель обязан дождаться подтверждения сети (12.4). Поставщик публикует RECEIPT отдельной транзакцией (valid_receipt.json)."
+}

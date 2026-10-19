@@ -1,0 +1,50 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "bad-equivocation-01",
+  "title": "Эквивокация: два перевода с одним seq разным получателям; конфликт и метка flagged",
+  "source": "KNOWLEDGE.md 7.5, 9.1; spec/03 3.7; spec/04 INV-1c",
+  "network": { "params": { "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "transfer_moratorium_days": 7, "delayed_threshold_default": 1000, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800, "flagged_mint_suspension_months_local": 3 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_MALLORY": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 1000, "seq": 5, "flags": [], "delayed_threshold": 1000 },
+      "W_BOB":   { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 },
+      "W_CAROL": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 },
+      "W_WATCHER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 9 }
+    },
+    "notes": [
+      "T_A и T_B: один wallet, один seq=6, один prev, разное содержание -> эквивокация",
+      "обе проходят общие проверки по отдельности (spec/03 3.1); конфликт разрешает финализация",
+      "инвариант INV-1c: в каноническом журнале |{tx: wallet=W_MALLORY, seq=6}| <= 1"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T_A", "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 400 } } },
+      "signature": "SIG_PLACEHOLDER_A"
+    },
+    {
+      "id": "T_B", "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER",
+      "timestamp_claim": 1790000200, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "send": { "recipient": "W_CAROL", "amount": 400 } } },
+      "signature": "SIG_PLACEHOLDER_B"
+    },
+    {
+      "id": "T_E", "wallet": "W_WATCHER", "seq": 10, "prev": "txid:W_WATCHER:9", "type": "EVIDENCE",
+      "timestamp_claim": 1790000300, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "evidence": { "tx_a": "T_A", "tx_b": "T_B", "kind": "EVIDENCE_EQUIVOCATION" } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    { "tx": "T_A", "outcome": "accept", "reason": "OK", "effects": { "ветка": "T_A финализирована первой (побеждает первая по порядку финализации)", "W_BOB.balance": 400, "burned": 4, "W_MALLORY.balance": 596 } },
+    { "tx": "T_B", "outcome": "conflict", "reason": "EQUIVOCATION_BRANCH_LOST", "effects": { "ветка": "T_B не входит в канонический журнал (INV-1c)", "W_CAROL.balance": 0 } },
+    { "tx": "T_E", "outcome": "accept", "reason": "OK", "effects": { "W_MALLORY.flags": ["FLAGGED"], "W_MALLORY.mint_suspended_until_period": 19, "W_MALLORY.balance": "не меняется", "W_WATCHER.seq": 10, "награда_подателю": 0 } }
+  ],
+  "postscript": "Проверка evidence не зависит от времени и порядка прихода (7.5): любой узел приходит к одному выводу. Повторная подача того же факта — E_EVIDENCE_DUP."
+}

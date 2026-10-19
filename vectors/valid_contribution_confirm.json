@@ -1,0 +1,45 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-contribution-confirm-01",
+  "title": "Второе peer-подтверждение принимает заявку вклада (N=2 локально)",
+  "source": "KNOWLEDGE.md 6.4; spec/03 3.12 (K2–K6); PENDING: вопрос №13 — N, лимиты",
+  "network": { "params": { "contribution_confirmations_required_local": 2, "contribution_confirm_limit_per_period_local": 5, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_VOLUNTEER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 13 },
+      "W_PEER1": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 4, "confirms_this_period": 1, "vouch_links": [] },
+      "W_PEER2": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 6, "confirms_this_period": 0, "vouch_links": [] }
+    },
+    "claims": {
+      "CLAIM_1": { "txid_ref": "txid:W_VOLUNTEER:13", "claimant": "W_VOLUNTEER", "size": 5, "period": 16, "confirmations": ["W_PEER1"], "state": "PENDING" }
+    },
+    "pools": {
+      "PROGRAM_POOL": { "balance": 1000, "state": "OPEN", "purpose": "contribution payouts" }
+    },
+    "notes": [
+      "W_PEER2 не связан поручительствами с W_VOLUNTEER (K3), в лимите (K4), не подтверждал ранее (K5)",
+      "N=2 локально; подтверждение от W_PEER2 — второе и принимает заявку",
+      "выплата — из пула программы (рекомендуется, инфляции нет)"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_PEER2", "seq": 7, "prev": "txid:W_PEER2:6", "type": "CONTRIBUTION_CONFIRM",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "contribution_confirm": { "claim_txid": "txid:W_VOLUNTEER:13" } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "CLAIM_1.state": "CONFIRMED", "CLAIM_1.confirmations": ["W_PEER1", "W_PEER2"],
+        "W_PEER2.seq": 7, "W_PEER2.confirms_this_period": 1,
+        "выплата": "из PROGRAM_POOL по правилам программы (потолки — PENDING: вопрос №13)"
+      }
+    }
+  ]
+}

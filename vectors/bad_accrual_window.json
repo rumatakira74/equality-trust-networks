@@ -1,0 +1,31 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "bad-accrual-window-01",
+  "title": "Выход за окно накопления: mint с пропуском 7 месяцев (окно 6)",
+  "source": "KNOWLEDGE.md 10.1; spec/03 3.4 (M5); spec/04 INV-9c",
+  "network": { "params": { "issuance_amount": 1000, "accrual_window_periods": 6, "voucher_reward_micros": 0, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800, "mint_challenge_window_hours": 48 } },
+  "pre_state": {
+    "epoch": 130, "network_time": 1827000000, "current_period": 17,
+    "wallets": {
+      "W_SLEEPY": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "activated_period": 5, "balance": 500, "seq": 9, "last_mint_period": 9 }
+    },
+    "notes": [
+      "W_SLEEPY не выпускал с периода 9; текущий период 17, заявляется завершённый 16",
+      "diff = 16 - 9 = 7 > accrual_window = 6 -> сверх окна начисление сгорает (10.1)",
+      "контроль: заявка периода 15 (diff = 6, на границе) была бы принята с amount = 6000"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_SLEEPY", "seq": 10, "prev": "txid:W_SLEEPY:9", "type": "MINT",
+      "timestamp_claim": 1827000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_ARGON2ID", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "mint": { "period": 16, "amount": 7000 } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    { "tx": "T1", "outcome": "reject", "reason": "E_ACCRUAL_WINDOW", "effects": { "W_SLEEPY.balance": 500, "W_SLEEPY.last_mint_period": 9, "сгорело": "начисление за периоды 10-16 сверх окна; деньги не блокируются (10.1)" } }
+  ],
+  "postscript": "Безлимитное накопление создаёт «спящие» начисления и стимул для отложенной атаки — поэтому окно ограничено (10.1). Значение 6 мес. — раздел 17."
+}

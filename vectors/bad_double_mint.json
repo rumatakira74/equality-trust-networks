@@ -1,0 +1,40 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "bad-double-mint-01",
+  "title": "Двойной выпуск: второй mint того же периода отклоняется; evidence DOUBLE_MINT доказуема",
+  "source": "KNOWLEDGE.md 7.5, 10.1; spec/03 3.4 (M3), 3.7 (E6)",
+  "network": { "params": { "issuance_amount": 1000, "accrual_window_periods": 6, "voucher_reward_micros": 0, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800, "mint_challenge_window_hours": 48, "flagged_mint_suspension_months_local": 3 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_MALLORY": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "activated_period": 5, "balance": 1000, "seq": 9, "last_mint_period": 14, "flags": [] },
+      "W_WATCHER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 9 }
+    },
+    "notes": [
+      "текущий период 16 -> заявляется 15; first-claimed = 15 (diff=1 <= 6)",
+      "T1 принимается: last_mint_period 14 -> 15, balance +1000",
+      "T2 снова заявляет 15: period 15 не > last_mint_period 15 -> E_MINT_DOUBLE"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_MALLORY", "seq": 10, "prev": "txid:W_MALLORY:9", "type": "MINT",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_ARGON2ID", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "mint": { "period": 15, "amount": 1000 } },
+      "signature": "SIG_PLACEHOLDER_1"
+    },
+    {
+      "id": "T2", "wallet": "W_MALLORY", "seq": 11, "prev": "txid:W_MALLORY:10", "type": "MINT",
+      "timestamp_claim": 1790000200, "protocol_version": 1,
+      "pow": { "algorithm": "POW_ARGON2ID", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "mint": { "period": 15, "amount": 1000 } },
+      "signature": "SIG_PLACEHOLDER_2"
+    }
+  ],
+  "expected": [
+    { "tx": "T1", "outcome": "accept", "reason": "OK", "effects": { "W_MALLORY.balance": 2000, "W_MALLORY.last_mint_period": 15, "W_MALLORY.seq": 10 } },
+    { "tx": "T2", "outcome": "reject", "reason": "E_MINT_DOUBLE", "effects": {} }
+  ],
+  "postscript": "Вариант с двумя mint одного period в разных ветках (один seq) — закрытый перечень evidence (EVIDENCE_DOUBLE_MINT, 7.5): доказательство строится как в bad_equivocation.json, kind = EVIDENCE_DOUBLE_MINT, проверка E6 — обе транзакции MINT одного period."
+}

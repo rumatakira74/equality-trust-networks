@@ -1,0 +1,322 @@
+// Genesis-пакет и манифест сети (KNOWLEDGE.md v9.2, разделы 3.1, 3.3, 4, 13).
+//
+// Манифест публичен, его хеш записан в genesis, после запуска он неизменен
+// (кроме процедуры раздела 13). Уровень гарантий ВЫЧИСЛЯЕТСЯ из манифеста,
+// а не заявляется (3.3) — поэтому поля guarantee_level в манифесте нет.
+//
+// Защитные параметры (13) не могут входить в mutable_bounds и никогда не
+// меняются: vouch_k и правила поручительств, transfer_delay_hours (D),
+// transfer_mode, размер и режим эмиссии, device_policy, signing_auth,
+// checkpoint_mode, params_mutable.
+
+syntax = "proto3";
+
+package tnp.v1;
+
+import "core.proto";
+
+// ---------------------------------------------------------------------------
+// Манифест сети (3.3, 4).
+// ---------------------------------------------------------------------------
+message Manifest {
+  bytes network_id = 1;          // 32 байта; уникальный идентификатор,
+                                 // генерируется при создании сети;
+                                 // входит в manifest_hash
+  string display_name = 2;       // человекочитаемое имя (не влияет на гарантии)
+  ProfileParams profile = 3;     // все параметры профиля (раздел 4)
+  repeated SeedMember seed_circle = 4; // посевной круг (3.3, 13);
+                                       // рекомендация ≥ 300 кошельков (7.7)
+  SeedSunset seed_sunset = 5;    // правило самоликвидации посевного круга
+  bytes genesis_hash = 6;        // хеш genesis-записи; связывает манифест
+                                 // с genesis (PENDING: вопрос №27 — состав
+                                 // хешируемой структуры)
+}
+
+// ---------------------------------------------------------------------------
+// Параметры профиля (раздел 4). Пометки:
+//   [P]  — защитный параметр, неизменяемый всегда (13);
+//   [M]  — изменяемый при params_mutable = true, только в границах
+//          mutable_bounds (13);
+//   значения с пометкой «этап 1.2» выбираются прогонами модели
+//   (development-plan, этап 1.2) и в v1 спецификации не зафиксированы.
+// ---------------------------------------------------------------------------
+message ProfileParams {
+  // Единица (4)
+  UnitType unit = 1;              // [P]
+  string resource_id = 2;        // для quota(resource_id) / voucher(program_id)
+
+  // Передача (4)
+  TransferMode transfer_mode = 3; // [P]: FREE / RESTRICTED / SOULBOUND
+
+  // Выпуск (4, 10.1)
+  IssuanceMode issuance_mode = 4; // [P]
+  uint64 issuance_amount = 5;     // [P] базовая эмиссия за период (по умолчанию 1000)
+  uint32 issuance_period_months = 6; // [P] период выпуска в календарных месяцах
+                                    // (v1: 1; произвольные периоды — PENDING: вопрос №28)
+  uint64 accrual_window_periods = 7; // [M] окно накопления пропусков, 0..N
+                                     // (по умолчанию 6; для quota_reset — 0)
+  uint64 fresh_transfer_window_periods = 53; // [M] окно переводимости свежих выпусков,
+                                     // мес. (10.1): выпуск периода t переводим
+                                     // с t + window; по умолчанию 3 — закрыто
+                                     // данными этапа 1.2 (REPORT.md, раздел 5;
+                                     // вопрос №11)
+
+  // Комиссия (4, 10.2)
+  FeeMode fee_mode = 8;           // BURN / POOL / NONE
+  uint64 fee_min = 9;             // фиксированный минимум; защита от спама
+                                  // (этап 1.2)
+  uint64 rate_min = 10;           // нижняя граница адаптивной ставки (этап 1.2)
+  uint64 rate_max = 11;           // верхняя граница адаптивной ставки (этап 1.2)
+                                  // rate, fee_min, границы — в миллионных долях
+                                  // (micros): 1% = 10 000
+
+  // Демередж (4, 10.3)
+  uint64 demurrage_rate_micros = 12; // [M] доля в месяц, millionths; 0 = выключен
+                                     // (значения для профилей 5 и 7 — этап 1.2)
+  uint64 demurrage_floor = 13;       // [M] необлагаемый остаток
+
+  // Вход (4)
+  EntryMode entry_mode = 14;      // [P]: OPEN_VOUCH / FOUNDERS_SEED / INVITE_ONLY_VOUCH
+
+  // Поручительства (4, 7.4, 7.7 — подтверждено симуляцией)
+  uint32 vouch_k = 15;            // [P] K = 3
+  uint64 voucher_min_age_days = 16; // [P] возраст поручителя ≥ 3 мес. (90 дней)
+  uint32 voucher_min_mint_periods = 17; // [P] ≥ 2 выполненных периодов выпуска
+  repeated SlotTier slot_tiers = 18;   // [P] пул слотов по возрасту:
+                                       // 3 при 3–12 мес., 5 старше 12 мес.
+  uint32 seed_slot_count = 19;     // [P] 10 слотов посевному кругу в первый год
+  uint32 slot_free_mint_periods = 20; // [P] слот освобождается после 3 периодов
+                                     // выпуска поручаемого без evidence
+  uint64 slot_free_days = 21;      // [P] ...или через 90 дней, если поручаемый
+                                   // так и не стал active
+  uint64 voucher_reward_micros = 22;   // [P] R = 10% (100 000 micros) от первых
+  uint32 voucher_reward_periods = 23;  // [P] 12 выпусков поручаемого
+
+  // Устройства и подпись (4, 8.1)
+  DevicePolicy device_policy = 24; // [P]: STRICT / RELAXED
+  SigningAuth signing_auth = 25;   // [P]: BIOMETRIC_STRONG / DEVICE_CREDENTIAL
+
+  // Доступ и чекпоинты (4, 9.1)
+  NetworkAccess network_access = 26; // PUBLIC / INVITE_ONLY
+  CheckpointMode checkpoint_mode = 27; // [P]: DECENTRALIZED / MEMBERS_QUORUM
+  uint64 epoch_seconds = 28;          // длительность эпохи чекпоинта
+                                       // (решение №16, утверждено 18.10.2026:
+                                       // 24 ч = 86400; песочница — time_scale)
+
+  // Песочница (4, 6.5)
+  bool sandbox = 29;              // [P] true → учебный уровень гарантий (3.3)
+  TimeScale time_scale = 30;      // REAL / ACCELERATED(n)
+
+  // Изменяемость параметров (4, 13)
+  bool params_mutable = 31;       // [P] false по умолчанию; в песочнице всегда false
+  repeated MutableBound mutable_bounds = 32; // границы для каждого [M]-параметра
+
+  // Модули (4, 6)
+  repeated ModuleId modules = 33;
+
+  // Поставщики и списки restricted-переводов (4, 6.2)
+  repeated bytes providers = 34;  // адреса кошельков-поставщиков
+
+  // Мораторий и отложенные переводы (7.6, 8.3, 17)
+  uint64 transfer_moratorium_days = 35; // [M] 7–30 дней после register
+  uint64 transfer_delay_hours = 36;     // [P] D = 48 ч, фиксированная
+  uint64 delayed_threshold_default = 37; // P по умолчанию (этап 1.2; вопрос №4 раздела 18)
+  uint64 delayed_threshold_max = 38;     // P_max (этап 1.2)
+
+  // Сроки статусов (7.3, 17)
+  uint64 registered_expiry_days = 39;  // [P] 3 года в registered без активации
+
+  // Гардианы и миграция (11, 17)
+  uint64 guardian_personal_threshold = 40; // [P] 2 из 3 личных
+  uint64 guardian_personal_count = 41;     // [P] 3
+  uint64 guardian_public_threshold = 42;   // [P] 3 из 5 при участии публичных
+  uint64 guardian_public_count = 43;       // [P] 5
+  uint64 guardian_min_age_days = 44;       // [P] публичный гардиан: active ≥ 12 мес.
+  uint64 guardian_max_wards = 45;          // [P] G_max = 20 подопечных публичному
+  uint64 guardian_personal_max_wards = 46; // личный: не более K кошельков
+                                           // (PENDING: вопрос №7 — уточнить K)
+  uint64 guardian_reward = 47;             // награда публичному гардиану из новой
+                                           // эмиссии (PENDING: вопрос №29;
+                                           // ориентир ≤ 10% месячного выпуска,
+                                           // не чаще раза в 12 мес. на подопечного)
+  uint64 guardian_reward_cooldown_days = 48; // 12 мес. на подопечного
+  uint64 migrate_delay_days = 49;           // [P] 14 дней до исполнения миграции
+
+  // Прочее (9.2, 7.6, 17)
+  uint64 timestamp_tolerance_seconds = 50; // [P] ±30 мин = 1800
+  uint64 mint_challenge_window_hours = 51; // [P] ±48 ч вокруг слота челленджа
+  PowParams pow_params = 52;                // параметры PoW (этап 1.2/2; вопрос №9)
+  uint64 eclipse_n = 54;          // [вопросы №35] подтверждение данных
+                                   // от N несвязанных пиров (12.3); дефолт 3;
+                                   // несвязанность (этап 6): N различных
+                                   // IP-подсетей (/24 IPv4, /64 IPv6);
+                                   // ASN — PENDING (нужны внешние данные)
+  uint64 validators_m = 55;       // [вопрос №17] размер выборки валидаторов
+                                   // эпохи в decentralized (решение
+                                   // 18.10.2026: M = 21; порог N = ceil(2/3 M));
+                                   // 0 — дефолт 21
+}
+
+// ---------------------------------------------------------------------------
+// Перечисления профиля (раздел 4)
+// ---------------------------------------------------------------------------
+enum UnitType {
+  UNIT_UNSPECIFIED = 0;
+  UNIT_CURRENCY = 1;
+  UNIT_HOURS = 2;
+  UNIT_QUOTA = 3;    // quota(resource_id)
+  UNIT_POINTS = 4;
+  UNIT_VOUCHER = 5;  // voucher(program_id)
+  UNIT_HEARTBEAT = 6;
+}
+
+enum TransferMode {
+  TRANSFER_MODE_UNSPECIFIED = 0;
+  TRANSFER_MODE_FREE = 1;
+  TRANSFER_MODE_RESTRICTED = 2; // только поставщику ресурса или по списку
+  TRANSFER_MODE_SOULBOUND = 3;  // не передаётся
+}
+
+enum IssuanceMode {
+  ISSUANCE_UNSPECIFIED = 0;
+  ISSUANCE_PERIODIC_EQUAL = 1;
+  ISSUANCE_QUOTA_RESET = 2;      // квота за период, сгорает в конце
+  ISSUANCE_ON_CONTRIBUTION = 3;  // ограниченная эмиссия с потолком (6.4)
+  ISSUANCE_POOL_CLAIM = 4;       // равные доли из пула
+  ISSUANCE_HEARTBEAT = 5;
+  ISSUANCE_NONE = 6;
+}
+
+enum FeeMode {
+  FEE_MODE_UNSPECIFIED = 0;
+  FEE_MODE_BURN = 1;
+  FEE_MODE_POOL = 2; // в общий фонд сети
+  FEE_MODE_NONE = 3;
+}
+
+enum EntryMode {
+  ENTRY_UNSPECIFIED = 0;
+  ENTRY_OPEN_VOUCH = 1;
+  ENTRY_FOUNDERS_SEED = 2;       // посевной круг из genesis, затем поручительства
+  ENTRY_INVITE_ONLY_VOUCH = 3;   // вход по ключу приглашения, дальше поручительства
+}
+
+enum DevicePolicy {
+  DEVICE_POLICY_UNSPECIFIED = 0;
+  DEVICE_POLICY_STRICT = 1;   // только аппаратная аттестация
+  DEVICE_POLICY_RELAXED = 2;  // допускаются устройства без аттестации;
+                              // только для сетей с низкими ставками
+}
+
+enum SigningAuth {
+  SIGNING_AUTH_UNSPECIFIED = 0;
+  SIGNING_AUTH_BIOMETRIC_STRONG = 1; // только BIOMETRIC_STRONG
+  SIGNING_AUTH_DEVICE_CREDENTIAL = 2; // PIN/пароль устройства (напр., для детей)
+}
+
+enum NetworkAccess {
+  NETWORK_ACCESS_UNSPECIFIED = 0;
+  NETWORK_ACCESS_PUBLIC = 1;
+  NETWORK_ACCESS_INVITE_ONLY = 2;
+}
+
+enum CheckpointMode {
+  CHECKPOINT_MODE_UNSPECIFIED = 0;
+  CHECKPOINT_MODE_DECENTRALIZED = 1; // подпись выборки валидаторов эпохи
+  CHECKPOINT_MODE_MEMBERS_QUORUM = 2; // подпись ≥ 2/3 участников
+}
+
+enum TimeScale {
+  TIME_SCALE_UNSPECIFIED = 0;
+  TIME_SCALE_REAL = 1;
+  TIME_SCALE_ACCELERATED = 2; // коэффициент задаётся при создании сети
+}
+
+enum ModuleId {
+  MODULE_UNSPECIFIED = 0;
+  MODULE_ATTEST = 1;
+  MODULE_REDEEM = 2;
+  MODULE_POOL = 3;
+  MODULE_CONTRIBUTION = 4;
+  MODULE_SANDBOX = 5;
+}
+
+// Пул слотов поручителя по возрасту (7.4).
+message SlotTier {
+  uint64 min_age_days = 1; // нижняя граница возраста поручителя
+  uint32 slots = 2;        // размер пула слотов
+}
+
+// Параметры PoW (7.6, 17). Значения — этап 1.2/2 (PENDING: вопрос №9).
+message PowParams {
+  uint64 target_light = 1;      // таргет лёгкого PoW (каждая транзакция)
+  uint64 argon2_memory_kib = 2; // memory-hard: KiB, «под средний телефон»
+  uint32 argon2_iterations = 3;
+  uint32 argon2_parallelism = 4;
+  uint64 target_hard = 5;       // таргет усиленного PoW (register, mint)
+  uint64 repeat_android_id_target = 6; // повышенный таргет при повторяющемся
+                                       // android_id (слабый сигнал, 7.2)
+}
+
+// ---------------------------------------------------------------------------
+// Посевной круг и его самоликвидация (3.3, 13, 18.3)
+// ---------------------------------------------------------------------------
+message SeedMember {
+  bytes address = 1;     // адрес кошелька участника посевного круга
+  bytes public_key = 2;  // публичный ключ (проверка подписей чекпоинтов
+                         // переходного периода)
+}
+
+// seed_sunset: посевной круг теряет особые права поручителя и подписанта
+// чекпоинтов после порога (13). Точное условие и состав подписантов
+// переходного режима — открытый вопрос (PENDING: вопрос №15 = вопрос 3 раздела 18).
+// seed_sunset (решение №15, утверждено 18.10.2026): посевной круг теряет
+// особые права, когда достигнуто ЛЮБОЕ из условий; 0 — условие не задано.
+message SeedSunset {
+  uint64 active_wallets = 1;  // порог числа active-кошельков (100)
+  uint64 deadline_epoch = 2;  // срок в эпохах (24)
+}
+
+// ---------------------------------------------------------------------------
+// Границы изменяемых параметров (4, 13).
+// Защитные параметры сюда не входят никогда.
+// ---------------------------------------------------------------------------
+message MutableBound {
+  string param = 1;  // имя поля ProfileParams (например, "demurrage_rate_micros")
+  uint64 min = 2;    // нижняя граница [min, max]
+  uint64 max = 3;    // верхняя граница
+}
+
+// ---------------------------------------------------------------------------
+// Genesis-запись и genesis-пакет (3.1, 3.3).
+// Genesis-пакет = манифест + genesis-запись + приложение (вне протокола).
+// ---------------------------------------------------------------------------
+message GenesisRecord {
+  bytes network_id = 1;         // совпадает с Manifest.network_id
+  bytes manifest_hash = 2;      // SHA-256(canonical(Manifest)); записан в genesis,
+                                // неизменен после запуска (3.3)
+  uint64 genesis_time = 3;      // время создания, Unix-секунды, UTC
+  uint64 epoch_zero = 4;       // первая эпоха сети
+  uint32 protocol_version = 5;  // версия протокола на момент создания
+  SeedSunset seed_sunset = 6;   // правило отключения посевного круга (дублируется
+                                // из манифеста для связности)
+  bytes invite_key = 7;         // для network_access = INVITE_ONLY: ключ сети,
+                               // передаётся в приглашении (QR/ссылка), НЕ публикуется
+                               // в манифесте
+}
+
+message GenesisPackage {
+  Manifest manifest = 1;       // публичная часть
+  GenesisRecord genesis = 2;   // связка: manifest_hash, посевной круг, эпоха 0
+}
+
+// ---------------------------------------------------------------------------
+// Уровень гарантий — вычисляется из манифеста (3.3), в манифесте НЕ хранится.
+// Формула — spec/02, раздел 2.5.
+// ---------------------------------------------------------------------------
+enum GuaranteeLevel {
+  GUARANTEE_UNSPECIFIED = 0;
+  GUARANTEE_HIGH = 1;         // strict + decentralized + open_vouch
+  GUARANTEE_MEDIUM = 2;       // relaxed или members_quorum
+  GUARANTEE_EDUCATIONAL = 3;  // sandbox
+}

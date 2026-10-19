@@ -1,0 +1,44 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-register-01",
+  "title": "Корректная REGISTER: аттестация, усиленный PoW, назначение гардианов",
+  "source": "KNOWLEDGE.md 7.2, 7.3, 11; spec/03 3.2",
+  "network": { "params": { "issuance_amount": 1000, "accrual_window_periods": 6, "vouch_k": 3, "voucher_min_age_days": 90, "voucher_min_mint_periods": 2, "voucher_reward_micros": 100000, "voucher_reward_periods": 12, "transfer_moratorium_days": 7, "transfer_delay_hours": 48, "delayed_threshold_default": 1000, "delayed_threshold_max": 100000, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "demurrage_rate_micros": 0, "epoch_seconds": 86400, "registered_expiry_days": 1095, "slot_free_days": 90, "slot_free_mint_periods": 3, "guardian_personal_threshold": 2, "guardian_personal_count": 3, "guardian_public_threshold": 3, "guardian_public_count": 5, "guardian_min_age_days": 365, "guardian_max_wards": 20, "migrate_delay_days": 14, "timestamp_tolerance_seconds": 1800, "mint_challenge_window_hours": 48, "device_policy": "STRICT", "sandbox": false } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_G1": { "status": "ACTIVE", "registered_at": 1740000000, "activated_at": 1741000000, "balance": 0, "seq": 4 },
+      "W_G2": { "status": "ACTIVE", "registered_at": 1740000000, "activated_at": 1741000000, "balance": 0, "seq": 3 },
+      "W_G3": { "status": "ACTIVE", "registered_at": 1740000000, "activated_at": 1741000000, "balance": 0, "seq": 2 }
+    },
+    "notes": ["фингерпринт W_NEW отсутствует в индексе и в чёрном списке (R1)"]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_NEW", "seq": 1, "prev": "0^32", "type": "REGISTER",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_ARGON2ID", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "register": {
+          "attested_public_key": "PUBKEY_W_NEW",
+          "attestation_chain": "ATTEST_CHAIN_W_NEW",
+          "attestation_challenge": "ATTEST_CHALLENGE_W_NEW",
+          "android_id": "a1b2c3d4e5f6g7h8",
+          "personal_guardians": ["W_G1", "W_G2", "W_G3"],
+          "synthetic": false
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "W_NEW.status": "REGISTERED", "W_NEW.registered_at": 1790000000,
+        "W_NEW.balance": 0, "W_NEW.seq": 1, "W_NEW.delayed_threshold": 1000,
+        "index_fingerprint_to_address": "+W_NEW"
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-pool-claim-01",
+  "title": "Заявка равной доли из выпущенного пула активным кошельком",
+  "source": "KNOWLEDGE.md 6.3; spec/03 3.9 (P4)",
+  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 140, "network_time": 1803000000, "current_period": 20,
+    "wallets": {
+      "W_CLAIMER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 100, "seq": 7 },
+      "W_A": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 3 },
+      "W_B": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 3 },
+      "W_C": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 3 },
+      "W_REG": { "status": "REGISTERED", "registered_at": 1800000000, "balance": 0, "seq": 1 }
+    },
+    "pools": {
+      "POOL_1": { "creator": "W_ORG", "recipient": "W_CHARITY", "goal": 10000, "deadline_epoch": 130, "balance": 1000, "release_mode": "RELEASE_ON_DEADLINE", "refund_mode": "REFUND_NONE", "state": "RELEASED", "claimed_by": [] }
+    },
+    "notes": [
+      "пул выпущен (эпоха 140 > дедлайна 130, RELEASE_ON_DEADLINE)",
+      "равная доля = balance / |active| = 1000 / 4 = 250 (active: W_CLAIMER, W_A, W_B, W_C; W_REG не участвует)",
+      "доля фиксируется на момент выпуска пула"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_CLAIMER", "seq": 8, "prev": "txid:W_CLAIMER:7", "type": "POOL_CLAIM",
+      "timestamp_claim": 1803000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "pool_claim": { "pool_id": "POOL_1" } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": { "W_CLAIMER.balance": 350, "POOL_1.balance": 750, "POOL_1.claimed_by": ["W_CLAIMER"], "W_CLAIMER.seq": 8 }
+    }
+  ]
+}

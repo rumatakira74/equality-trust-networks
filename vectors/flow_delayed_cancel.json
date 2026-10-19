@@ -1,0 +1,44 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "flow-delayed-cancel-01",
+  "title": "Отложенный крупный перевод: pending на 48 ч, отмена владельцем в окне",
+  "source": "KNOWLEDGE.md 8.3; spec/03 3.5.1 (T6), 3.5.2; spec/04 INV-5",
+  "network": { "params": { "transfer_mode": "FREE", "sandbox": false, "transfer_delay_hours": 48, "delayed_threshold_default": 1000, "delayed_threshold_max": 100000, "transfer_moratorium_days": 7, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_ALICE": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 10000, "seq": 20, "delayed_threshold": 1000, "balance_locked": 0 },
+      "W_BOB":   { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 }
+    },
+    "notes": [
+      "amount 5000 > P = 1000 -> перевод pending до network_time + 48 ч (T6)",
+      "fee = max(1, 1% x 5000) = 50; резерв = 5050",
+      "отмена в течение D подписью владельца (биометрия — платформенно); протокол проверяет подпись"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_ALICE", "seq": 21, "prev": "txid:W_ALICE:20", "type": "TRANSFER",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 5000 } } },
+      "signature": "SIG_PLACEHOLDER"
+    },
+    {
+      "id": "T2", "wallet": "W_ALICE", "seq": 22, "prev": "txid:W_ALICE:21", "type": "TRANSFER",
+      "timestamp_claim": 1790036600, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "cancel": { "pending_seq": 21 } } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    { "tx": "T1", "outcome": "accept", "reason": "OK", "effects": { "T1.state": "PENDING", "T1.deadline": 1790172800, "W_ALICE.balance_locked": 5050, "W_BOB.balance": 0, "W_ALICE.seq": 21 } },
+    { "tx": "T2", "outcome": "accept", "reason": "OK", "effects": { "T1.state": "CANCELED", "W_ALICE.balance_locked": 0, "W_ALICE.balance": 10000, "W_BOB.balance": 0, "burned": 0, "W_ALICE.seq": 22 } }
+  ],
+  "postscript": [
+    "Отмена через 10 ч после T1: 1790036600 - 1790000100 = 36500 с ~ 10.1 ч < 48 ч (X3).",
+    "Без T2 перевод исполнился бы по финализации после 1790172800: W_BOB +5000, fee 50 сжигается.",
+    "Правило обязательно для всех сетей с transfer_mode = free, кроме песочницы (INV-5); повышение P вступает через 48 ч, понижение — сразу (8.3)."
+  ]
+}

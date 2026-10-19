@@ -1,0 +1,22 @@
+# CI ядра (трек «Инфраструктура разработки», начинается с этапа 3):
+# go test / go vet / gofmt по каждому push и pull request.
+name: core
+on:
+  push:
+    paths: ["core/**", "go.mod", "go.sum", "vectors/**", ".github/workflows/core.yml"]
+  pull_request:
+    paths: ["core/**", "go.mod", "go.sum", "vectors/**", ".github/workflows/core.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - name: gofmt
+        run: test -z "$(gofmt -l core/)"
+      - name: go vet
+        run: go vet ./core/...
+      - name: go test
+        run: go test ./core/...

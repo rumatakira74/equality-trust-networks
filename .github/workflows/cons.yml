@@ -1,0 +1,22 @@
+# CI консенсуса (этап 5): go test / go vet / gofmt по каждому push и PR.
+# Включает детерминированную симуляцию (sim/) и сетевые тесты консенсуса.
+name: cons
+on:
+  push:
+    paths: ["cons/**", "sim/**", "net/**", "core/**", "cmd/**", "go.mod", "go.sum", ".github/workflows/cons.yml"]
+  pull_request:
+    paths: ["cons/**", "sim/**", "net/**", "core/**", "cmd/**", "go.mod", "go.sum", ".github/workflows/cons.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - name: gofmt
+        run: test -z "$(gofmt -l cons/ sim/)"
+      - name: go vet
+        run: go vet ./cons/... ./sim/...
+      - name: go test (cons + sim)
+        run: go test ./cons/... ./sim/... -timeout 900s

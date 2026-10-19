@@ -1,0 +1,52 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-migrate-01",
+  "title": "Предложение миграции: 2 из 3 личных гардианов, задержка 14 дней",
+  "source": "KNOWLEDGE.md 11; spec/03 3.6.1",
+  "network": { "params": { "issuance_amount": 1000, "vouch_k": 3, "guardian_personal_threshold": 2, "guardian_personal_count": 3, "migrate_delay_days": 14, "transfer_moratorium_days": 7, "fee_mode": "NONE", "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_OLD":   { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 4200, "seq": 20, "personal_guardians": ["W_G1", "W_G2", "W_G3"] },
+      "W_NEW":   { "status": "REGISTERED", "registered_at": 1789900000, "balance": 0, "seq": 1 },
+      "W_G1":    { "status": "ACTIVE", "registered_at": 1710000000, "activated_at": 1711000000, "balance": 0, "seq": 4, "wards": 0 },
+      "W_G2":    { "status": "ACTIVE", "registered_at": 1710000000, "activated_at": 1711000000, "balance": 0, "seq": 5, "wards": 1 },
+      "W_G3":    { "status": "ACTIVE", "registered_at": 1710000000, "activated_at": 1711000000, "balance": 0, "seq": 6, "wards": 0 }
+    },
+    "notes": [
+      "W_NEW прошёл собственную REGISTER (G1) с той же аттестацией",
+      "подписи W_G1 и W_G2 над MigrateStatement{old=W_OLD, new=W_NEW, nonce=77, epoch=100}",
+      "порог 2 из 3 личных достигнут (G3)"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_NEW", "seq": 2, "prev": "txid:W_NEW:1", "type": "MIGRATE",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "migrate": {
+          "propose": {
+            "old_address": "W_OLD",
+            "approvals": [
+              { "guardian": "W_G1", "statement_sig": "SIG_PLACEHOLDER_G1" },
+              { "guardian": "W_G2", "statement_sig": "SIG_PLACEHOLDER_G2" }
+            ],
+            "nonce": 77
+          }
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "migration": { "old": "W_OLD", "new": "W_NEW", "state": "PENDING", "execute_not_before": 1791209600, "nonce": 77 },
+        "W_NEW.seq": 2
+      }
+    }
+  ],
+  "postscript": "Через 14 дней без MIGRATE/cancel: перенос возраста, истории выпусков, last_claimed_period и поручительств; W_NEW -> ACTIVE; фингерпринт W_OLD — в чёрный список навсегда; награда гардианам не платится (личные)"
+}

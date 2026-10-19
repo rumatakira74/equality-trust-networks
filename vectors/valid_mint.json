@@ -1,0 +1,124 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-mint-01",
+  "title": "Выпуск с нагоном 3 пропущенных месяцев в окне накопления; доля R=10% поручителям",
+  "source": "KNOWLEDGE.md 10.1, 7.4, 7.6; spec/03 3.4",
+  "network": {
+    "params": {
+      "issuance_amount": 1000,
+      "accrual_window_periods": 6,
+      "vouch_k": 3,
+      "voucher_min_age_days": 90,
+      "voucher_min_mint_periods": 2,
+      "voucher_reward_micros": 100000,
+      "voucher_reward_periods": 12,
+      "transfer_moratorium_days": 7,
+      "transfer_delay_hours": 48,
+      "delayed_threshold_default": 1000,
+      "delayed_threshold_max": 100000,
+      "fee_mode": "BURN",
+      "fee_min": 1,
+      "rate_micros": 10000,
+      "demurrage_rate_micros": 0,
+      "epoch_seconds": 86400,
+      "registered_expiry_days": 1095,
+      "slot_free_days": 90,
+      "slot_free_mint_periods": 3,
+      "guardian_personal_threshold": 2,
+      "guardian_personal_count": 3,
+      "guardian_public_threshold": 3,
+      "guardian_public_count": 5,
+      "guardian_min_age_days": 365,
+      "guardian_max_wards": 20,
+      "migrate_delay_days": 14,
+      "timestamp_tolerance_seconds": 1800,
+      "mint_challenge_window_hours": 48
+    }
+  },
+  "pre_state": {
+    "epoch": 100,
+    "network_time": 1790000000,
+    "current_period": 16,
+    "wallets": {
+      "W_ALICE": {
+        "status": "ACTIVE",
+        "registered_at": 1761000000,
+        "activated_at": 1762000000,
+        "activated_period": 10,
+        "balance": 1000,
+        "seq": 8,
+        "last_mint_period": 12,
+        "flags": [],
+        "vouch_count": 3,
+        "activators": [
+          "W_V1",
+          "W_V2",
+          "W_V3"
+        ]
+      },
+      "W_V1": {
+        "status": "ACTIVE",
+        "registered_at": 1720000000,
+        "activated_at": 1721000000,
+        "balance": 0,
+        "seq": 5
+      },
+      "W_V2": {
+        "status": "ACTIVE",
+        "registered_at": 1720000000,
+        "activated_at": 1721000000,
+        "balance": 0,
+        "seq": 6
+      },
+      "W_V3": {
+        "status": "ACTIVE",
+        "registered_at": 1720000000,
+        "activated_at": 1721000000,
+        "balance": 0,
+        "seq": 7
+      }
+    },
+    "notes": [
+      "текущий период 16 -> заявляется 15 (завершённый); last=12 -> diff=3 <= accrual_window=6",
+      "amount = 1000 x 3 = 3000; номер выпуска i = 15-10+1 = 6 <= 12 -> R=10%",
+      "доля_R = 300; Alice +2700; каждому поручителю +100"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1",
+      "wallet": "W_ALICE",
+      "seq": 9,
+      "prev": "txid:W_ALICE:8",
+      "type": "MINT",
+      "timestamp_claim": 1790000100,
+      "protocol_version": 1,
+      "pow": {
+        "algorithm": "POW_ARGON2ID",
+        "nonce": "POW_NONCE_PLACEHOLDER"
+      },
+      "payload": {
+        "mint": {
+          "period": 15,
+          "amount": 3000
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1",
+      "outcome": "accept",
+      "reason": "OK",
+      "effects": {
+        "W_ALICE.balance": 3700,
+        "W_ALICE.last_mint_period": 15,
+        "W_ALICE.seq": 9,
+        "W_V1.balance": 100,
+        "W_V2.balance": 100,
+        "W_V3.balance": 100
+      }
+    }
+  ]
+}

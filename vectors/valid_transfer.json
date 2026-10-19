@@ -1,0 +1,34 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-transfer-01",
+  "title": "Малый перевод: мораторий пройден, комиссия сжигается, задержки нет",
+  "source": "KNOWLEDGE.md 10.2, 7.6, 8.3; spec/03 3.5.1",
+  "network": { "params": { "issuance_amount": 1000, "accrual_window_periods": 6, "vouch_k": 3, "voucher_min_age_days": 90, "voucher_min_mint_periods": 2, "voucher_reward_micros": 100000, "voucher_reward_periods": 12, "transfer_moratorium_days": 7, "transfer_delay_hours": 48, "delayed_threshold_default": 1000, "delayed_threshold_max": 100000, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "demurrage_rate_micros": 0, "epoch_seconds": 86400, "registered_expiry_days": 1095, "slot_free_days": 90, "slot_free_mint_periods": 3, "guardian_personal_threshold": 2, "guardian_personal_count": 3, "guardian_public_threshold": 3, "guardian_public_count": 5, "guardian_min_age_days": 365, "guardian_max_wards": 20, "migrate_delay_days": 14, "timestamp_tolerance_seconds": 1800, "mint_challenge_window_hours": 48 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_ALICE": { "status": "ACTIVE", "registered_at": 1789000000, "activated_at": 1789100000, "balance": 5000, "seq": 12, "delayed_threshold": 1000 },
+      "W_BOB":   { "status": "ACTIVE", "registered_at": 1750000000, "activated_at": 1751000000, "balance": 1000, "seq": 3 }
+    },
+    "notes": [
+      "возраст W_ALICE ~11.5 дней >= моратория 7 (T3)",
+      "amount 500 <= P=1000 -> без задержки (T6)",
+      "fee = max(1, 1% x 500) = 5, сжигается; Bob получает ровно 500"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_ALICE", "seq": 13, "prev": "txid:W_ALICE:12", "type": "TRANSFER",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 500 } } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": { "W_ALICE.balance": 4495, "W_BOB.balance": 1500, "burned": 5, "W_ALICE.seq": 13 }
+    }
+  ]
+}

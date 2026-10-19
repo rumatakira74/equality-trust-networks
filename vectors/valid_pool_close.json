@@ -1,0 +1,38 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-pool-close-01",
+  "title": "Закрытие пула после дедлайна с возвратом (цель не достигнута)",
+  "source": "KNOWLEDGE.md 6.3; spec/03 3.9 (P3, P5); PENDING: вопрос №26 — право закрытия",
+  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 140, "network_time": 1803000000, "current_period": 20,
+    "wallets": {
+      "W_ORG":   { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 9 },
+      "W_D1":    { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 4, "donated_to_POOL_1": 300 },
+      "W_D2":    { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 5, "donated_to_POOL_1": 200 }
+    },
+    "pools": {
+      "POOL_1": { "creator": "W_ORG", "recipient": "W_CHARITY", "goal": 10000, "deadline_epoch": 130, "balance": 500, "release_mode": "RELEASE_ON_DEADLINE", "refund_mode": "REFUND_IF_UNMET", "state": "OPEN" }
+    },
+    "notes": ["эпоха 140 > дедлайна 130; цель 10000 не достигнута (500) -> REFUND_IF_UNMET"]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_ORG", "seq": 10, "prev": "txid:W_ORG:9", "type": "POOL_CLOSE",
+      "timestamp_claim": 1803000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "pool_close": { "pool_id": "POOL_1" } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "POOL_1.state": "CLOSED_REFUNDED", "POOL_1.balance": 0,
+        "W_D1.balance": 300, "W_D2.balance": 200,
+        "W_ORG.seq": 10
+      }
+    }
+  ]
+}

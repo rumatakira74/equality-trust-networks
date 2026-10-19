@@ -1,0 +1,32 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "bad-moratorium-01",
+  "title": "Нарушение моратория: перевод на 3-й день после register (мораторий 7 дней)",
+  "source": "KNOWLEDGE.md 7.6, 17; spec/03 3.5.1 (T3); spec/04 INV-10",
+  "network": { "params": { "transfer_moratorium_days": 7, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "delayed_threshold_default": 1000, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_NEWBIE": { "status": "REGISTERED", "registered_at": 1789740800, "balance": 100, "seq": 1, "delayed_threshold": 1000 },
+      "W_BOB":    { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 }
+    },
+    "notes": [
+      "1790000000 - 1789740800 = 259200 с = 3 дня < 7 (T3)",
+      "баланс 100 получен переводами (registered получает переводы, 7.3) — мораторий всё равно действует",
+      "мораторий считается от register, статус не снимает (spec/03 T3)"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_NEWBIE", "seq": 2, "prev": "txid:W_NEWBIE:1", "type": "TRANSFER",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 10 } } },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    { "tx": "T1", "outcome": "reject", "reason": "E_MORATORIUM", "effects": {} }
+  ],
+  "postscript": "Тот же перевод, опубликованный после 7 дней от register, принимается (см. valid_transfer.json). Диапазон моратория 7–30 дней — раздел 17; сеть фиксирует значение 7 локально."
+}

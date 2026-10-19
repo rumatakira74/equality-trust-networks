@@ -1,0 +1,49 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-evidence-01",
+  "title": "Валидное доказательство эквивокации: две подписанные транзакции с одним seq",
+  "source": "KNOWLEDGE.md 7.5; spec/03 3.7",
+  "network": { "params": { "issuance_amount": 1000, "vouch_k": 3, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "transfer_moratorium_days": 7, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800, "flagged_mint_suspension_months_local": 3 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_MALLORY": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 1000, "seq": 5, "flags": [] },
+      "W_WATCHER":  { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 9 },
+      "W_BOB":      { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 },
+      "W_CAROL":    { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 2 }
+    },
+    "known_conflicting_transactions": {
+      "note": "обе подписаны ключом W_MALLORY, seq=6, prev=txid:W_MALLORY:5, содержание разное; обе позже register (E5)",
+      "tx_a": { "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER", "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 400 } } }, "signature": "SIG_PLACEHOLDER_A" },
+      "tx_b": { "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER", "payload": { "transfer": { "send": { "recipient": "W_CAROL", "amount": 400 } } }, "signature": "SIG_PLACEHOLDER_B" }
+    },
+    "notes": ["факт (W_MALLORY, seq=6) ранее не доказан (E7)"]
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_WATCHER", "seq": 10, "prev": "txid:W_WATCHER:9", "type": "EVIDENCE",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "evidence": {
+          "tx_a": "tx_a", "tx_b": "tx_b", "kind": "EVIDENCE_EQUIVOCATION"
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "W_MALLORY.flags": ["FLAGGED"],
+        "W_MALLORY.mint_suspended_until_period": 19,
+        "W_MALLORY.balance": "не меняется (денежных штрафов нет)",
+        "каноническая_ветка": "остаётся ветка, выбранная финализацией",
+        "W_WATCHER.reward": 0,
+        "W_WATCHER.seq": 10
+      }
+    }
+  ],
+  "postscript": "N месяцев приостановки выпуска — локальное значение 3 (глобально PENDING: вопрос №12). Поручители W_MALLORY перестают получать долю R с эпохи финализации."
+}

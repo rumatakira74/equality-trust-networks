@@ -1,0 +1,22 @@
+# CI сетевого слоя (этап 4): go test / go vet / gofmt по каждому push и PR.
+# Включает мультипроцессный тест (сборка cmd/tnp-node внутри теста).
+name: net
+on:
+  push:
+    paths: ["net/**", "cmd/**", "core/**", "go.mod", "go.sum", ".github/workflows/net.yml"]
+  pull_request:
+    paths: ["net/**", "cmd/**", "core/**", "go.mod", "go.sum", ".github/workflows/net.yml"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+      - name: gofmt
+        run: test -z "$(gofmt -l net/ cmd/)"
+      - name: go vet
+        run: go vet ./net/... ./cmd/...
+      - name: go test
+        run: go test ./net/... -timeout 900s

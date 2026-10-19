@@ -1,0 +1,38 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-pool-create-01",
+  "title": "Создание пула: получатель, цель, дедлайн, режимы выпуска и возврата",
+  "source": "KNOWLEDGE.md 6.3; spec/03 3.9",
+  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 100, "network_time": 1790000000, "current_period": 16,
+    "wallets": {
+      "W_ORG":     { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 8 },
+      "W_CHARITY": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 0, "seq": 3 }
+    },
+    "pools": {}
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_ORG", "seq": 9, "prev": "txid:W_ORG:8", "type": "POOL_CREATE",
+      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "pool_create": {
+          "recipient": "W_CHARITY", "goal": 10000, "deadline_epoch": 130,
+          "release_mode": "RELEASE_ON_GOAL", "refund_mode": "REFUND_IF_UNMET"
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": {
+        "pools.txid:W_ORG:9": { "creator": "W_ORG", "recipient": "W_CHARITY", "goal": 10000, "deadline_epoch": 130, "balance": 0, "release_mode": "RELEASE_ON_GOAL", "refund_mode": "REFUND_IF_UNMET", "state": "OPEN" },
+        "W_ORG.seq": 9
+      }
+    }
+  ]
+}

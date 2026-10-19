@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Сети доверия</string>
+    <string name="node_channel">Узел сети</string>
+    <string name="node_notification">Узел сети доверия работает</string>
+    <string name="btn_setup">Настроить кошелёк</string>
+    <string name="btn_balance">Баланс</string>
+    <string name="btn_send">Перевод</string>
+    <string name="btn_node">Узел: запуск/остановка</string>
+    <string name="status_hint">Статус</string>
+    <string name="pin_title">Введите PIN</string>
+    <string name="pin_setup_title">Задайте PIN</string>
+    <string name="pin_duress_setup_title">Задайте тревожный PIN</string>
+</resources>

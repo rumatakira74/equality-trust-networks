@@ -1,0 +1,280 @@
+// Wire-формат всех транзакций (KNOWLEDGE.md v9.2, разделы 9.1–9.3; модули — раздел 6).
+// Конверт общий для всех типов; payload выбирается oneof и обязан соответствовать
+// полю type (несоответствие → отклонение, код E_TYPE; см. spec/03).
+//
+// Вычисляемые величины (не передаются, узел вычисляет сам):
+//   wallet_fingerprint = SHA-256(attested_public_key || protocol_id)  (7.2);
+//   signing_preimage   = canonical-кодирование Transaction с очищенным полем signature;
+//   signing_hash       = SHA-256(signing_preimage || pow.nonce);
+//   txid               = SHA-256(canonical-кодирование полной Transaction).
+
+syntax = "proto3";
+
+package tnp.v1;
+
+import "core.proto";
+
+// ---------------------------------------------------------------------------
+// Конверт транзакции (раздел 9.1: wallet, seq, prev, type, payload,
+// timestamp_claim, подпись; раздел 13: protocolVersion).
+// ---------------------------------------------------------------------------
+message Transaction {
+  bytes network_id = 1;       // 32 байта; идентификатор сети-инстанса из genesis
+  bytes wallet = 2;           // 32 байта; адрес кошелька-отправителя
+  uint64 seq = 3;             // строго prev_seq + 1; первая транзакция (register): seq = 1
+  bytes prev = 4;             // 32 байта; txid предыдущей транзакции цепочки;
+                              // для seq = 1 — 32 нулевых байта
+  TxType type = 5;            // тип; обязан совпадать с активной веткой payload
+  uint64 timestamp_claim = 6; // Unix-секунды, UTC; допуск ±30 мин (9.2)
+  uint32 protocol_version = 7;// версия протокола (13); узлы отключаются от чужой версии
+  PowProof pow = 8;           // лёгкий PoW на каждую транзакцию (9.3);
+                              // register и mint — усиленный memory-hard (7.6)
+  bytes signature = 9;        // DER ECDSA P-256 над signing_hash (12.1)
+
+  oneof payload {
+    RegisterPayload register = 10;
+    VouchPayload vouch = 11;
+    MintPayload mint = 12;
+    TransferPayload transfer = 13;
+    MigratePayload migrate = 14;
+    EvidencePayload evidence = 15;
+    GuardianOfferPayload guardian_offer = 16;
+    PoolCreatePayload pool_create = 17;
+    PoolDonatePayload pool_donate = 18;
+    PoolClosePayload pool_close = 19;
+    PoolClaimPayload pool_claim = 20;
+    RedeemPayload redeem = 21;
+    ReceiptPayload receipt = 22;
+    ContributionClaimPayload contribution_claim = 23;
+    ContributionConfirmPayload contribution_confirm = 24;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// REGISTER — регистрация кошелька (7.2, 7.3).
+// Первая транзакция цепочки: seq = 1, prev = 0^32.
+// ---------------------------------------------------------------------------
+message RegisterPayload {
+  bytes attested_public_key = 1;  // публичный ключ из Android Keystore
+  bytes attestation_chain = 2;    // DER X.509: лист + промежуточные;
+                                  // корни Google зашиты в APK; проверка каждым узлом:
+                                  // аппаратный уровень (StrongBox/TEE),
+                                  // verifiedBootState = Verified, deviceLocked = true,
+                                  // не просроченный уровень патча (7.2)
+  bytes attestation_challenge = 3; // значение setAttestationChallenge;
+                                   // узел проверяет связку с ключом и сетью
+                                   // (PENDING: вопрос №23 — точная формула challenge)
+  string android_id = 4;          // слабый дополнительный сигнал (7.2):
+                                  // повторяющиеся значения повышают порог PoW,
+                                  // не основание для отказа
+  repeated bytes personal_guardians = 5; // адреса личных гардианов, назначаются
+                                         // заранее, при создании кошелька (11);
+                                         // максимум 3; PENDING: вопрос №6 — способ
+                                         // обновления списка вне закрытого перечня
+  bool synthetic = 6;             // метка синтетического кошелька; допустима только
+                                  // при sandbox = true (6.5), иначе E_SBOX
+}
+
+// ---------------------------------------------------------------------------
+// VOUCH — поручительство (7.4).
+// Подписывается поручителем; для активации кандидата нужно K = 3 таких
+// транзакций от разных кошельков.
+// ---------------------------------------------------------------------------
+message VouchPayload {
+  bytes candidate = 1; // адрес кандидата; обязан быть в статусе registered
+  uint64 epoch = 2;    // эпоха подачи (из чекпоинтов, 9.2)
+}
+
+// ---------------------------------------------------------------------------
+// MINT — выпуск periodic_equal (10.1, 7.6).
+// ---------------------------------------------------------------------------
+message MintPayload {
+  uint64 period = 1; // номер календарного периода (месяц; 1-е число = первая
+                     // эпоха после 00:00 UTC 1-го, 9.2). Правила:
+                     // строго больше последнего заявленного; первый mint
+                     // заявляет завершённые периоды, не раньше периода активации
+                     // (PENDING: вопрос №24 — точное толкование «первый mint =
+                     // period − 1»)
+  uint64 amount = 2; // issuance_amount × (period − last_claimed_period);
+                     // узел пересчитывает и сверяет; сверка с окном накопления
+}
+
+// ---------------------------------------------------------------------------
+// TRANSFER — переводы и правила отложенных крупных переводов (10.2, 7.6, 8.3).
+// Три действия в одном типе: обычная отправка, отмена отложенного перевода,
+// смена личного порога P. Разделение на действия — решение спецификации,
+// закрытый перечень типов из 9.3 не расширяется
+// (PENDING: вопросы №3 и №4 — подтвердить кодирование).
+// ---------------------------------------------------------------------------
+message TransferPayload {
+  oneof action {
+    TransferSend send = 1;
+    TransferCancel cancel = 2;
+    ThresholdUpdate set_threshold = 3;
+  }
+}
+
+message TransferSend {
+  bytes recipient = 1; // адрес получателя
+  uint64 amount = 2;   // сумма; получатель получает ровно amount,
+                       // комиссия fee = max(fee_min, rate × amount) сжигается
+                       // сверх суммы (10.2)
+}
+
+// Отмена отложенного перевода в течение задержки D = 48 ч (8.3).
+// Подписывается владельцем (biometric_strong на стороне устройства).
+message TransferCancel {
+  uint64 pending_seq = 1; // seq отменяемой транзакции TRANSFER/send
+                          // в цепочке того же кошелька
+}
+
+// Смена личного порога P отложенного перевода (8.3).
+message ThresholdUpdate {
+  uint64 new_threshold = 1; // новый P; проверка: new_threshold ≤ P_max;
+                            // повышение вступает через 48 ч, понижение — сразу
+}
+
+// ---------------------------------------------------------------------------
+// MIGRATE — миграция кошелька на новое устройство (11).
+// Предложение публикуется в цепочке НОВОГО кошелька (новый кошелёк проходит
+// ту же аттестацию, что при register, — отдельной транзакцией REGISTER).
+// Отмена подписывается СТАРЫМ ключом и публикуется в цепочке старого кошелька
+// (PENDING: вопрос №34 — подтвердить кодирование отмены).
+// ---------------------------------------------------------------------------
+message MigratePayload {
+  oneof action {
+    MigratePropose propose = 1;
+    MigrateCancel cancel = 2;
+  }
+}
+
+message MigratePropose {
+  bytes old_address = 1;                 // адрес старого кошелька
+  repeated GuardianApproval approvals = 2; // порог: 2 из 3 личных, либо
+                                          // 3 из 5 при участии публичных
+                                          // (любое сочетание, 11)
+  uint64 nonce = 3;                      // связывает approvals с конкретной
+                                        // попыткой; повторный nonce отклоняется
+}
+
+// Каноническое утверждение, подписываемое гардианом (не транзакция).
+message MigrateStatement {
+  bytes network_id = 1;
+  bytes old_address = 2;
+  bytes new_address = 3;
+  uint64 nonce = 4;
+  uint64 epoch = 5;
+}
+
+message GuardianApproval {
+  bytes guardian = 1;      // адрес гардиана
+  bytes statement_sig = 2; // DER ECDSA P-256 гардиана над SHA-256(MigrateStatement)
+}
+
+message MigrateCancel {
+  bytes new_address = 1;  // адрес нового кошелька pending-миграции
+  uint64 propose_seq = 2; // seq предложения MIGRATE/propose в цепочке нового кошелька
+}
+
+// ---------------------------------------------------------------------------
+// EVIDENCE — доказательство нарушения (7.5, закрытый перечень).
+// Подаёт любой узел; проверяют все узлы одинаково и независимо.
+// ---------------------------------------------------------------------------
+message EvidencePayload {
+  Transaction tx_a = 1; // первая конфликтующая транзакция (полностью)
+  Transaction tx_b = 2; // вторая конфликтующая транзакция (полностью)
+  EvidenceKind kind = 3;
+}
+
+enum EvidenceKind {
+  EVIDENCE_UNSPECIFIED = 0;
+  EVIDENCE_EQUIVOCATION = 1; // один wallet + одинаковые seq/prev, разное содержание
+  EVIDENCE_DOUBLE_MINT = 2; // два mint одного period — частный случай эквивокации
+}
+
+// ---------------------------------------------------------------------------
+// GUARDIAN_OFFER — объявление себя публичным гардианом (11).
+// Условия: статус active, возраст ≥ 12 мес. Лимит подопечных G_max = 20.
+// Само наличие транзакции = объявление. Отзыв предложения в документе не
+// определен (PENDING: вопрос №25).
+// ---------------------------------------------------------------------------
+message GuardianOfferPayload {
+  // намеренно пусто: offer = факт публикации транзакции этого типа
+}
+
+// ---------------------------------------------------------------------------
+// POOL — пул: сборы, бюджет программы, общий фонд (6.3).
+// ---------------------------------------------------------------------------
+message PoolCreatePayload {
+  bytes recipient = 1;     // получатель — обычный кошелёк из параметров сети
+  uint64 goal = 2;         // целевая сумма (0 = без цели)
+  uint64 deadline_epoch = 3; // дедлайн в эпохах чекпоинтов
+  ReleaseMode release_mode = 4;
+  RefundMode refund_mode = 5;
+  // pool_id = txid транзакции POOL_CREATE (вычисляется, не передаётся)
+}
+
+enum ReleaseMode {
+  RELEASE_UNSPECIFIED = 0;
+  RELEASE_ON_DEADLINE = 1;  // выпуск получателю по дедлайну
+  RELEASE_ON_GOAL = 2;      // выпуск при достижении цели
+  RELEASE_CONTINUOUS = 3;   // непрерывный выпуск получателю
+}
+
+enum RefundMode {
+  REFUND_UNSPECIFIED = 0;
+  REFUND_IF_UNMET = 1; // возврат донатам, если цель не достигнута
+  REFUND_NONE = 2;
+}
+
+message PoolDonatePayload {
+  bytes pool_id = 1;  // txid транзакции POOL_CREATE
+  uint64 amount = 2;  // сумма доната; правила списания — как у transfer
+                      // (PENDING: вопрос №20 — применяется ли комиссия)
+}
+
+message PoolClosePayload {
+  bytes pool_id = 1;
+  // PENDING: вопрос №26 — кто и в какой момент вправе закрыть пул
+  // (создатель после дедлайна / любой узел при выполнении условий)
+}
+
+message PoolClaimPayload {
+  bytes pool_id = 1; // claiming кошелёк обязан быть active; доля равная
+}
+
+// ---------------------------------------------------------------------------
+// REDEEM / RECEIPT — погашение (6.2).
+// ---------------------------------------------------------------------------
+message RedeemPayload {
+  bytes provider = 1;    // кошелёк-поставщик; адрес обязан быть указан
+                         // в параметрах сети (иначе E_REDEEM_PROVIDER)
+  string resource_id = 2; // идентификатор ресурса
+  TimeSlot slot = 3;      // необязательный временной слот
+  uint64 amount = 4;      // сумма погашения
+}
+
+// Подписывается поставщиком; публикуется в цепочке поставщика.
+message ReceiptPayload {
+  bytes redeem_txid = 1;  // txid подтверждаемой транзакции REDEEM
+  uint64 amount = 2;      // подтверждаемая сумма; сверяется с redeem
+  string resource_id = 3;
+  TimeSlot slot = 4;
+}
+
+// ---------------------------------------------------------------------------
+// CONTRIBUTION — учёт вклада (6.4).
+// ---------------------------------------------------------------------------
+message ContributionClaimPayload {
+  bytes description_hash = 1; // хеш описания вклада
+  uint64 size = 2;            // размер: часы или баллы
+  uint64 period = 3;          // период, за который заявлен вклад
+}
+
+message ContributionConfirmPayload {
+  bytes claim_txid = 1; // txid подтверждаемой транзакции CONTRIBUTION_CLAIM;
+                        // подтверждающий обязан быть active, не связан
+                        // поручительствами с заявителем, в пределах лимита
+                        // подтверждений на период; N подтверждений принимают
+                        // заявку (PENDING: вопрос №13 — N, лимиты, потолки)
+}

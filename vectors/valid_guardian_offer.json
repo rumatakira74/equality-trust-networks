@@ -1,0 +1,63 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-guardian-offer-01",
+  "title": "Кошелёк active старше 12 месяцев объявляет себя публичным гардианом",
+  "source": "KNOWLEDGE.md 11; spec/03 3.8",
+  "network": {
+    "params": {
+      "guardian_min_age_days": 365,
+      "guardian_max_wards": 20,
+      "epoch_seconds": 86400,
+      "timestamp_tolerance_seconds": 1800
+    }
+  },
+  "pre_state": {
+    "epoch": 100,
+    "network_time": 1790000000,
+    "current_period": 16,
+    "wallets": {
+      "W_GUARD": {
+        "status": "ACTIVE",
+        "registered_at": 1730000000,
+        "activated_at": 1731000000,
+        "balance": 0,
+        "seq": 15,
+        "public_guardian": false
+      }
+    },
+    "notes": [
+      "возраст W_GUARD: 1790000000 - 1730000000 = 60 000 000 с ~ 694 дня > 365 (O2)"
+    ]
+  },
+  "transactions": [
+    {
+      "id": "T1",
+      "wallet": "W_GUARD",
+      "seq": 16,
+      "prev": "txid:W_GUARD:15",
+      "type": "GUARDIAN_OFFER",
+      "timestamp_claim": 1790000100,
+      "protocol_version": 1,
+      "pow": {
+        "algorithm": "POW_LIGHT",
+        "nonce": "POW_NONCE_PLACEHOLDER"
+      },
+      "payload": {
+        "guardian_offer": {}
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1",
+      "outcome": "accept",
+      "reason": "OK",
+      "effects": {
+        "W_GUARD.public_guardian": true,
+        "W_GUARD.max_wards": 20,
+        "W_GUARD.seq": 16
+      }
+    }
+  ]
+}

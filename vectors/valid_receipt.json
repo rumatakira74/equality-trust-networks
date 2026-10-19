@@ -1,0 +1,40 @@
+{
+  "schema": "tnp-vector-1",
+  "id": "valid-receipt-01",
+  "title": "Поставщик публикует подписанную квитанцию на состоявшееся погашение",
+  "source": "KNOWLEDGE.md 6.2; spec/03 3.11 (D5)",
+  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "pre_state": {
+    "epoch": 101, "network_time": 1790900000, "current_period": 16,
+    "wallets": {
+      "W_PROVIDER": { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 30, "seq": 21 },
+      "W_USER":     { "status": "ACTIVE", "registered_at": 1720000000, "activated_at": 1721000000, "balance": 70, "seq": 11 }
+    },
+    "finalized_transactions": {
+      "REDEEM_TX": {
+        "note": "txid ссылается на валидную REDEEM от W_USER в пользу W_PROVIDER: amount=30, resource_id=water, slot={1790100000,1790200000}",
+        "txid_ref": "txid:W_USER:11"
+      }
+    }
+  },
+  "transactions": [
+    {
+      "id": "T1", "wallet": "W_PROVIDER", "seq": 22, "prev": "txid:W_PROVIDER:21", "type": "RECEIPT",
+      "timestamp_claim": 1790900100, "protocol_version": 1,
+      "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
+      "payload": {
+        "receipt": {
+          "redeem_txid": "txid:W_USER:11", "amount": 30, "resource_id": "water",
+          "slot": { "start": 1790100000, "end": 1790200000 }
+        }
+      },
+      "signature": "SIG_PLACEHOLDER"
+    }
+  ],
+  "expected": [
+    {
+      "tx": "T1", "outcome": "accept", "reason": "OK",
+      "effects": { "receipts.txid:W_USER:11": { "provider": "W_PROVIDER", "amount": 30 }, "W_PROVIDER.seq": 22, "балансы": "не меняются (запись подтверждения)" }
+    }
+  ]
+}
