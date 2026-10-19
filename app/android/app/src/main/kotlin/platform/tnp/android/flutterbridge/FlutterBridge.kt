@@ -88,9 +88,15 @@ object FlutterBridge {
         NodeController.ownWallet = address()
         // полный multiaddr с /p2p/<id>: без ID компонента адрес молча
         // отбрасывается AddrInfoFromP2pAddr (bootstrap не подключается);
-        // ID стабилен — детерминированный ключ узла песочницы
+        // ID стабильны — детерминированные ключи узлов песочницы.
+        // Пиры песочницы запускаются ВНУТРИ эмулятора (127.0.0.1): все
+        // узлы делят одни часы — выпуск требует завершённого периода
+        // (M4), часы эмулятора сдвигаются перезапуском с -qemu -rtc.
+        // Два пира: corroboration seq перед подписью требует согласия
+        // 2 пиров (12.4, eclipse)
         NodeController.manualAddrs =
-            "/ip4/10.0.2.2/udp/4001/quic-v1/p2p/QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP"
+            "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP," +
+                "/ip4/127.0.0.1/udp/4002/quic-v1/p2p/QmNXG1JRSkhWPzc8QzkiDm2mBFniQni9vSwW9BCM8JBtJC"
         NodeController.log = tnp.Logger { line ->
             android.util.Log.d("TnpNode", line)
         }
@@ -560,7 +566,16 @@ object FlutterBridge {
                     NodeService.stop(appContext)
                     result.success(true)
                 }
-                "nodeStats" -> result.success(node()?.statsText())
+                "nodeStats" -> {
+                    val n = node()
+                    if (n != null) {
+                        // диагностика этапа 7: принудительная сверка + состояние
+                        android.util.Log.d("TnpNode", "sync: " + n.syncDiag())
+                    }
+                    val st = n?.statsText()
+                    android.util.Log.d("TnpNode", "stats: " + st)
+                    result.success(st)
+                }
                 "publishAwaiting" -> {
                     node()?.publishAwaiting()
                     result.success(null)

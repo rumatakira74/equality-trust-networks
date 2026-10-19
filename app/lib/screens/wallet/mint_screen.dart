@@ -44,11 +44,15 @@ class _MintScreenState extends State<MintScreen> {
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
     try {
-      // amount = эмиссия × (period − last_claimed); узел пересчитает
+      // период и сумма к заявлению — из узла (M4–M6: только завершённые
+      // периоды, amount = эмиссия × diff от base; формула — в ядре)
       final w = _window!;
-      final amount = w.issuanceAmount * (w.currentPeriod - w.lastClaimedPeriod);
+      if (w.claimPeriod <= 0) {
+        setState(() => _result = 'Нет периодов к заявлению');
+        return;
+      }
       final res = await app.signAndSubmit(
-        () => platform.buildMint(w.currentPeriod, amount),
+        () => platform.buildMint(w.claimPeriod, w.claimAmount),
         'Подтвердите выпуск',
       );
       setState(() => _result =
@@ -79,8 +83,11 @@ class _MintScreenState extends State<MintScreen> {
               const SizedBox(height: 8),
               Text(
                 w.open
-                    ? 'Окно челленджа открыто (±${w.windowHours} ч вокруг '
-                      'слота). Можно выпускать.'
+                    ? (w.windowHours > 0
+                          ? 'Окно челленджа открыто (±${w.windowHours} ч вокруг '
+                                'слота). Можно выпускать.'
+                          : 'Проверка окна челленджа отключена (песочница). '
+                                'Можно выпускать.')
                     : 'Окно челленджа закрыто. Слот внутри месяца '
                       'непредсказуем заранее; пропуск переносится в '
                       'пределах окна накопления (${w.accrualWindowPeriods} '
@@ -88,10 +95,16 @@ class _MintScreenState extends State<MintScreen> {
               ),
               const SizedBox(height: 16),
               Text('Последний заявленный период: ${w.lastClaimedPeriod}'),
+              Text(
+                'Период к заявлению: ${w.claimPeriod > 0 ? w.claimPeriod : "—"}'
+                ' (завершённые периоды, M4)',
+              ),
+              Text('Сумма к выпуску: ${w.claimAmount}'),
               Text('Эмиссия за период: ${w.issuanceAmount}'),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: w.open && !_busy ? _mint : null,
+                onPressed:
+                    w.open && w.claimPeriod > 0 && !_busy ? _mint : null,
                 child: const Text('Выпустить (усиленный PoW)'),
               ),
             ],

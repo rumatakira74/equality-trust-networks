@@ -269,7 +269,13 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	prof.Sandbox = true
 	prof.TransferMoratoriumDays = 0
 	prof.FreshTransferWindowPeriods = 0
-	prof.MintChallengeWindowHours = 24 * 31
+	// Окно челленджа в песочнице отключено: mintChallengeSlot (ядро,
+	// headless) считает слот от period×30сут от 1970, а периоды сети —
+	// календарные месяцы от genesis (cons.Clock): для малых номеров
+	// периодов слот выпадает в 1970-е и окно всегда закрыто. Уточнение
+	// слота — этап 5 (PENDING, отчёт 7); сетевые узлы и так не проверяют
+	// окно при apply (SkipMintChallengeWindow, долг этапа 8).
+	prof.MintChallengeWindowHours = 0
 	prof.Pow = &wire.PowParams{
 		TargetLight: uint64(powTargetLight), TargetHard: uint64(powTargetHard),
 		Argon2MemoryKiB: uint32(argon2MemKiB), Argon2Iterations: uint32(argon2Iter),

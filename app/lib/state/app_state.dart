@@ -66,8 +66,10 @@ class AppState extends ChangeNotifier {
   Future<void> refreshWallet() async {
     if (!_walletRegistered) return;
     try {
-      _wallet = await platform.walletInfo();
+      // сначала статистика узла: walletInfo до готовности узла кидает
+      // NONODE и не должен маскировать остальные обновления
       _nodeRunning = (await platform.nodeStats()).isNotEmpty;
+      _wallet = await platform.walletInfo();
     } on TnpPlatformException {
       _nodeRunning = false;
     }
@@ -77,6 +79,16 @@ class AppState extends ChangeNotifier {
   /// Запуск узла (12.2) и обновление состояния.
   Future<void> startNode() async {
     await platform.nodeStart();
+    // узел поднимается в foreground-сервисе асинхронно: дождаться
+    // готовности, иначе снапшоты увидят пустой реестр
+    for (var i = 0; i < 25; i++) {
+      try {
+        if ((await platform.nodeStats()).isNotEmpty) break;
+      } on TnpPlatformException {
+        // узел ещё не готов
+      }
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
     _nodeRunning = true;
     notifyListeners();
   }

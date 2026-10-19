@@ -238,6 +238,8 @@ class MintWindow {
   final int accrualWindowPeriods;
   final int issuanceAmount;
   final int currentPeriod;
+  final int claimPeriod;
+  final int claimAmount;
   final int lastClaimedPeriod;
 
   MintWindow.fromJson(Map<String, dynamic> j)
@@ -246,6 +248,8 @@ class MintWindow {
         accrualWindowPeriods = _i(j['accrual_window_periods']),
         issuanceAmount = _i(j['issuance_amount']),
         currentPeriod = _i(j['current_period']),
+        claimPeriod = _i(j['claim_period']),
+        claimAmount = _i(j['claim_amount']),
         lastClaimedPeriod = _i(j['last_claimed_period']);
 
   static int _i(dynamic v) => v is num ? v.toInt() : 0;

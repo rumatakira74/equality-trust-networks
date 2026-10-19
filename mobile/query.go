@@ -9,10 +9,12 @@
 package tnp
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
@@ -745,17 +747,44 @@ func (nd *Node) PendingMigrationsJSON(addr []byte) string {
 // MintWindowJSON — окно челленджа выпуска (7.6): открыто/закрыто, часы
 // окна, окно накопления accrual_window, текущий период и последний
 // заявленный. Точный момент слота не раскрывается (PENDING, отчёт 7).
+// claim_period/claim_amount — период к заявлению (последний завершённый)
+// и сумма по M6 (amount = эмиссия × diff; diff от base: для первого
+// выпуска base = activated_period − 1, вопрос №24) — UI не дублирует
+// формулу ядра. claim_period = 0 — заявлять нечего.
 func (nd *Node) MintWindowJSON(addr []byte) string {
 	w := nd.n.QueryWallet(addr)
-	_, now, period := nd.n.QueryClock()
+	_, now, _ := nd.n.QueryClock()
+	// период живых часов узла (RealClock, 30-сут. конвенция ядра):
+	// applyMint проверяет M4 по живым часам, не по State.CurrentPeriod
+	period := nd.n.Clock.Period()
 	prof := nd.n.QueryProfile()
 	if prof == nil {
 		prof = &wire.ProfileParams{}
 	}
 	open := nd.n.QueryMintWindowOpen(addr, period, now)
-	var last int64
+	var last, activated uint64
 	if w != nil {
-		last = int64(w.LastClaimedPeriod)
+		last = w.LastClaimedPeriod
+		activated = w.ActivatedPeriod
+	}
+	claim := uint64(0)
+	if period > 0 {
+		claim = period - 1
+	}
+	if claim <= last {
+		claim = 0
+	}
+	var amount uint64
+	if claim > 0 {
+		base := last
+		if base == 0 {
+			base = activated - 1 // конвенция ядра (M4, uint64-перенос)
+		}
+		amount = prof.IssuanceAmount * (claim - base)
+	}
+	var lastOut int64
+	if w != nil {
+		lastOut = int64(w.LastClaimedPeriod)
 	}
 	b, _ := json.Marshal(map[string]any{
 		"open":                   open,
@@ -763,7 +792,9 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 		"accrual_window_periods": int64(prof.AccrualWindowPeriods),
 		"issuance_amount":        int64(prof.IssuanceAmount),
 		"current_period":         int64(period),
-		"last_claimed_period":    last,
+		"claim_period":           int64(claim),
+		"claim_amount":           int64(amount),
+		"last_claimed_period":    lastOut,
 		"now":                    int64(now),
 	})
 	return string(b)
@@ -773,6 +804,20 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 // сверх суммы; видна до отправки.
 func (nd *Node) FeeQuote(amount int64) int64 {
 	return int64(nd.n.QueryFee(uint64(amount)))
+}
+
+// SyncDiag — диагностика синхронизации (этап 7): принудительная сверка
+// с каждым подключённым пиром, результат строкой (applied/ошибка) для
+// журнала моста. Только диагностика песочницы.
+func (nd *Node) SyncDiag() string {
+	peers := nd.n.ConnectedPeers()
+	out := make([]string, 0, len(peers))
+	for _, p := range peers {
+		k, err := nd.n.SyncFromPeer(context.Background(), p)
+		out = append(out, fmt.Sprintf("%s: applied=%d err=%v",
+			p.ShortString(), k, err))
+	}
+	return strings.Join(out, "; ")
 }
 
 // AwaitingJSON — офлайн-транзакции, ожидающие публикации (12.4): экран

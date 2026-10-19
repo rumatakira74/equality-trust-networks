@@ -53,6 +53,10 @@ func main() {
 	port := flag.Int("port", 4001, "UDP-порт QUIC-транспорта")
 	db := flag.String("db", "", "путь к SQLite (пусто — без персистентности)")
 	mint := flag.Bool("mint", true, "выполнить периоды 1–2 для посевного круга")
+	vouch := flag.Bool("vouch", true, "следить за реестром и поручаться за новичков")
+	nodeseed := flag.String("nodeseed", "tnp-sandbox-peer-node-key", "seed ключа узла (peer ID)")
+	peers := flag.String("peers", "", "multiaddr пиров для подключения (через запятую)")
+	simapp := flag.Bool("simapp", false, "запустить второй узел путём приложения (mobile.StartNode) — диагностика синхронизации")
 	flag.Parse()
 
 	log := func(f string, a ...any) { fmt.Fprintf(os.Stderr, "sandbox-peer: "+f+"\n", a...) }
@@ -63,8 +67,8 @@ func main() {
 	// детерминированный ключ узла: стабильный peer ID — приложение
 	// подключается по полному multiaddr с /p2p/<id> (без ID адрес
 	// молча отбрасывается AddrInfoFromP2pAddr)
-	node, err := tnp.StartNodeAddrsKey(gen, "full", *db, nil, "",
-		listen, "tnp-sandbox-peer-node-key", loggerFunc(func(l string) { log("узел: %s", l) }))
+	node, err := tnp.StartNodeAddrsKey(gen, "full", *db, nil, *peers,
+		listen, *nodeseed, loggerFunc(func(l string) { log("узел: %s", l) }))
 	if err != nil {
 		log("запуск: %v", err)
 		os.Exit(1)
@@ -72,6 +76,30 @@ func main() {
 	defer node.Close()
 	log("слушает udp/tcp %d; genesis-время %d", *port, sandboxGenesisT)
 	log("peer: %s", node.StatsText())
+
+	// диагностика этапа 7: второй узел тем же путём, что приложение
+	// (mobile.StartNode, случайный ключ, default listen) — видно,
+	// синхронизируется ли журнал
+	var sim *tnp.Node
+	if *simapp {
+		var st struct {
+			PeerID string `json:"peer_id"`
+		}
+		if err := json.Unmarshal([]byte(node.StatsText()), &st); err != nil {
+			log("simapp: %v", err)
+		} else {
+			addr := fmt.Sprintf("/ip4/127.0.0.1/udp/%d/quic-v1/p2p/%s", *port, st.PeerID)
+			var err error
+			sim, err = tnp.StartNode(gen, "full", "", nil, addr,
+				loggerFunc(func(l string) { log("simapp: %s", l) }))
+			if err != nil {
+				log("simapp: запуск: %v", err)
+			} else {
+				defer sim.Close()
+				log("simapp: запущен: %s", sim.StatsText())
+			}
+		}
+	}
 
 	// ключи посевного круга (деривация как в cmd/tnp-node)
 	seeds := map[string][]byte{}
@@ -83,13 +111,20 @@ func main() {
 	}
 
 	if *mint {
-		// выпуск периодов 1 и 2 для V1..V3 (V3: ≥ 2 периодов, 7.4)
+		// выпуск периодов 1 и 2 для V1..V3 (V3: ≥ 2 периодов, 7.4);
+		// идемпотентно: уже заявленный период пропускается (персистентный db)
 		for _, id := range []string{"V1", "V2", "V3"} {
-			if err := mintFor(node, gen, id, seeds[id], 1); err != nil {
-				log("mint %s период 1: %v", id, err)
-			}
-			if err := mintFor(node, gen, id, seeds[id], 2); err != nil {
-				log("mint %s период 2: %v", id, err)
+			for _, period := range []uint64{1, 2} {
+				var w struct {
+					LastPeriod int64 `json:"last_period"`
+				}
+				if err := json.Unmarshal([]byte(node.WalletInfoJSON(seeds[id])), &w); err == nil &&
+					w.LastPeriod >= int64(period) {
+					continue
+				}
+				if err := mintFor(node, gen, id, seeds[id], period); err != nil {
+					log("mint %s период %d: %v", id, period, err)
+				}
 			}
 		}
 	}
@@ -110,6 +145,12 @@ func main() {
 		case <-ticker.C:
 			// диагностика этапа 7: видно, подключается ли узел приложения
 			log("статус: %s", node.StatsText())
+			if sim != nil {
+				log("simapp: %s", sim.StatsText())
+			}
+			if !*vouch {
+				continue
+			}
 			for _, cand := range registeredWallets(node) {
 				if vouched[cand] {
 					continue

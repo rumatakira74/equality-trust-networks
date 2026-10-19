@@ -24,10 +24,12 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     // узел живёт всё время приложения (foreground service, 12.2)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final app = context.read<AppState>();
-      if (!app.nodeRunning) app.startNode();
-      app.refreshWallet();
+      // сначала узел (синхронизация с пирами), затем снапшот кошелька —
+      // иначе UI увидит пустой реестр до готовности узла
+      if (!app.nodeRunning) await app.startNode();
+      await app.refreshWallet();
     });
   }
 
