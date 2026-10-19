@@ -14,13 +14,13 @@ Author: Kirill Lapchinsky
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Kirill Lapchinsky. Terms of use are defined by the license (Section 16).
 
-**DOI:** [10.5281/zenodo.23452922](https://doi.org/10.5281/zenodo.23452922)
+**DOI:** [10.5281/zenodo.23474357](https://doi.org/10.5281/zenodo.23474357)
 
 The document has been reworked: rejected decisions were moved to a short appendix at the end.
 
 Version 9.2: added Section 7.7 — results of the farming-economy simulation ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, slots 3/5/10, R = 10%, and a seed circle ≥ 300 confirmed quantitatively.
 
-Version 9.3: working title — Equality Project; v1.0.0 published on Zenodo (DOI [10.5281/zenodo.23458917](https://zenodo.org/records/23458917)).
+Version 9.3: working title — Equality Project; v1.0.0 published on Zenodo (DOI [10.5281/zenodo.23474358](https://zenodo.org/records/23474358)).
 
 ## 0. How to read this document
 

@@ -13,13 +13,13 @@ description: "Платформа сетей доверия — конструк�
 Контакты: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Лапчинский Кирилл (Kirill Lapchinsky). Условия использования определяются лицензией (раздел 16).
 
-**DOI:** [10.5281/zenodo.23351012](https://doi.org/10.5281/zenodo.23351012)
+**DOI:** [10.5281/zenodo.23474316](https://doi.org/10.5281/zenodo.23474316)
 
 Документ переработан: отклонённые решения вынесены в короткое приложение в конце.
 
 Версия 9.2: добавлен раздел 7.7 — результаты симуляции фермерской экономики ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, слоты 3/5/10, R = 10% и посевной круг ≥ 300 подтверждены количественно.
 
-Версия 9.3: рабочее название — Equality Project; v1.0.0 опубликован в Zenodo (DOI [10.5281/zenodo.23458917](https://zenodo.org/records/23458917)).
+Версия 9.3: рабочее название — Equality Project; v1.0.0 опубликован в Zenodo (DOI [10.5281/zenodo.23474358](https://zenodo.org/records/23474358)).
 
 ## 0. Как читать документ
 
