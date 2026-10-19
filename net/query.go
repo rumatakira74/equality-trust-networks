@@ -287,6 +287,18 @@ func (n *Node) QueryProfile() *wire.ProfileParams {
 	return &n.Ledger.State.Net.Profile
 }
 
+// QueryAwaiting — офлайн-транзакции, ожидающие публикации (12.4:
+// «получено по Bluetooth» ≠ оплата). Снапшоты для UI получателя.
+func (n *Node) QueryAwaiting() []*wire.Transaction {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	out := make([]*wire.Transaction, 0, len(n.awaiting))
+	for _, tx := range n.awaiting {
+		out = append(out, tx)
+	}
+	return out
+}
+
 // QueryRegistry — адреса всех кошельков реестра (9.1: реестр публичен
 // внутри сети; экран участника, этап 7). Полный узел; лёгкий — только
 // свои данные, возвращает nil.

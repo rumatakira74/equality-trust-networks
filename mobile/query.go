@@ -775,6 +775,32 @@ func (nd *Node) FeeQuote(amount int64) int64 {
 	return int64(nd.n.QueryFee(uint64(amount)))
 }
 
+// AwaitingJSON — офлайн-транзакции, ожидающие публикации (12.4): экран
+// получателя со статусом «получено по Bluetooth — ожидает публикации».
+func (nd *Node) AwaitingJSON() string {
+	txs := nd.n.QueryAwaiting()
+	type row struct {
+		Txid      string `json:"txid"`
+		Type      string `json:"type"`
+		Recipient string `json:"recipient"`
+		Amount    int64  `json:"amount"`
+		Status    string `json:"status"`
+	}
+	out := make([]row, 0, len(txs))
+	for _, tx := range txs {
+		id := tx.TxID()
+		e := row{Txid: hexOr(id[:]), Type: tx.Type.String()}
+		if pl, ok := tx.Payload.(*wire.TransferPayload); ok && pl.Send != nil {
+			e.Recipient = hexOr(pl.Send.Recipient)
+			e.Amount = int64(pl.Send.Amount)
+		}
+		e.Status = nd.n.OfflineStatus(id).String()
+		out = append(out, e)
+	}
+	b, _ := json.Marshal(out)
+	return string(b)
+}
+
 // GuardianOffersJSON — публичные гардианы сети (11): для экрана выбора
 // при миграции (порог 3 из 5, комбинируется с личными).
 func (nd *Node) GuardianOffersJSON() string {
