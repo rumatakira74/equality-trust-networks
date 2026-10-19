@@ -5,19 +5,50 @@ tnp-node.exe
 # Go
 *.test
 *.out
+*.prof
 *.so
 coverage/
+coverage.out
 
-# Android (этап 6): AAR ядра собирается gomobile bind, APK — gradle;
-# бинарники в git не попадают
+# Android/Flutter (этапы 6–7): сборки и кэши в git не попадают —
+# глобальные шаблоны на всех уровнях вложенности (AAR — gomobile bind,
+# APK — gradle; обёртка gradle и GeneratedPluginRegistrant генерируются
+# инструментом flutter)
 android/libs/
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
+build/
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+captures/
+local.properties
+.flutter-plugins*
+ephemeral/
+.dart_tool/
+.idea/
+*.iml
 *.apk
 *.aab
 *.aar
+gradlew
+gradlew.bat
+gradle-wrapper.jar
+GeneratedPluginRegistrant.java
+
+# IDE/редакторы
+.vscode/
+*.swp
+*.swo
+
+# ОС
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # Локальные артефакты
 *.log
+tmp/
+.cache/
+
+# Flutter (этап 7)
+app/.metadata.bak
