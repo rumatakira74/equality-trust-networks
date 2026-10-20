@@ -327,6 +327,20 @@ func (n *Node) cpTick(ctx context.Context) {
 		return
 	}
 	n.consClock.OnCheckpoint(n.lastCheckpoint())
+	// перепубликация последнего финализированного чекпоинта (блокер 8.1):
+	// предложение и доли подписей gossip доставляет один раз; узел, не
+	// собравший порог к моменту закрытия эпохи (потери one-shot рассылки),
+	// навсегда выпадал из цепочки (строгая проверка epoch = last+1).
+	// Финализированный чекпоинт перепубликуется — отстающий узел принимает
+	// его в collectCpPending (Verify: порог подписей + prev_hash).
+	if cp := n.lastCheckpoint(); cp != nil && time.Since(n.lastCpRepublish) > 30*time.Second {
+		n.mu.Lock()
+		n.lastCpRepublish = time.Now()
+		n.mu.Unlock()
+		if err := n.publishCp(ctx, cp, wire.SignatureShare{}); err != nil {
+			n.logf("чекпоинт: перепубликация: %v", err)
+		}
+	}
 	if !n.consClock.EpochDue() {
 		return
 	}
@@ -343,6 +357,29 @@ func (n *Node) cpTick(ctx context.Context) {
 	} else {
 		prevHash = make([]byte, 32)
 	}
+	// Блокер 8.1 (48 узлов): предложение строится ОДИН раз на эпоху.
+	// Раньше cpTick строил новое предложение каждую секунду — каждая
+	// секунда давала новый вариант (NetworkTime/состояние менялись),
+	// подписанты подписывают все варианты → разные узлы финализировали
+	// разные цепочки, набор подписантов раскалывался ниже порога N и
+	// цепочка умирала (эпоха 3 не собрала 14 подписей). Переподпись
+	// своей доли и перепубликация ниже — каждый тик (живость).
+	n.mu.RLock()
+	proposed := n.lastProposalEpoch == epoch && n.lastProposal != nil
+	var own *wire.Checkpoint
+	if proposed {
+		own = n.lastProposal
+	}
+	n.mu.RUnlock()
+	if proposed {
+		// своё предложение уже построено: переподпись доли каждый тик
+		// (живость при потерях gossip) и продолжение сбора
+		if own != nil {
+			n.signAndPublishShare(ctx, own, own.Participants)
+		}
+		n.collectCpPending(ctx)
+		return
+	}
 	// состав подписантов и сборка чекпоинта читают реестр — под
 	// applyMu.RLock (data race — net/query.go, этап 7)
 	n.applyMu.RLock()
@@ -351,6 +388,21 @@ func (n *Node) cpTick(ctx context.Context) {
 		n.ConsParams, epoch, prevHash)
 	if err != nil {
 		n.applyMu.RUnlock()
+		return
+	}
+	// Блокер 8.1 (48 узлов, порог 14): детерминированный строитель
+	// предложения — первый участник состава эпохи. Пока предлагал любой
+	// узел, варианты (разные NetworkTime/состояния) подписывались всеми
+	// подписантами и РАЗНЫЕ узлы финализировали разные цепочки — набор
+	// подписантов раскалывался ниже порога, цепочка умирала. Фолбэк
+	// (живость при оффлайне строителя): через 2×epoch_seconds после
+	// наступления эпохи предлагает любой узел. Протокольное решение
+	// (правило одного предложения) — на утверждение владельца, см. отчёт.
+	if len(part) > 0 && !n.isCpProposer(part[0]) && !n.cpEpochOverdue(epoch) {
+		n.applyMu.RUnlock()
+		// не строитель: входящие предложения подписываются в onCpMessage,
+		// здесь — сбор долей уже полученных предложений
+		n.collectCpPending(ctx)
 		return
 	}
 	// finalized_txid_list: принятые с прошлого чекпоинта
@@ -373,26 +425,65 @@ func (n *Node) cpTick(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	// наблюдаемость (8.1): новый вариант предложения эпохи — метрика
+	// времени сбора подписей и диагностика фрагментации вариантов
+	h := cp.CheckpointHash()
+	n.mu.Lock()
+	n.lastProposalEpoch = cp.Epoch
+	n.lastProposalHash = append(n.lastProposalHash[:0], h[:]...)
+	n.lastProposal = cp
+	n.mu.Unlock()
+	n.logf("чекпоинт: предложение эпохи %d t=%d корень=%s", cp.Epoch, cp.NetworkTime,
+		hex.EncodeToString(cp.StateRoot)[:12])
 	n.onCpMessage(cp, wire.SignatureShare{}, true)
 	// публикация предложения в тему (даже если узел не участник)
 	if err := n.publishCp(ctx, cp, wire.SignatureShare{}); err != nil {
 		n.logf("чекпоинт: публикация: %v", err)
 	}
 	// подпись участником
-	for _, p := range part {
-		if string(p) == string(n.Cfg.WalletAddr) && n.Signer != nil {
-			share, err := n.Signer.Sign(cp)
-			if err != nil {
-				return
-			}
-			n.onCpMessage(cp, share, true)
-			if err := n.publishCp(ctx, cp, share); err != nil {
-				n.logf("чекпоинт: публикация доли: %v", err)
-			}
-			break
-		}
-	}
+	n.signAndPublishShare(ctx, cp, part)
 	n.collectCpPending(ctx)
+}
+
+// signAndPublishShare — подпись предложения участником (кошелёк узла) и
+// публикация доли; повторяется каждый тик (живость при потерях gossip).
+func (n *Node) signAndPublishShare(ctx context.Context, cp *wire.Checkpoint, part [][]byte) {
+	if n.Signer == nil {
+		return
+	}
+	for _, p := range part {
+		if string(p) != string(n.Cfg.WalletAddr) {
+			continue
+		}
+		share, err := n.Signer.Sign(cp)
+		if err != nil {
+			return
+		}
+		n.onCpMessage(cp, share, true)
+		if err := n.publishCp(ctx, cp, share); err != nil {
+			n.logf("чекпоинт: публикация доли: %v", err)
+		}
+		return
+	}
+}
+
+// isCpProposer — этот узел — строитель предложения эпохи (кошелёк узла
+// равен первому участнику состава).
+func (n *Node) isCpProposer(first []byte) bool {
+	return string(first) == string(n.Cfg.WalletAddr)
+}
+
+// cpEpochOverdue — эпоха давно due и не закрыта (строитель оффлайн):
+// фолбэк — предложение строит любой узел.
+func (n *Node) cpEpochOverdue(epoch uint64) bool {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.epochDueFor != epoch {
+		n.epochDueFor = epoch
+		n.epochDueAt = time.Now()
+		return false
+	}
+	return time.Since(n.epochDueAt) > 2*time.Duration(n.ConsParams.EpochSeconds)*time.Second
 }
 
 // publishCp — чекпоинт + доля подписи в тему checkpoint/<network_id>.
@@ -463,13 +554,29 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 	}
 }
 
-// collectCpPending — финализация сборов с достигнутым порогом.
+// collectCpPending — финализация сборов с достигнутым порогом и приём
+// финализированных чекпоинтов, полученных от других узлов (перепубликация —
+// догоняющий механизм, блокер 8.1: one-shot gossip теряет доли подписей,
+// узел, не собравший порог локально, навсегда выпадал из цепочки).
 func (n *Node) collectCpPending(ctx context.Context) {
 	n.mu.Lock()
 	var ready []*wire.Checkpoint
+	var received []*wire.Checkpoint
+	lastEpoch := uint64(0)
+	if len(n.Chain) > 0 {
+		lastEpoch = n.Chain[len(n.Chain)-1].Epoch
+	}
 	for h, col := range n.CpCollectors {
 		cp := n.CpProposals[h]
-		if cp == nil || cp.ThresholdSig != nil {
+		if cp == nil {
+			continue
+		}
+		if cp.ThresholdSig != nil {
+			// финализированный (перепубликованный) чекпоинт следующей
+			// эпохи — кандидат на приём без локального сбора долей
+			if cp.Epoch == lastEpoch+1 {
+				received = append(received, cp)
+			}
 			continue
 		}
 		if sig := col.Ready(); sig != nil {
@@ -478,6 +585,15 @@ func (n *Node) collectCpPending(ctx context.Context) {
 		}
 	}
 	n.mu.Unlock()
+	// полученные финализированные принимаются только при совпадении корня
+	// состояния (вне mu: порядок applyMu → mu). Проверка своим состоянием —
+	// защита от предложений, собранных и финализированных по отставшему
+	// состоянию (подписант подписывает любое предложение своей эпохи)
+	for _, cp := range received {
+		if n.stateRootMatches(cp.StateRoot) {
+			ready = append(ready, cp)
+		}
+	}
 	for _, cp := range ready {
 		if err := cons.Verify(cp, n.lastCheckpoint(), n.Cfg.Genesis.Genesis.GenesisTime,
 			n.ConsParams.EpochSeconds, n.ConsParams.MaxTimeShift, n.pubKeyOf); err != nil {
@@ -489,6 +605,17 @@ func (n *Node) collectCpPending(ctx context.Context) {
 			_ = n.publishCp(ctx, cp, wire.SignatureShare{})
 		}
 	}
+}
+
+// stateRootMatches — корень состояния узла совпадает с корнем чекпоинта.
+func (n *Node) stateRootMatches(root []byte) bool {
+	if n.Ledger == nil {
+		return false
+	}
+	n.applyMu.RLock()
+	defer n.applyMu.RUnlock()
+	local := cons.StateRoot(n.Ledger)
+	return string(local) == string(root)
 }
 
 // adoptCheckpoint — принять финализированный чекпоинт: цепочка, store,

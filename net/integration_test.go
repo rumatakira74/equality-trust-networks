@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
@@ -333,5 +334,85 @@ func TestLightNode(t *testing.T) {
 	}
 	if leaf.Seq != 1 {
 		t.Fatalf("seq в листе: %d, ожидается 1", leaf.Seq)
+	}
+}
+
+// TestJournalTxGossipDedup — txid журнала отмечается в дедупе gossip
+// (блокер 8.1, авторизовано владельцем): после рестарта seen пуст, а
+// журнал наполнен replay/синхронизацией — повторная доставка известной
+// транзакции должна отсеиваться ДО cheapCheck (иначе каждая копия
+// register/mint проходит Argon2id-верификацию ради отказа E_DUP).
+func TestJournalTxGossipDedup(t *testing.T) {
+	e := newTestEnv(t)
+	n1 := e.newNode(nodeOpts{level: LevelFull})
+	e.start(n1)
+
+	// применение без публикации (как replay при старте из БД)
+	tx := e.mintTx(n1, "V1")
+	n1.applyLive(tx)
+
+	// контракт фикса: txid журнала отмечен в дедупе gossip
+	id := tx.TxID()
+	n1.mu.RLock()
+	marked := n1.seen[string(id[:])]
+	n1.mu.RUnlock()
+	if !marked {
+		t.Fatal("txid журнала не отмечен в дедупе gossip")
+	}
+
+	// повторная доставка (эхо/рестарт): тихий пропуск до cheapCheck,
+	// журнал не растёт и повторного apply не происходит
+	n1.handleTxFromPeer(tx, n1.Host.ID())
+	if got := len(n1.journalSnapshot()); got != 1 {
+		t.Fatalf("журнал вырос при повторной доставке: %d", got)
+	}
+}
+
+// TestImportJournalPinnedVouch — восстановление журнала пинированным
+// путём (блокер 8.1-2, №40): vouch, чья эпоха уже прошла, отклоняется
+// при живом apply (V8: эпоха транзакции != текущая — рестарт из БД через
+// cons.Replay невозможен), но применяется ImportJournal-ом с пинированием
+// часов на timestamp_claim (семантика сетевой сверки).
+func TestImportJournalPinnedVouch(t *testing.T) {
+	// короткие эпохи (2 с): эпоха vouch-а «протухает» за секунды;
+	// возраст/периоды поручителя в тесте сняты (посевной 65 дн. < 90)
+	e := newTestEnv(t, func(p *wire.ProfileParams) {
+		p.EpochSeconds = 2
+		p.VoucherMinAgeDays = 0
+		p.VoucherMinMintPeriods = 0
+	})
+	n1 := e.newNode(nodeOpts{level: LevelFull})
+
+	// журнал: минт посевного, регистрация кандидата, vouch
+	mint := e.mintTx(n1, "V1")
+	n1.applyLive(mint)
+	reg := e.register(n1, "CAND")
+	n1.applyLive(reg)
+	vouch := e.tx(n1, "V1", wire.Vouch, &wire.VouchPayload{
+		Candidate: e.addr("CAND"), Epoch: n1.Clock.Epoch(),
+	}, false)
+
+	// эпоха уходит: живой apply отклоняет vouch (V8) — как при replay
+	// из БД (cons.Replay делегирует эпоху живым часам, №40)
+	time.Sleep(3 * time.Second)
+	n1.applyMu.Lock()
+	res := n1.applyWithClock(vouch, n1.Clock)
+	n1.applyMu.Unlock()
+	if res.Outcome != ledger.Rejected || res.Code != "E_VOUCH_EPOCH" {
+		t.Fatalf("живой apply past-epoch vouch: %v/%s, хочу E_VOUCH_EPOCH",
+			res.Outcome, res.Code)
+	}
+
+	// свежий узел: импорт журнала пинированным путём — vouch применяется
+	n2 := e.newNode(nodeOpts{level: LevelFull})
+	if applied := n2.ImportJournal([]*wire.Transaction{mint, reg, vouch}); applied != 3 {
+		t.Fatalf("импорт: применено %d из 3", applied)
+	}
+	if got := len(n2.journalSnapshot()); got != 3 {
+		t.Fatalf("журнал после импорта: %d, хочу 3", got)
+	}
+	cand := n2.Ledger.State.Wallet(e.addr("CAND"))
+	if cand == nil || len(cand.VouchesReceived) != 1 {
+		t.Fatalf("vouch не применён при импорте: cand=%v", cand)
 	}
 }

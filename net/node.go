@@ -85,6 +85,21 @@ type Node struct {
 	published  map[string]bool              // опубликованные из awaiting
 	spamCount  int64
 
+	// lastCpRepublish — момент последней перепубликации финализированного
+	// чекпоинта (догоняющий механизм цепочки, блокер 8.1)
+	lastCpRepublish time.Time
+
+	// lastProposal — своё предложение чекпоинта текущей эпохи
+	// (8.1: строится один раз на эпоху, доля переподписывается каждый тик)
+	lastProposal      *wire.Checkpoint
+	lastProposalEpoch uint64
+	lastProposalHash  []byte
+
+	// epochDueFor/At — момент, когда эпоха впервые стала due (фолбэк
+	// детерминированного строителя, блокер 8.1)
+	epochDueFor uint64
+	epochDueAt  time.Time
+
 	relayReserved int
 
 	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).
@@ -464,6 +479,12 @@ func (n *Node) indexTx(tx *wire.Transaction) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.journal = append(n.journal, tx)
+	// txid журнала — в дедуп gossip (блокер 8.1, авторизовано владельцем):
+	// после рестарта seen пуст, а журнал наполнен replay/sync — повторная
+	// доставка известной транзакции не должна проходить cheapCheck
+	// (Argon2id для register/mint) ради отказа E_DUP
+	id := tx.TxID()
+	n.seen[string(id[:])] = true
 	chain, ok := n.chainIndex[string(tx.Wallet)]
 	if !ok {
 		chain = make(map[uint64]*wire.Transaction)
@@ -527,6 +548,33 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 	// повтор буфера внеочередных — строго вне applyMu (retryPending
 	// берёт RLock; из-под Lock — self-deadlock)
 	n.retryPending(tx.Wallet)
+}
+
+// ImportJournal — восстановление журнала из внешнего источника (БД):
+// применяет транзакции с пинированием часов на timestamp_claim каждой —
+// та же семантика, что сетевая сверка (SyncJournalFrom, net.ReplayClock).
+// Блокер 8.1-2, авторизовано владельцем: replay из БД (cons.Replay)
+// делегирует эпоху живым часам узла (№40) и отклоняет vouch-ы прошлых
+// эпох (E_VOUCH_EPOCH) — узел с vouch-ами разных эпох в журнале не может
+// стартовать из БД, пока №40 не решён; протокол не меняется, cons не
+// трогается. Вызывать до Start (без гонки с gossip/сверками).
+// Возвращает число применённых (accepted) транзакций.
+func (n *Node) ImportJournal(txs []*wire.Transaction) int {
+	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime,
+		n.Cfg.Genesis.Manifest.Profile.EpochSeconds)
+	applied := 0
+	for _, tx := range txs {
+		n.applyMu.Lock()
+		rc.Pin(tx.TimestampClaim)
+		res := n.applyWithClock(tx, rc)
+		n.postApply(tx, res)
+		n.applyMu.Unlock()
+		n.retryPending(tx.Wallet)
+		if res.Outcome == ledger.Accepted {
+			applied++
+		}
+	}
+	return applied
 }
 
 // applyWithClock — Apply с подменой часов (вызывающий держит applyMu).
