@@ -28,11 +28,15 @@ class NodeService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, notification())
         if (intent?.action == ACTION_STOP) {
-            NodeController.stop(this)
-            stopSelf()
+            // close() узла может блокировать — в фон; stopSelf после
+            NodeController.stopAsync(this) { stopSelf() }
             return START_NOT_STICKY
         }
-        NodeController.ensureStarted(this)
+        // ANR-блокер 8.1 (латентный баг, вскрыт симуляцией 8.1): старт
+        // узла (bootstrap до ~11 с, первичная сверка журнала) — на
+        // фоновом executor; главный поток свободен, готовность — опрос
+        // nodeStats (паттерн этапа 7)
+        NodeController.ensureStartedAsync(this)
         return START_STICKY
     }
 

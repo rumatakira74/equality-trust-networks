@@ -7,6 +7,8 @@ import android.net.NetworkCapabilities
 import tnp.Genesis
 import tnp.Logger
 import tnp.Node
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -23,6 +25,36 @@ object NodeController {
     var ownWallet: ByteArray? = null
     var manualAddrs: String? = null
     var log: Logger? = null
+
+    /**
+     * Фоновый однопоточный executor узла (ANR-блокер 8.1, авторизовано
+     * владельцем; латентный баг, вскрыт симуляцией 8.1): старт/стоп/смена
+     * уровня и ВСЕ cgo-вызовы моста (сверки, PoW, запросы состояния) —
+     * вне главного потока Android; вызовы узла сериализованы. Готовность
+     * узла UI узнаёт опросом nodeStats (паттерн этапа 7).
+     */
+    val executor: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "tnp-node-io")
+    }
+
+    /** Запуск узла в фоне (главный поток не ждёт bootstrap/сверку). */
+    fun ensureStartedAsync(context: Context) {
+        executor.execute { ensureStarted(context) }
+    }
+
+    /** Остановка в фоне (close() может блокировать); after — после close. */
+    fun stopAsync(context: Context, after: () -> Unit = {}) {
+        executor.execute {
+            stop(context)
+            after()
+        }
+    }
+
+    /** Пересборка узла при смене условий — в фоне. */
+    fun reevaluateAsync(context: Context) {
+        executor.execute { reevaluate(context) }
+    }
+
 
     /**
      * Этап 7 (вопрос №38): true — узел без SQLite (в памяти).
