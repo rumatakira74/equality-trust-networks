@@ -192,7 +192,11 @@ func (n *Node) initLedger() error {
 	gp := n.Cfg.Genesis
 	clock := NewClock(gp.Genesis.GenesisTime, gp.Manifest.Profile.EpochSeconds)
 	n.Clock = clock
-	l, err := ledger.New(gp, clock, ledger.Options{SkipMintChallengeWindow: true})
+	// Окно челленджа выпуска (M7, 7.6) проверяется при apply: долг этапа 7
+	// закрыт (раньше SkipMintChallengeWindow=true — сетевой узёл не проверял
+	// окно). Replay пинирует часы на timestamp_claim (cons.Replay), поэтому
+	// пересчёт исторических выпусков проходит по моменту публикации.
+	l, err := ledger.New(gp, clock, ledger.Options{})
 	if err != nil {
 		return fmt.Errorf("net: genesis: %w", err)
 	}

@@ -56,6 +56,13 @@ func newTestEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *testEnv {
 		Argon2Iterations: 1, Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	prof.FreshTransferWindowPeriods = 0 // мгновенная переводимость (тесты)
+	// Окно челленджа выпуска (7.6) в сетевых тестах открыто весь период:
+	// тесты проверяют транспорт/синхронизацию/консенсус и минтят в
+	// произвольные моменты; слот челленджа при этом закрыт почти всегда
+	// (№39: окно заявляемого периода достижимо только для «поздних»
+	// слотов). Само окно покрыто тестами core/ledger и прогоном
+	// тестовой сети (cmd/tnp-testnet, этап 8).
+	prof.MintChallengeWindowHours = 0
 	for _, o := range opts {
 		o(prof)
 	}

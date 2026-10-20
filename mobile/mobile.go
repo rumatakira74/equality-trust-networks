@@ -269,12 +269,16 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	prof.Sandbox = true
 	prof.TransferMoratoriumDays = 0
 	prof.FreshTransferWindowPeriods = 0
-	// Окно челленджа в песочнице отключено: mintChallengeSlot (ядро,
-	// headless) считает слот от period×30сут от 1970, а периоды сети —
-	// календарные месяцы от genesis (cons.Clock): для малых номеров
-	// периодов слот выпадает в 1970-е и окно всегда закрыто. Уточнение
-	// слота — этап 5 (PENDING, отчёт 7); сетевые узлы и так не проверяют
-	// окно при apply (SkipMintChallengeWindow, долг этапа 8).
+	// Окно челленджа в песочнице открыто весь период (учебный оверрайд,
+	// как мораторий и окно переводимости). Слот челленджа с этапа 8
+	// считается календарно от genesis-времени (долг этапа 7 закрыт), и
+	// сетевые узлы проверяют окно при apply (SkipMintChallengeWindow
+	// выведен из кода). Но при окне ±48 ч (7.6) заявлять можно только
+	// завершённые периоды (№24), а слот лежит внутри заявляемого
+	// периода — окно достижимо лишь для «поздних» слотов (вопрос №39);
+	// у посевного круга V2/V3 достижимых периодов нет вовсе — полный
+	// путь в песочнице был бы невозможен. Проверка реального окна —
+	// на закрытой тестовой сети (cmd/tnp-testnet, этап 8).
 	prof.MintChallengeWindowHours = 0
 	prof.Pow = &wire.PowParams{
 		TargetLight: uint64(powTargetLight), TargetHard: uint64(powTargetHard),
