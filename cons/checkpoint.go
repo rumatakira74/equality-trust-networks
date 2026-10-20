@@ -66,7 +66,12 @@ func Build(networkID []byte, epoch uint64, l *ledger.Ledger, prev *wire.Checkpoi
 	if prev != nil {
 		h := prev.CheckpointHash()
 		cp.PrevCheckpointHash = h[:]
-		cp.Epoch = prev.Epoch + 1
+		// эпоха задаёт вызывающий (№42 (D), этап 9): пропуск застрявшей
+		// эпохи строит prev+2 (застрявшая — пустой гэп), обычная — prev+1;
+		// регрессия нумерации здесь не допускается (Verify — на приёме)
+		if cp.Epoch <= prev.Epoch {
+			return nil, fmt.Errorf("cons: epoch %d не следует за %d", cp.Epoch, prev.Epoch)
+		}
 	} else {
 		cp.PrevCheckpointHash = make([]byte, 32)
 	}
@@ -100,7 +105,11 @@ func Verify(cp, prev *wire.Checkpoint, genesisTime, epochSeconds, maxShift uint6
 			return errors.New("cons: prev_hash первого чекпоинта не нулевой")
 		}
 	} else {
-		if cp.Epoch != prev.Epoch+1 {
+		// пропуск застрявшей эпохи (№42 (D), этап 9): гэп в нумерации
+		// разрешён — пропущенная эпоха закрыта пустой (без чекпоинта);
+		// регрессия нумерации запрещена. Окно времени — на чекпоинт
+		// (9.2), без масштабирования на пропуски.
+		if cp.Epoch <= prev.Epoch {
 			return fmt.Errorf("cons: epoch %d не следует за %d", cp.Epoch, prev.Epoch)
 		}
 		h := prev.CheckpointHash()

@@ -7,6 +7,7 @@ package net
 
 import (
 	"context"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
 	"testing"
 	"time"
 )
@@ -106,9 +107,12 @@ func TestSyncAnchorRealignsOnDivergence(t *testing.T) {
 	rootBefore := mustRoot(t, n2)
 
 	// перестройка у пира: порядок вставки разошёлся (транзакции разных
-	// кошельков меняются местами — как при rebuildToFinality)
+	// кошельков меняются местами). Новый срез, как при rebuildToFinality
+	// (продукт никогда не мутирует элементы журнала на месте — читатели
+	// держат заголовок среза под RLock, элементы читают после Unlock)
 	n1.mu.Lock()
-	n1.journal[1], n1.journal[2] = n1.journal[2], n1.journal[1]
+	j := n1.journal
+	n1.journal = []*wire.Transaction{j[0], j[2], j[1]}
 	n1.mu.Unlock()
 
 	// якорь не сходится — выравнивание полным проходом

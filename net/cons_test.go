@@ -192,7 +192,10 @@ func TestLightNodeCheckpointProof(t *testing.T) {
 	e := newTestEnv(t)
 	n1 := e.consNode("V1", nodeOpts{level: LevelFull})
 	e.start(n1)
-	n2 := e.consNode("V2", nodeOpts{level: LevelFull, manual: manualAddrs(t, n1)})
+	// №42 (A): у тестового env genesis 65 суток назад — окно очереди
+	// первого чекпоинта давно у последнего строителя (V3 = part[K-1]);
+	// онлайн-строитель — V3, подписант — V1 (порог 2 из 3)
+	n2 := e.consNode("V3", nodeOpts{level: LevelFull, manual: manualAddrs(t, n1)})
 	e.start(n2)
 	ctx := context.Background()
 	if res, err := n1.SubmitTx(ctx, e.mintTx(n1, "V1")); err != nil || res.Outcome.String() != "accept" {

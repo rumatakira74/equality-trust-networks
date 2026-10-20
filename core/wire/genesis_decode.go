@@ -318,6 +318,8 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.EclipseN = v
 	case 55:
 		p.ValidatorsM = v
+	case 56:
+		p.CpBuilderQueue = v
 	default:
 		return errUnknownField
 	}

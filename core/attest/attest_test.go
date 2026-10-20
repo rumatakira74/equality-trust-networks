@@ -52,6 +52,8 @@ func TestAttestTampered(t *testing.T) {
 		{"boot not verified", Extension{LevelTEE, BootSelfSigned, true, 2026, 6}, "verifiedBootState"},
 		{"software level", Extension{LevelSoftware, BootVerified, true, 2026, 6}, "уровень"},
 		{"stale patch", Extension{LevelTEE, BootVerified, true, 2023, 1}, "патча"},
+		// №43 (минор-фикс, этап 9): дата патча в будущем — отклоняется
+		{"future patch", Extension{LevelTEE, BootVerified, true, 2030, 1}, "будущем"},
 	}
 	for _, c := range cases {
 		leaf, err := BuildLeaf(&walletKey.PublicKey, challenge, c.ext, rootKey, rootCert, 7)

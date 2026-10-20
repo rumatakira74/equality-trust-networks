@@ -83,7 +83,10 @@ func (e *e2eEnv) register(id string, guardians ...string) Result {
 	challenge := attest.ChallengeFormula(pub, crypto.ProtocolID, e.ledger.State.Net.NetworkID)
 	ext := attest.Extension{
 		SecurityLevel: attest.LevelTEE, VerifiedBootState: attest.BootVerified,
-		DeviceLocked: true, PatchYear: 2026, PatchMonth: 10,
+		// №43 (этап 9): дата патча — в прошлом относительно сетевого
+		// времени теста (FixedClock T = 1.7e9 ≈ 2023-11); будущая
+		// отклоняется Verify
+		DeviceLocked: true, PatchYear: 2023, PatchMonth: 6,
 	}
 	leaf, err := attest.BuildLeaf(&priv.PublicKey, challenge, ext, e.rootKey, e.rootCert, 42)
 	if err != nil {
@@ -181,7 +184,10 @@ func TestRegisterChallengeBinding(t *testing.T) {
 	wrong := attest.ChallengeFormula(pub, crypto.ProtocolID, []byte("другая сеть"))
 	ext := attest.Extension{
 		SecurityLevel: attest.LevelTEE, VerifiedBootState: attest.BootVerified,
-		DeviceLocked: true, PatchYear: 2026, PatchMonth: 10,
+		// №43 (этап 9): дата патча — в прошлом относительно сетевого
+		// времени теста (FixedClock T = 1.7e9 ≈ 2023-11); будущая
+		// отклоняется Verify
+		DeviceLocked: true, PatchYear: 2023, PatchMonth: 6,
 	}
 	leaf, err := attest.BuildLeaf(&priv.PublicKey, wrong, ext, e.rootKey, e.rootCert, 43)
 	if err != nil {

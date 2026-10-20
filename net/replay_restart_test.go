@@ -58,6 +58,13 @@ func mustRoot(t *testing.T, n *Node) []byte {
 // живым часам и NewNode падал; после — replay пинирует Epoch/Period на
 // timestamp_claim каждого vouch-а и узел поднимается, состояние сходится
 // с состоянием до рестарта.
+//
+// Сетап журнала — пинированным путём (ImportJournal, семантика сетевой
+// сверки): живой apply на 2-с эпохах гоняется с границей эпохи между
+// сборкой (timestamp_claim) и применением (эпоха apply) — RegisteredEpoch
+// живого применения расходился бы с replay на ±1 у границы; оба пути
+// теста пинируют часы на claim — сходимость детерминирована. Объект
+// теста — рестарт из БД (cons.Replay), а не способ построения журнала.
 func TestStoreReplayRestartMultiEpochVouch(t *testing.T) {
 	// короткие эпохи (2 с): vouch-ы разных эпох в журнале за секунды;
 	// возраст/периоды поручителей сняты (посевные 65 дн. < 90)
@@ -69,23 +76,33 @@ func TestStoreReplayRestartMultiEpochVouch(t *testing.T) {
 	db := dbPath(t, "restart.db")
 	n1 := e.newNode(nodeOpts{level: LevelFull, db: db})
 
-	// журнал: минт, два кандидата, vouch в эпохе E и (после сна) в E+1
-	n1.applyLive(e.mintTx(n1, "V1"))
-	n1.applyLive(e.register(n1, "CAND1"))
-	n1.applyLive(e.register(n1, "CAND2"))
-	v1 := e.tx(n1, "V1", wire.Vouch, &wire.VouchPayload{
-		Candidate: e.addr("CAND1"), Epoch: n1.Clock.Epoch(),
-	}, false)
-	n1.applyLive(v1)
+	// журнал: минт, два кандидата, vouch в эпохе E и (после сна) в E+1;
+	// эпоха vouch-а выводится из его timestamp_claim — пинированный
+	// replay видит ту же эпоху, что и применение
+	apply := func(tx *wire.Transaction) {
+		t.Helper()
+		if n1.ImportJournal([]*wire.Transaction{tx}) != 1 {
+			t.Fatalf("не применён tx типа %d (seq %d)", tx.Type, tx.Seq)
+		}
+	}
+	apply(e.mintTx(n1, "V1"))
+	apply(e.register(n1, "CAND1"))
+	apply(e.register(n1, "CAND2"))
+	ts1 := uint64(time.Now().Unix())
+	apply(e.txAt(n1, "V1", wire.Vouch, &wire.VouchPayload{
+		Candidate: e.addr("CAND1"), Epoch: (ts1 - e.genesisT) / 2,
+	}, false, ts1))
 
 	time.Sleep(3 * time.Second) // эпоха ушла (epoch_seconds = 2)
-	v2 := e.tx(n1, "V2", wire.Vouch, &wire.VouchPayload{
-		Candidate: e.addr("CAND2"), Epoch: n1.Clock.Epoch(),
-	}, false)
-	if v1.Payload.(*wire.VouchPayload).Epoch == v2.Payload.(*wire.VouchPayload).Epoch {
+	ts2 := uint64(time.Now().Unix())
+	v2 := e.txAt(n1, "V2", wire.Vouch, &wire.VouchPayload{
+		Candidate: e.addr("CAND2"), Epoch: (ts2 - e.genesisT) / 2,
+	}, false, ts2)
+	v1Epoch := (ts1 - e.genesisT) / 2
+	if v1Epoch == v2.Payload.(*wire.VouchPayload).Epoch {
 		t.Fatal("vouch-ы в одной эпохе — тест не воспроизводит №40")
 	}
-	n1.applyLive(v2)
+	apply(v2)
 
 	// рестарт из той же БД: NewNode → initLedger → cons.Replay (store-replay)
 	n2 := e.newNode(nodeOpts{level: LevelFull, db: db})
