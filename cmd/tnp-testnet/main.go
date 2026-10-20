@@ -175,7 +175,7 @@ type txFlags struct {
 
 func addCommonFlags(fs *flag.FlagSet, c *txFlags) {
 	fs.StringVar(&c.genesis, "genesis", "", "путь к genesis.bin")
-	fs.IntVar(&c.wait, "wait", 2, "секунд после публикации")
+	fs.IntVar(&c.wait, "wait", 6, "секунд держать узел после публикации")
 	fs.StringVar(&c.nodeSeed, "node-seed", "", "seed ключа узла (peer ID)")
 	fs.StringVar(&c.db, "db", "", "путь к SQLite (пусто — в памяти)")
 	fs.StringVar(&c.listen, "listen", "/ip4/0.0.0.0/udp/0/quic-v1,/ip4/0.0.0.0/tcp/0", "адреса прослушивания")
@@ -227,11 +227,24 @@ func startEnv(c *txFlags) (*txEnv, func(), error) {
 		node.Close()
 		return nil, nil, fmt.Errorf("запуск: %w", err)
 	}
+	// первичная сверка: узел обязан иметь журнал пиров ДО сборки
+	// транзакций (tip/seq/prev из состояния; иначе эквивокация
+	// получается случайной). Событие identify (net.syncLoop, 8.0.3)
+	// сверяет сразу, здесь — детерминированный добор и пауза.
+	time.Sleep(2 * time.Second)
+	n := node.SyncAllPeers()
+	if n > 0 {
+		fmt.Fprintf(os.Stderr, "узел: первичная сверка: применено %d\n", n)
+	}
+	time.Sleep(1 * time.Second)
 	wait := c.wait
 	cleanup := func() {
+		// держим узел живым ПОСЛЕ публикации: gossip-запись и сверка пиров
+		// должны успеть до cancel/Close (закрытие сразу после SubmitTx
+		// обрывало доставку — tx оставался только на узле драйвера)
+		time.Sleep(time.Duration(wait) * time.Second)
 		stop()
 		node.Close()
-		time.Sleep(time.Duration(wait) * time.Second) // дать gossip разнести
 	}
 	fmt.Fprintf(os.Stderr, "узел: %s\n", node.Host.ID().String())
 	return &txEnv{gp: gp, node: node, ctx: ctx}, cleanup, nil

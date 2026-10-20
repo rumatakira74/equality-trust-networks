@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -47,6 +48,7 @@ func main() {
 	nodeKey := flag.String("node-key", "", "seed ключа узла (Peer ID); по умолчанию — network-id+hostname")
 	dbPath := flag.String("db", "", "путь к SQLite")
 	statusFile := flag.String("status-file", "", "файл JSON-статуса")
+	listen := flag.String("listen", "/ip4/0.0.0.0/udp/0/quic-v1,/ip4/0.0.0.0/tcp/0", "адреса прослушивания, через запятую")
 	demoTx := flag.Bool("demo-tx", false, "опубликовать демонстрационные транзакции")
 	noAnnounce := flag.Bool("no-announce", false, "не анонсировать адреса (CGNAT)")
 	forcePublic := flag.Bool("force-public", false, "форсировать публичную достижимость (relay)")
@@ -95,7 +97,7 @@ func main() {
 		NodeKey:     crypto.DeterministicKey("tnp-node-key:" + *nodeKey),
 		Level:       net.LevelFull,
 		DBPath:      *dbPath,
-		ListenAddrs: []string{"/ip4/0.0.0.0/udp/0/quic-v1", "/ip4/0.0.0.0/tcp/0"},
+		ListenAddrs: strings.Split(*listen, ","),
 		ManualAddrs: peers,
 		RelayAddrs:  relays,
 		NoAnnounce:  *noAnnounce,
