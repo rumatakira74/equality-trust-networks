@@ -325,3 +325,14 @@ func (n *Node) QueryRegistry() [][]byte {
 	}
 	return out
 }
+
+// CheckpointChain — финализированная цепочка чекпоинтов узла (копия):
+// источник для лёгкого клиента-синхронизатора проверяющей библиотеки
+// (6.1: синхронизация с любым узлом, серверы проекта не нужны).
+func (n *Node) CheckpointChain() []*wire.Checkpoint {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	out := make([]*wire.Checkpoint, len(n.Chain))
+	copy(out, n.Chain)
+	return out
+}

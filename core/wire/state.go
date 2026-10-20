@@ -232,3 +232,46 @@ func (m *MigrateStatement) Encode() []byte {
 func (m *MigrateStatement) Hash() [32]byte {
 	return sha256.Sum256(m.Encode())
 }
+
+// AttestStatement — каноническое утверждение предъявления, подписываемое
+// кошельком (6.1, модуль attest; не транзакция): network_id, адрес, статус,
+// возраст, глубина графа поручительств, метка flagged, хеш манифеста,
+// эпоха чекпоинта, challenge проверяющего, срок годности, app_id
+// стороннего приложения (для идентификатора H(address ‖ app_id)).
+type AttestStatement struct {
+	NetworkID   []byte
+	Address     []byte
+	Status      WalletStatus
+	AgeDays     uint64
+	VouchDepth  int64
+	Flagged     bool
+	ManifestHash []byte
+	Epoch       uint64
+	Challenge   []byte
+	ExpiresAt   uint64
+	AppID       []byte
+}
+
+func (a *AttestStatement) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, a.NetworkID)
+	b = appendBytesField(b, 2, a.Address)
+	b = appendU32Field(b, 3, uint32(a.Status))
+	b = appendU64Field(b, 4, a.AgeDays)
+	if a.VouchDepth >= 0 {
+		b = appendU64Field(b, 5, uint64(a.VouchDepth))
+	}
+	b = appendBoolField(b, 6, a.Flagged)
+	b = appendBytesField(b, 7, a.ManifestHash)
+	b = appendU64Field(b, 8, a.Epoch)
+	b = appendBytesField(b, 9, a.Challenge)
+	b = appendU64Field(b, 10, a.ExpiresAt)
+	b = appendBytesField(b, 11, a.AppID)
+	return b
+}
+
+// Hash — хеш, подписываемый кошельком (6.1: подпись по signing_auth сети;
+// в headless-ядре — ECDSA P-256 над этим хешем).
+func (a *AttestStatement) Hash() [32]byte {
+	return sha256.Sum256(a.Encode())
+}
