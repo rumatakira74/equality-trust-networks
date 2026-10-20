@@ -102,7 +102,7 @@ func TestEclipseSameSubnetNotUnrelated(t *testing.T) {
 		t.Fatal("транзакция не доставлена")
 	}
 	txid := mint.TxID()
-	if _, err := n2.SyncJournalFrom(ctx, n1.Host.ID(), 0); err != nil {
+	if _, _, _, err := n2.SyncJournalFrom(ctx, n1.Host.ID(), 0, nil); err != nil {
 		t.Fatalf("сверка: %v", err)
 	}
 	// доставка от одного пира: одна группа (127.0.0.0/24), N=2 не достигнуто
@@ -145,10 +145,10 @@ func TestEclipseIsolation(t *testing.T) {
 	}
 	// полная сверка с каждым подключённым (только атакующий): каждый
 	// ответ подтверждает каждую транзакцию журнала (corroboration)
-	if _, err := v.SyncJournalFrom(ctx, a1.Host.ID(), 0); err != nil {
+	if _, _, _, err := v.SyncJournalFrom(ctx, a1.Host.ID(), 0, nil); err != nil {
 		t.Fatalf("сверка с A1: %v", err)
 	}
-	if _, err := v.SyncJournalFrom(ctx, a2.Host.ID(), 0); err != nil {
+	if _, _, _, err := v.SyncJournalFrom(ctx, a2.Host.ID(), 0, nil); err != nil {
 		t.Fatalf("сверка с A2: %v", err)
 	}
 	txid := mint.TxID()
@@ -176,7 +176,7 @@ func TestEclipseIsolation(t *testing.T) {
 		t.Fatalf("честный узел не получил транзакцию: %d", h.Stats().JournalLen)
 	}
 	// жертва сверяется с посторонним источником (полная, от genesis)
-	if _, err := v.SyncJournalFrom(ctx, h.Host.ID(), 0); err != nil {
+	if _, _, _, err := v.SyncJournalFrom(ctx, h.Host.ID(), 0, nil); err != nil {
 		t.Fatalf("сверка с честным узлом: %v", err)
 	}
 	if !v.Corroboration.Confirmed(txid[:]) {

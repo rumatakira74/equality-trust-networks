@@ -292,22 +292,32 @@ func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	// Подпись: для register — ключ из payload; для остальных — ключ
 	// кошелька из локального состояния (нет кошелька — пропускаем,
 	// полный apply в фоне отклонит при невозможности).
+	//
+	// Чтение полей кошелька (PublicKey/Seq/TipTxID) — под applyMu.RLock:
+	// валидатор gossip и handleTxFromPeer идут без applyMu, а фоновый
+	// applyLive пишет реестр параллельно (race-аудит этапа 9, -race).
+	// PoW (Argon2id) — до локом: проверка не читает реестр.
+	n.applyMu.RLock()
 	if tx.Type == wire.Register {
 		reg, ok := tx.Payload.(*wire.RegisterPayload)
 		if !ok {
+			n.applyMu.RUnlock()
 			return errors.New("register без payload")
 		}
 		pk, err := crypto.ParsePubKey(reg.AttestedPublicKey)
 		if err != nil {
+			n.applyMu.RUnlock()
 			return errors.New("некорректный ключ")
 		}
 		sh := tx.SigningHash()
 		if !crypto.VerifyDER(pk, sh[:], tx.Signature) {
+			n.applyMu.RUnlock()
 			return errors.New("подпись не сходится")
 		}
 	} else if w := n.wallet(tx.Wallet); w != nil && w.PublicKey != nil {
 		sh := tx.SigningHash()
 		if !crypto.VerifyDER(w.PublicKey, sh[:], tx.Signature) {
+			n.applyMu.RUnlock()
 			return errors.New("подпись не сходится")
 		}
 	}
@@ -315,8 +325,10 @@ func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	// конфликтная ветка (seq = tip) доставляется (эквивокация — этап 5).
 	if w := n.wallet(tx.Wallet); w != nil && tx.Seq == w.Seq+1 {
 		if string(tx.Prev) != string(w.TipTxID) {
+			n.applyMu.RUnlock()
 			return errors.New("prev не сходится с tip")
 		}
 	}
+	n.applyMu.RUnlock()
 	return nil
 }

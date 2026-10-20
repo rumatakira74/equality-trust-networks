@@ -4,10 +4,14 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
+
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 )
 
+// verifyDER — через общий строгий верификатор (каноничный DER + low-s,
+// аудит криптографии этапа 9): одна семантика подписи во всём ядре.
 func verifyDER(pub *ecdsa.PublicKey, hash, sig []byte) bool {
-	return ecdsa.VerifyASN1(pub, hash, sig)
+	return crypto.VerifyDER(pub, hash, sig)
 }
 
 func ecdsaP256() elliptic.Curve { return elliptic.P256() }

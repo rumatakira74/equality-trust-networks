@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
+import '../pin_gate.dart';
 
 class TransferScreen extends StatefulWidget {
   const TransferScreen({super.key});
@@ -54,16 +55,24 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   Future<void> _send() async {
-    setState(() => _busy = true);
+    // деструктивная операция (8.2, этап 9): подтверждение — только явный
+    // ввод PIN; тревожный PIN открывает приманку (неотличимо), реальной
+    // подписи не будет — мост ответит правдоподобно
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    if (!await confirmPin(context, title: 'Подтвердите перевод')) {
+      return;
+    }
+    setState(() => _busy = true);
     try {
       final built = await platform.buildTransfer(
         _recipient.text.trim(),
         int.parse(_amount.text),
       );
       final id = built['id'] as String;
-      final signed = await platform.signTx(id, 'Подтвердите перевод');
+      // подтверждение уже дано PIN-ом: биометрия здесь — только
+      // разблокировка ключа Keystore (не подтверждение операции)
+      final signed = await platform.signTx(id, 'Разблокировка ключа');
       if (!signed) {
         await platform.discardTx(id);
         setState(() => _result = 'Подпись не подтверждена');
@@ -87,15 +96,20 @@ class _TransferScreenState extends State<TransferScreen> {
   /// Bluetooth-платёж (12.4): подписанная транзакция передаётся
   /// напрямую получателю; «получено по Bluetooth» ≠ оплата.
   Future<void> _sendBt() async {
-    setState(() => _busy = true);
+    // деструктивная операция (8.2, этап 9): подтверждение — только PIN
     final platform = context.read<PlatformService>();
+    if (!await confirmPin(context, title: 'Подтвердите Bluetooth-платёж')) {
+      return;
+    }
+    setState(() => _busy = true);
     try {
       final built = await platform.buildTransfer(
         _recipient.text.trim(),
         int.parse(_amount.text),
       );
       final id = built['id'] as String;
-      final signed = await platform.signTx(id, 'Подтвердите Bluetooth-платёж');
+      // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
+      final signed = await platform.signTx(id, 'Разблокировка ключа');
       if (!signed) {
         await platform.discardTx(id);
         setState(() => _result = 'Подпись не подтверждена');

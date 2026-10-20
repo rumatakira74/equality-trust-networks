@@ -89,29 +89,69 @@ func Canonicalize(txs []*wire.Transaction, view *FinalityView) []*wire.Transacti
 	return out
 }
 
-// pinClock — часы replay: NetTime пинируется на timestamp_claim каждой
-// транзакции (C9 ±30 мин проверяется на момент публикации, а не
-// пересчёта); эпоха/период делегируются исходным часам узла.
+// pinClock — часы replay: NetTime, Epoch и Period пинируются на
+// timestamp_claim каждой транзакции (№40 — блокер 8.1, этап 9): эпоха и
+// период вычисляются от пинированного времени арифметически от genesis —
+// та же семантика, что у сетевой сверки (net.ReplayClock,
+// SyncJournalFrom/ImportJournal). C9 ±30 мин проверяется на момент
+// публикации, а не пересчёта; vouch-ы прошлых эпох применяются (V8
+// сверяется с эпохой публикации — рестарт из БД больше не даёт
+// E_VOUCH_EPOCH), демередж оседает по историческим границам периодов
+// (расхождение store-replay/синхронизация Δ125 закрыто).
 type pinClock struct {
-	inner ledger.EpochSource
-	t     uint64
+	genesis    uint64
+	epochSecs  uint64
+	periodSecs uint64
+	t          uint64
 }
 
+// newPinClock — параметры genesis берутся из состояния реестра; конвенция
+// периода — 30 суток от genesis (headless-ядро: net.RealClock,
+// mintChallengeSlot).
+func newPinClock(l *ledger.Ledger) *pinClock {
+	epochSecs := l.State.Net.EpochSeconds
+	if epochSecs == 0 {
+		epochSecs = 24 * 3600
+	}
+	return &pinClock{
+		genesis:    l.State.GenesisTime,
+		epochSecs:  epochSecs,
+		periodSecs: 30 * 86400,
+	}
+}
+
+// Pin фиксирует время транзакции (её timestamp_claim).
+func (c *pinClock) Pin(t uint64) { c.t = t }
+
 func (c *pinClock) NetTime() uint64 { return c.t }
-func (c *pinClock) Epoch() uint64   { return c.inner.Epoch() }
-func (c *pinClock) Period() uint64  { return c.inner.Period() }
+
+func (c *pinClock) Epoch() uint64 {
+	if c.t <= c.genesis {
+		return 0
+	}
+	return (c.t - c.genesis) / c.epochSecs
+}
+
+func (c *pinClock) Period() uint64 {
+	if c.t <= c.genesis {
+		return 0
+	}
+	return (c.t - c.genesis) / c.periodSecs
+}
+
+var _ ledger.EpochSource = (*pinClock)(nil)
 
 // Replay — пересчёт состояния из genesis + журнала (INV-3): применяет
-// транзакции в каноническом порядке с пинированием часов на
-// timestamp_claim; конфликтная ветка (не победитель) фиксируется через
-// Apply как Conflict и остаётся в журнале хранения.
+// транзакции в каноническом порядке с пинированием часов (NetTime, Epoch,
+// Period) на timestamp_claim; конфликтная ветка (не победитель)
+// фиксируется через Apply как Conflict и остаётся в журнале хранения.
 func Replay(l *ledger.Ledger, txs []*wire.Transaction, view *FinalityView) error {
 	orig := l.Clock
-	pc := &pinClock{inner: orig}
+	pc := newPinClock(l)
 	l.Clock = pc
 	defer func() { l.Clock = orig }()
 	for _, tx := range Canonicalize(txs, view) {
-		pc.t = tx.TimestampClaim
+		pc.Pin(tx.TimestampClaim)
 		res := l.Apply(tx)
 		switch res.Outcome {
 		case ledger.Accepted:

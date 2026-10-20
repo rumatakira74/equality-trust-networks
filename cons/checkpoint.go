@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/smt"
 	"github.com/rumatakira74/equality-trust-networks/core/threshold"
@@ -139,10 +140,12 @@ type Signer struct {
 	Priv   *ecdsa.PrivateKey
 }
 
-// Sign — подпись над checkpoint_hash (spec/07 7.2).
+// Sign — подпись над checkpoint_hash (spec/07 7.2) через crypto.SignDER:
+// каноничный DER + low-s (аудит криптографии, этап 9) — строгий
+// верификатор threshold принимает все собственные подписи.
 func (s *Signer) Sign(cp *wire.Checkpoint) (wire.SignatureShare, error) {
 	h := cp.CheckpointHash()
-	sig, err := ecdsa.SignASN1(nil, s.Priv, h[:]) //nolint:staticcheck // rand nil = crypto/rand
+	sig, err := crypto.SignDER(s.Priv, h[:])
 	if err != nil {
 		return wire.SignatureShare{}, err
 	}

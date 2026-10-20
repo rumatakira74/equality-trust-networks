@@ -7,16 +7,20 @@
 package cons
 
 import (
+	"sync"
 	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
-// Clock — консенсусные часы узла (ledger.EpochSource).
+// Clock — консенсусные часы узла (ledger.EpochSource). Потокобезопасен
+// сам по себе (race-аудит этапа 9): OnCheckpoint пишет из горутины
+// чекпоинтов, EpochDue/NetTime читают из cpLoop/voteLoop параллельно.
 type Clock struct {
 	GenesisTime  uint64
 	EpochSeconds uint64
 	MaxShift     uint64
+	mu           sync.RWMutex
 	// lastCP — последний финализированный чекпоинт (эпоха/время).
 	lastCP *wire.Checkpoint
 	// local — локальное системное время (калибровка NTP — вне кода).
@@ -43,18 +47,26 @@ func (c *Clock) SetLocal(f func() uint64) { c.local = f }
 
 // OnCheckpoint — принять финализированный чекпоинт (ход времени).
 func (c *Clock) OnCheckpoint(cp *wire.Checkpoint) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.lastCP == nil || cp.Epoch > c.lastCP.Epoch {
 		c.lastCP = cp
 	}
 }
 
 // LastCheckpoint — последний принятый чекпоинт (nil — только genesis).
-func (c *Clock) LastCheckpoint() *wire.Checkpoint { return c.lastCP }
+func (c *Clock) LastCheckpoint() *wire.Checkpoint {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.lastCP
+}
 
 // NetTime — сетевое время: локальное, ограниченное пределом сдвига от
 // последнего чекпоинта (9.2: не может сдвигаться более чем на заданный
 // предел между чекпоинтами).
 func (c *Clock) NetTime() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	now := c.local()
 	if c.lastCP == nil {
 		if now < c.GenesisTime {
@@ -75,6 +87,8 @@ func (c *Clock) NetTime() uint64 {
 
 // Epoch — номер текущей эпохи (по последнему чекпоинту).
 func (c *Clock) Epoch() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if c.lastCP == nil {
 		return 0
 	}
@@ -85,6 +99,8 @@ func (c *Clock) Epoch() uint64 {
 // после genesis к началу текущей эпохи (9.2: «1-е число месяца» =
 // первая эпоха, начавшаяся после 00:00 UTC 1-го).
 func (c *Clock) Period() uint64 {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	epochStart := c.GenesisTime
 	if c.lastCP != nil {
 		epochStart = c.lastCP.NetworkTime
@@ -117,8 +133,19 @@ func PeriodOfEpoch(genesisTime, epochStartTime uint64) uint64 {
 // EpochDue — пора закрывать эпоху: от последнего чекпоинта прошло
 // epoch_seconds (по сетевому времени узла).
 func (c *Clock) EpochDue() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	now := c.local()
 	if c.lastCP == nil {
-		return c.NetTime() >= c.GenesisTime+c.EpochSeconds
+		return now >= c.GenesisTime+c.EpochSeconds
 	}
-	return c.NetTime() >= c.lastCP.NetworkTime+c.EpochSeconds
+	lo := c.lastCP.NetworkTime
+	hi := lo + c.EpochSeconds + c.MaxShift
+	if now < lo {
+		now = lo
+	}
+	if now > hi {
+		now = hi
+	}
+	return now >= lo+c.EpochSeconds
 }

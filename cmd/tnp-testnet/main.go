@@ -573,7 +573,7 @@ func seedlist(networkID []byte, peers []string) ([]byte, error) {
 	sig := &wire.ThresholdSignature{}
 	for i := 1; i <= 3; i++ {
 		key := crypto.DeterministicKey(fmt.Sprintf("tnp-testnet-seedlist-key:%d", i))
-		s, err := ecdsa.SignASN1(nil, key, h[:]) //nolint:staticcheck // rand nil = crypto/rand
+		s, err := crypto.SignDER(key, h[:]) // low-s (аудит, этап 9)
 		if err != nil {
 			return nil, err
 		}

@@ -44,7 +44,11 @@ func DeterministicKey(seed string) *ecdsa.PrivateKey {
 	}
 }
 
-// SignDER подписывает 32-байтовый хеш, возвращает DER-подпись.
+// SignDER подписывает 32-байтовый хеш, возвращает каноничную DER-подпись.
+// Канонизация low-s (аудит криптографии, этап 9): s и N−s — обе валидные
+// подписи; без нормализации третья сторона чеканит вторую валидную
+// кодировку чужой транзакции (s -> N−s) с другим txid (TxID включает
+// подпись) — ложный конфликт той же seq/prev, грифинг «эквивокацией».
 func SignDER(priv *ecdsa.PrivateKey, hash []byte) ([]byte, error) {
 	if len(hash) != 32 {
 		return nil, errors.New("crypto: хеш должен быть 32 байта")
@@ -53,8 +57,16 @@ func SignDER(priv *ecdsa.PrivateKey, hash []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if s.Cmp(halfN) > 0 {
+		s.Sub(new(big.Int).Set(ecdsaP256N), s)
+	}
 	return encodeDERSignature(r, s)
 }
+
+var (
+	ecdsaP256N = elliptic.P256().Params().N
+	halfN      = new(big.Int).Rsh(new(big.Int).Add(ecdsaP256N, big.NewInt(1)), 1)
+)
 
 // VerifyDER проверяет DER-подпись P-256 над 32-байтовым хешем.
 func VerifyDER(pub *ecdsa.PublicKey, hash, sig []byte) bool {
@@ -130,7 +142,10 @@ func decodeDERSignature(sig []byte) (*big.Int, *big.Int, error) {
 	if rl == 0 || 4+rl+2 > len(sig) {
 		return nil, nil, errors.New("crypto: DER: некорректная длина r")
 	}
-	r := new(big.Int).SetBytes(sig[4 : 4+rl])
+	r, err := decodeDERInt(sig[4 : 4+rl])
+	if err != nil {
+		return nil, nil, err
+	}
 	p := 4 + rl
 	if sig[p] != 0x02 {
 		return nil, nil, errors.New("crypto: DER: ожидается INTEGER s")
@@ -139,9 +154,36 @@ func decodeDERSignature(sig []byte) (*big.Int, *big.Int, error) {
 	if sl == 0 || p+2+sl != len(sig) {
 		return nil, nil, errors.New("crypto: DER: длина s не сходится")
 	}
-	s := new(big.Int).SetBytes(sig[p+2 : p+2+sl])
+	s, err := decodeDERInt(sig[p+2 : p+2+sl])
+	if err != nil {
+		return nil, nil, err
+	}
 	if r.Sign() <= 0 || s.Sign() <= 0 {
 		return nil, nil, errors.New("crypto: DER: нулевые компоненты")
 	}
+	// строгая каноничность (аудит криптографии, этап 9): ровно одна
+	// валидная кодировка на подпись — иначе txid маllеабелен (TxID
+	// включает подпись): неканоничные INTEGER и high-s отклоняются
+	if r.Cmp(ecdsaP256N) >= 0 || s.Cmp(ecdsaP256N) >= 0 {
+		return nil, nil, errors.New("crypto: DER: компонент вне порядка кривой")
+	}
+	if s.Cmp(halfN) > 0 {
+		return nil, nil, errors.New("crypto: DER: high-s (не канонично)")
+	}
 	return r, s, nil
+}
+
+// decodeDERInt — INTEGER строго каноничного вида: минимальная длина,
+// без знакового бита (отрицательные отклоняются), <= 33 байт.
+func decodeDERInt(b []byte) (*big.Int, error) {
+	if len(b) > 33 {
+		return nil, errors.New("crypto: DER: INTEGER слишком длинный")
+	}
+	if b[0]&0x80 != 0 {
+		return nil, errors.New("crypto: DER: отрицательный INTEGER")
+	}
+	if len(b) >= 2 && b[0] == 0x00 && b[1]&0x80 == 0 {
+		return nil, errors.New("crypto: DER: неминимальный INTEGER")
+	}
+	return new(big.Int).SetBytes(b), nil
 }

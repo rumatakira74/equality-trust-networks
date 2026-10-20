@@ -84,6 +84,10 @@ type Node struct {
 	awaiting   map[string]*wire.Transaction // офлайн-канал: ожидает публикации
 	published  map[string]bool              // опубликованные из awaiting
 	spamCount  int64
+	// syncAnchors — позиционные якоря сверки по пирам (№41): позиция в
+	// нумерации журнала ПИРА + txid на границе; инкрементальное
+	// продолжение без квадратичного трафика при росте журнала
+	syncAnchors map[peer.ID]*syncAnchor
 
 	// lastCpRepublish — момент последней перепубликации финализированного
 	// чекпоинта (догоняющий механизм цепочки, блокер 8.1)
@@ -162,6 +166,7 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		seen:          make(map[string]bool),
 		awaiting:      make(map[string]*wire.Transaction),
 		published:     make(map[string]bool),
+		syncAnchors:   make(map[peer.ID]*syncAnchor),
 		Corroboration: NewCorroboration(cfg.CorroborationN),
 		Snapshots:     NoSnapshots{},
 		Snowball:      cons.NewSnowball(cons.DefaultParams()),
@@ -553,11 +558,11 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 // ImportJournal — восстановление журнала из внешнего источника (БД):
 // применяет транзакции с пинированием часов на timestamp_claim каждой —
 // та же семантика, что сетевая сверка (SyncJournalFrom, net.ReplayClock).
-// Блокер 8.1-2, авторизовано владельцем: replay из БД (cons.Replay)
-// делегирует эпоху живым часам узла (№40) и отклоняет vouch-ы прошлых
-// эпох (E_VOUCH_EPOCH) — узел с vouch-ами разных эпох в журнале не может
-// стартовать из БД, пока №40 не решён; протокол не меняется, cons не
-// трогается. Вызывать до Start (без гонки с gossip/сверками).
+// Введён как обход блокера 8.1-2 (авторизовано владельцем), когда replay
+// из БД падал на vouch-ах прошлых эпох; с закрытием №40 (этап 9,
+// пинирование Epoch/Period в cons.Replay) обычный рестарт из БД снова
+// работает — ImportJournal остаётся путём восстановления (не удалять):
+// импорт до старта сети, без гонки с gossip/сверками.
 // Возвращает число применённых (accepted) транзакций.
 func (n *Node) ImportJournal(txs []*wire.Transaction) int {
 	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime,
@@ -962,11 +967,15 @@ func smtTreeOf(l *ledger.Ledger) *smt.Tree {
 }
 
 // StateRoot — корень SMT состояния (полный узел; для сверки узлов).
+// Чтение реестра — под applyMu.RLock: статус-файл/тесты/мост зовут без
+// applyMu, фоновый applyLive пишет параллельно (race-аудит этапа 9).
 func (n *Node) StateRoot() ([]byte, error) {
 	if n.Ledger == nil {
 		return nil, errors.New("net: нет ядра")
 	}
+	n.applyMu.RLock()
 	tree := smtTreeOf(n.Ledger)
+	n.applyMu.RUnlock()
 	r := tree.Root()
 	return r[:], nil
 }

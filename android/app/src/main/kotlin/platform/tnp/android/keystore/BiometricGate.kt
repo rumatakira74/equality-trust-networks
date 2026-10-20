@@ -32,6 +32,40 @@ object BiometricGate {
         }
 
     /**
+     * Вход по отпечатку (8.2, этап 9): разблокировка приложения без
+     * подписи (просмотр). Подтверждение деструктивных операций — PIN
+     * (PIN-промпт — точка входа в режим-приманку; биометрия принуждаема
+     * физически). Отпечаток предлагается, только когда приманка не
+     * активна (DuressState.biometricAllowed).
+     */
+    fun authenticatePlain(
+        activity: FragmentActivity,
+        title: String,
+        onResult: (Boolean) -> Unit,
+    ) {
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setNegativeButtonText("PIN")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .build()
+        BiometricPrompt(
+            activity,
+            ContextCompat.getMainExecutor(activity),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult,
+                ) {
+                    onResult(true)
+                }
+
+                override fun onAuthenticationError(code: Int, msg: CharSequence) {
+                    onResult(false)
+                }
+            },
+        ).authenticate(info)
+    }
+
+    /**
      * Подпись хеша ключом Keystore после биометрии: BiometricPrompt с
      * CryptoObject — ключ с setUserAuthenticationRequired(true) без
      * биометрии не подписывает.
