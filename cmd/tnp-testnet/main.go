@@ -786,6 +786,7 @@ func mintCmd(args []string) error {
 	addCommonFlags(fs, &c)
 	seed := fs.String("seed", "", "метка посевного кошелька")
 	period := fs.Uint64("period", 0, "заявляемый период")
+	keyDomain := fs.String("key-domain", "seed", "домен деривации ключа: seed (tnp-node-seed:) | wallet (tnp-testnet-wallet:)")
 	save := fs.String("save", "", "сохранить транзакцию в файл")
 	noSubmit := fs.Bool("no-submit", false, "не публиковать (для эквивокации)")
 	if err := fs.Parse(args); err != nil {
@@ -801,6 +802,9 @@ func mintCmd(args []string) error {
 	defer cleanup()
 
 	key := seedKey(*seed)
+	if *keyDomain == "wallet" {
+		key = walletKey(*seed)
+	}
 	addr := addrOf(key, env.gp.Genesis.NetworkID)
 	w := env.node.Ledger.State.Wallet(addr)
 	if w == nil {
