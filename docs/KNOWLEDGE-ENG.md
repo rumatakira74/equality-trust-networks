@@ -303,7 +303,7 @@ The `flagged` mark is a separate attribute (Section 7.5).
 - Of the vouched-for member's first 12 issuances, R = 10% is automatically split equally between their K vouchers (with K = 3 that is about 3.3% each, roughly 33 units per issuance at the base emission).
 - The source is the vouched-for member's own issuance, not new emission: the total emission does not grow. In the first year the vouched-for member receives 90%.
 - Farm-neutral: if a farm vouches for its own wallets, the share returns to it. Real profit goes only to those vouching for other people.
-- The payout stops from the epoch of finalization of an `evidence` against the vouched-for member. This is the only "punishment": the vouching member loses the reward, not money.
+- The payout stops from the epoch of finalization of an `evidence` against the vouched-for member. This is the only "punishment": the vouching member loses the reward, not units.
 - The vouching member's public statistics (how many they vouched for, how many of them are active) is a reputational bonus without money.
 - The reward size is a trade-off: the larger it is, the more actively people vouch and the stronger the temptation to hand out vouches to everyone. Vouches can be sold even without rewards; what restrains this is slots and the open graph.
 
@@ -392,7 +392,7 @@ The model: [equality-anti-farm-simulation](https://github.com/rumatakira74/equal
 
 ### 8.2 Owner coercion: the duress PIN ✅
 
-The threat: the owner is forced to open the app or send money.
+The threat: the owner is forced to open the app or send units.
 
 - Two PINs: the ordinary one and the duress one. The duress PIN opens a **decoy mode**: the interface is the same, but a plausible small balance and history are shown. Showing zero is not allowed: an active wallet regularly receives issuance, and a zero balance looks suspicious.
 - **Fingerprint unlock is disabled when the duress PIN is enabled:** otherwise the coercer presses the owner's finger to the sensor.
@@ -462,7 +462,7 @@ The values in this section are the default "Currency" profile; the other profile
 - Base issuance of 1000 units, on the 1st of each month, a single date for everyone.
 - The first `mint` = `period − 1` (no retro-accruals). The `period` of a new issuance is strictly greater than the previous one; `amount = base_emission × periods_elapsed`.
 - Issuance is available only to a wallet in `active` status.
-- **Accrual for missed months is limited by a window** (`accrual_window`, 6 months by default): unlimited accrual creates "sleeping" accruals and an incentive for a delayed attack. The money is not blocked: beyond the window, the accrual simply burns.
+- **Accrual for missed months is limited by a window** (`accrual_window`, 6 months by default): unlimited accrual creates "sleeping" accruals and an incentive for a delayed attack. The units are not blocked: beyond the window, the accrual simply burns.
 - The emission is constant: 1000 × the number of `active` wallets per month; a decreasing emission is not used.
 - An offline duplicate conflict: the first one by finalization order wins; the second is voided.
 - Freshly issued funds are not transferable immediately (part of the moratorium, Section 7.6): this cuts off "issue → dump".
@@ -576,7 +576,7 @@ A phone behind mobile NAT (CGNAT) does not accept incoming connections, which is
 | An eclipse attack                    | Isolating a node among controlled peers                      | Mixing the sources, confirmation from N unrelated peers                                                                                                                 | A new node with a single source                                                                |
 | Time shifting                        | Manipulating "network time"                                   | Epochs by finalized checkpoints                                                                                                                                        | A small network at the start                                                                    |
 | Phone theft                          | Using an unlocked device                                      | Signing only after per-operation authentication (per `signing_auth`)                                                                                                  | Owner coercion                                                                                  |
-| Owner coercion                       | The owner is forced to open the app or send money            | The duress PIN with decoy mode, delayed large transfers                                                                                                                | A prepared attacker checking the registry                                                      |
+| Owner coercion                       | The owner is forced to open the app or send units            | The duress PIN with decoy mode, delayed large transfers                                                                                                                | A prepared attacker checking the registry                                                      |
 | Device loss                          | The key is non-exportable                                     | Social recovery with a delay, public guardians, a restart                                                                                                             | Guardian collusion                                                                             |
 | Project key compromise               | The signing of seed lists and releases                       | An N-of-M multisignature, key rotation                                                                                                                                  | Social engineering                                                                             |
 | Spam                                 | Mass transactions                                            | A light PoW + a burn fee                                                                                                                                                | —                                                                                              |
