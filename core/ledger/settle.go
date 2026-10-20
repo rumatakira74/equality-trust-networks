@@ -45,6 +45,9 @@ func (l *Ledger) settleEpoch(epoch, now uint64) {
 	if l.State.SeedRightsActive && l.seedSunsetMet(epoch) {
 		l.State.SeedRightsActive = false
 	}
+	// пулы (6.3, этап 10): выпуск release_on_deadline открывается после
+	// дедлайна, непрерывный закрывается дедлайном
+	l.settlePools(epoch)
 }
 
 func (l *Ledger) seedSunsetMet(epoch uint64) bool {
@@ -73,6 +76,25 @@ func (l *Ledger) seedSunsetMet(epoch uint64) bool {
 // (интерпретация этапа 3; в spec «эпохи» — см. отчёт, отклонение D-2).
 func (l *Ledger) settlePeriod(period, now uint64) {
 	prof := l.State.Net.Profile
+	// quota_reset (раздел 4, 6.2): квота не накапливается и сгорает в
+	// конце периода — когорты прошлых периодов сжигаются
+	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+		for _, w := range l.State.Wallets {
+			burn := uint64(0)
+			keep := w.Cohorts[:0]
+			for _, c := range w.Cohorts {
+				if c.Period < period {
+					burn += c.Amount
+				} else {
+					keep = append(keep, c)
+				}
+			}
+			w.Cohorts = keep
+			if burn > 0 {
+				l.State.TotalBurned += burn
+			}
+		}
+	}
 	if prof.DemurrageRateMicros == 0 {
 		return
 	}

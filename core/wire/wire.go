@@ -204,6 +204,94 @@ type EvidencePayload struct {
 
 type GuardianOfferPayload struct{}
 
+// ---------------------------------------------------------------------------
+// Модульные payload (раздел 6, этап 10; теги 17–24)
+// ---------------------------------------------------------------------------
+
+// Идентификаторы модулей (раздел 6; поле профиля modules).
+const (
+	ModuleAttest      uint32 = 1 // 6.1
+	ModuleRedeem      uint32 = 2 // 6.2
+	ModulePool        uint32 = 3 // 6.3
+	ModuleContribution uint32 = 4 // 6.4
+	ModuleSandbox     uint32 = 5 // 6.5
+)
+
+// Режимы выпуска пула (6.3).
+type PoolReleaseMode uint32
+
+const (
+	PoolReleaseUnspecified   PoolReleaseMode = 0
+	PoolReleaseOnDeadline    PoolReleaseMode = 1
+	PoolReleaseOnGoal        PoolReleaseMode = 2
+	PoolReleaseContinuous    PoolReleaseMode = 3
+)
+
+// Режимы возврата пула (6.3).
+type PoolRefundMode uint32
+
+const (
+	PoolRefundUnspecified  PoolRefundMode = 0
+	PoolRefundIfUnmet      PoolRefundMode = 1
+	PoolRefundNone         PoolRefundMode = 2
+)
+
+// PoolCreatePayload — pool_create {получатель, цель, дедлайн, режимы} (6.3).
+type PoolCreatePayload struct {
+	Recipient     []byte
+	GoalAmount    uint64
+	DeadlineEpoch uint64
+	ReleaseMode   PoolReleaseMode
+	RefundMode    PoolRefundMode
+}
+
+// PoolDonatePayload — pool_donate {pool, amount} (6.3).
+type PoolDonatePayload struct {
+	PoolID []byte // txid pool_create
+	Amount uint64
+}
+
+// PoolClosePayload — pool_close {pool} (6.3).
+type PoolClosePayload struct {
+	PoolID []byte
+}
+
+// PoolClaimPayload — pool_claim {pool} (6.3: равные доли active-кошелькам).
+type PoolClaimPayload struct {
+	PoolID []byte
+}
+
+// RedeemPayload — redeem {provider, resource_id, amount, слот} (6.2).
+type RedeemPayload struct {
+	Provider   []byte
+	ResourceID string
+	Amount     uint64
+	Slot       *TimeSlot
+}
+
+// ReceiptPayload — подписанная поставщиком receipt (6.2).
+type ReceiptPayload struct {
+	RedeemTxID []byte
+	Amount     uint64
+	ResourceID string
+	Slot       *TimeSlot
+}
+
+// ContributionClaimPayload — contribution_claim {хеш описания, размер,
+// период} (6.4); PoolID — пул программы для выплаты (рекомендуется,
+// инфляции нет; 6.4).
+type ContributionClaimPayload struct {
+	PoolID          []byte
+	DescriptionHash []byte
+	Size            uint64
+	Period          uint64
+}
+
+// ContributionConfirmPayload — contribution_confirm от подтверждающего (6.4).
+type ContributionConfirmPayload struct {
+	ClaimTxID []byte
+}
+
 // Payload — интерфейс маркировки payload-ветвей oneof.
 type Payload interface{ payloadTag() uint32 }
 
@@ -214,6 +302,14 @@ func (*TransferPayload) payloadTag() uint32      { return 13 }
 func (*MigratePayload) payloadTag() uint32       { return 14 }
 func (*EvidencePayload) payloadTag() uint32      { return 15 }
 func (*GuardianOfferPayload) payloadTag() uint32 { return 16 }
+func (*PoolCreatePayload) payloadTag() uint32    { return 17 }
+func (*PoolDonatePayload) payloadTag() uint32    { return 18 }
+func (*PoolClosePayload) payloadTag() uint32     { return 19 }
+func (*PoolClaimPayload) payloadTag() uint32     { return 20 }
+func (*RedeemPayload) payloadTag() uint32        { return 21 }
+func (*ReceiptPayload) payloadTag() uint32       { return 22 }
+func (*ContributionClaimPayload) payloadTag() uint32   { return 23 }
+func (*ContributionConfirmPayload) payloadTag() uint32 { return 24 }
 
 // ---------------------------------------------------------------------------
 // Transaction (конверт, proto/transactions.proto)
@@ -435,6 +531,79 @@ func (p *MigratePayload) Encode() []byte {
 
 func (p *GuardianOfferPayload) Encode() []byte { return nil }
 
+func (p *PoolCreatePayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.Recipient)
+	b = appendU64Field(b, 2, p.GoalAmount)
+	b = appendU64Field(b, 3, p.DeadlineEpoch)
+	b = appendU32Field(b, 4, uint32(p.ReleaseMode))
+	b = appendU32Field(b, 5, uint32(p.RefundMode))
+	return b
+}
+
+func (p *PoolDonatePayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.PoolID)
+	b = appendU64Field(b, 2, p.Amount)
+	return b
+}
+
+func (p *PoolClosePayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.PoolID)
+	return b
+}
+
+func (p *PoolClaimPayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.PoolID)
+	return b
+}
+
+func (p *RedeemPayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.Provider)
+	b = appendStringField(b, 2, p.ResourceID)
+	b = appendU64Field(b, 3, p.Amount)
+	if p.Slot != nil {
+		b = appendMessageField(b, 4, p.Slot.Encode())
+	}
+	return b
+}
+
+func (p *TimeSlot) Encode() []byte {
+	var b []byte
+	b = appendU64Field(b, 1, p.Start)
+	b = appendU64Field(b, 2, p.End)
+	return b
+}
+
+func (p *ReceiptPayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.RedeemTxID)
+	b = appendU64Field(b, 2, p.Amount)
+	b = appendStringField(b, 3, p.ResourceID)
+	if p.Slot != nil {
+		b = appendMessageField(b, 4, p.Slot.Encode())
+	}
+	return b
+}
+
+func (p *ContributionClaimPayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.PoolID)
+	b = appendBytesField(b, 2, p.DescriptionHash)
+	b = appendU64Field(b, 3, p.Size)
+	b = appendU64Field(b, 4, p.Period)
+	return b
+}
+
+func (p *ContributionConfirmPayload) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, p.ClaimTxID)
+	return b
+}
+
 func (p *EvidencePayload) Encode() []byte {
 	var b []byte
 	if p.TxA != nil {
@@ -475,6 +644,22 @@ func (t *Transaction) Encode() []byte {
 		b = appendMessageField(b, 15, pl.Encode())
 	case *GuardianOfferPayload:
 		b = appendMessageField(b, 16, pl.Encode())
+	case *PoolCreatePayload:
+		b = appendMessageField(b, 17, pl.Encode())
+	case *PoolDonatePayload:
+		b = appendMessageField(b, 18, pl.Encode())
+	case *PoolClosePayload:
+		b = appendMessageField(b, 19, pl.Encode())
+	case *PoolClaimPayload:
+		b = appendMessageField(b, 20, pl.Encode())
+	case *RedeemPayload:
+		b = appendMessageField(b, 21, pl.Encode())
+	case *ReceiptPayload:
+		b = appendMessageField(b, 22, pl.Encode())
+	case *ContributionClaimPayload:
+		b = appendMessageField(b, 23, pl.Encode())
+	case *ContributionConfirmPayload:
+		b = appendMessageField(b, 24, pl.Encode())
 	case nil:
 	default:
 		panic(fmt.Sprintf("wire: неизвестный payload %T", t.Payload))
@@ -965,6 +1150,262 @@ func DecodeGuardianOfferPayload(b []byte) (*GuardianOfferPayload, error) {
 	return &GuardianOfferPayload{}, nil
 }
 
+func DecodePoolCreatePayload(b []byte) (*PoolCreatePayload, error) {
+	d := &decoder{b: b}
+	p := &PoolCreatePayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.Recipient, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 0:
+			if p.GoalAmount, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 3 && wt == 0:
+			if p.DeadlineEpoch, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 4 && wt == 0:
+			v, err := d.varint()
+			if err != nil {
+				return nil, err
+			}
+			p.ReleaseMode = PoolReleaseMode(v)
+		case f == 5 && wt == 0:
+			v, err := d.varint()
+			if err != nil {
+				return nil, err
+			}
+			p.RefundMode = PoolRefundMode(v)
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodePoolDonatePayload(b []byte) (*PoolDonatePayload, error) {
+	d := &decoder{b: b}
+	p := &PoolDonatePayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.PoolID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 0:
+			if p.Amount, err = d.varint(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodePoolClosePayload(b []byte) (*PoolClosePayload, error) {
+	d := &decoder{b: b}
+	p := &PoolClosePayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.PoolID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodePoolClaimPayload(b []byte) (*PoolClaimPayload, error) {
+	d := &decoder{b: b}
+	p := &PoolClaimPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.PoolID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodeTimeSlot(b []byte) (*TimeSlot, error) {
+	d := &decoder{b: b}
+	p := &TimeSlot{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 0:
+			if p.Start, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 0:
+			if p.End, err = d.varint(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodeRedeemPayload(b []byte) (*RedeemPayload, error) {
+	d := &decoder{b: b}
+	p := &RedeemPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.Provider, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			p.ResourceID = string(v)
+		case f == 3 && wt == 0:
+			if p.Amount, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 4 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			if p.Slot, err = DecodeTimeSlot(v); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodeReceiptPayload(b []byte) (*ReceiptPayload, error) {
+	d := &decoder{b: b}
+	p := &ReceiptPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.RedeemTxID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 0:
+			if p.Amount, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 3 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			p.ResourceID = string(v)
+		case f == 4 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			if p.Slot, err = DecodeTimeSlot(v); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodeContributionClaimPayload(b []byte) (*ContributionClaimPayload, error) {
+	d := &decoder{b: b}
+	p := &ContributionClaimPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.PoolID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 2 && wt == 2:
+			if p.DescriptionHash, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		case f == 3 && wt == 0:
+			if p.Size, err = d.varint(); err != nil {
+				return nil, err
+			}
+		case f == 4 && wt == 0:
+			if p.Period, err = d.varint(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+func DecodeContributionConfirmPayload(b []byte) (*ContributionConfirmPayload, error) {
+	d := &decoder{b: b}
+	p := &ContributionConfirmPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			if p.ClaimTxID, err = d.bytes(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
 // DecodeTransaction разбирает canonical-кодирование конверта.
 func DecodeTransaction(b []byte) (*Transaction, error) {
 	d := &decoder{b: b}
@@ -1062,10 +1503,24 @@ func decodePayload(field uint32, b []byte) (Payload, error) {
 		return DecodeEvidencePayload(b)
 	case 16:
 		return DecodeGuardianOfferPayload(b)
+	case 17:
+		return DecodePoolCreatePayload(b)
+	case 18:
+		return DecodePoolDonatePayload(b)
+	case 19:
+		return DecodePoolClosePayload(b)
+	case 20:
+		return DecodePoolClaimPayload(b)
+	case 21:
+		return DecodeRedeemPayload(b)
+	case 22:
+		return DecodeReceiptPayload(b)
+	case 23:
+		return DecodeContributionClaimPayload(b)
+	case 24:
+		return DecodeContributionConfirmPayload(b)
 	default:
-		// 17–24: модульные типы (этап 10) — структура ядра не мешает им,
-		// но ядро их не декодирует.
-		return nil, fmt.Errorf("wire: payload %d вне ядра (модули — этап 10)", field)
+		return nil, fmt.Errorf("wire: payload %d вне перечня", field)
 	}
 }
 
@@ -1086,6 +1541,22 @@ func PayloadMatchesType(t TxType, p Payload) bool {
 		return t == Evidence
 	case *GuardianOfferPayload:
 		return t == GuardianOffer
+	case *PoolCreatePayload:
+		return t == PoolCreate
+	case *PoolDonatePayload:
+		return t == PoolDonate
+	case *PoolClosePayload:
+		return t == PoolClose
+	case *PoolClaimPayload:
+		return t == PoolClaim
+	case *RedeemPayload:
+		return t == Redeem
+	case *ReceiptPayload:
+		return t == Receipt
+	case *ContributionClaimPayload:
+		return t == ContributionClaim
+	case *ContributionConfirmPayload:
+		return t == ContributionConfirm
 	default:
 		return false
 	}
@@ -1108,6 +1579,22 @@ func PayloadTxType(p Payload) TxType {
 		return Evidence
 	case *GuardianOfferPayload:
 		return GuardianOffer
+	case *PoolCreatePayload:
+		return PoolCreate
+	case *PoolDonatePayload:
+		return PoolDonate
+	case *PoolClosePayload:
+		return PoolClose
+	case *PoolClaimPayload:
+		return PoolClaim
+	case *RedeemPayload:
+		return Redeem
+	case *ReceiptPayload:
+		return Receipt
+	case *ContributionClaimPayload:
+		return ContributionClaim
+	case *ContributionConfirmPayload:
+		return ContributionConfirm
 	default:
 		return TxUnspecified
 	}
