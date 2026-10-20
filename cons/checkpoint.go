@@ -167,13 +167,15 @@ func NewCollector(cp *wire.Checkpoint, pubOf func(addr []byte) (*ecdsa.PublicKey
 // Add — принять долю подписи: подписант из participants, подпись верна.
 //
 // Блокер 8.1 (прогон 1, 48 узлов): fatal error concurrent map writes —
-// net.onCpMessage вызывает Add вне n.mu из нескольких горутин
-// (checkpointLoop: входящие предложения и доли), на разреженном трафике
-// этапа 8 окно не вскрылось. Фикс — собственный мьютекс коллектора
-// (минимальная правка cons, причина: падение узла на масштабе).
+// net.onCpMessage вызывает Add вне n.mu из нескольких горутин. Первый
+// фикс (мьютекс на весь Add) вскрыл цикл блокировок
+// n.mu → c.mu → applyMu → n.mu (pubOf читает реестр под applyMu):
+// collectCpPending держит n.mu и зовёт Ready (c.mu), Add держал c.mu и
+// звал pubOf (applyMu), SyncJournalFrom держит applyMu и зовёт indexTx
+// (n.mu) — полный дедлок узла. Итоговый фикс: pubOf и проверка подписи —
+// ВНЕ мьютекса коллектора, мьютекс только на карте долей; порядок
+// блокировок везде applyMu → n.mu → c.mu.
 func (c *Collector) Add(share wire.SignatureShare) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	inSet := false
 	for _, p := range c.cp.Participants {
 		if string(p) == string(share.Signer) {
@@ -184,15 +186,17 @@ func (c *Collector) Add(share wire.SignatureShare) bool {
 	if !inSet {
 		return false
 	}
-	if _, dup := c.shares[string(share.Signer)]; dup {
-		return false
-	}
 	pub, ok := c.pubOf(share.Signer)
 	if !ok || pub == nil {
 		return false
 	}
 	h := c.cp.CheckpointHash()
 	if !ecdsa.VerifyASN1(pub, h[:], share.Signature) {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, dup := c.shares[string(share.Signer)]; dup {
 		return false
 	}
 	c.shares[string(share.Signer)] = share
