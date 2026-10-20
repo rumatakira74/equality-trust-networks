@@ -13,6 +13,10 @@
 //	-no-announce           не анонсировать адреса (эмуляция CGNAT)
 //	-force-public          форсировать публичную достижимость (relay-узел)
 //	-own-wallet            адрес собственного кошелька (лёгкий узел)
+//	-wallet                метка кошелька узла для подписи чекпоинтов
+//	-wallet-domain         домен деривации кошелька: seed | wallet
+//	-link-groups           несвязанность пиров по подсетям (№35);
+//	                       false для флота на localhost (подэтап 8.1)
 //	-status-file           файл JSON-статуса (периодически обновляется)
 //	-demo-tx               опубликовать демонстрационные транзакции
 //	                       (выпуск посевного кошелька + перевод)
@@ -53,7 +57,9 @@ func main() {
 	noAnnounce := flag.Bool("no-announce", false, "не анонсировать адреса (CGNAT)")
 	forcePublic := flag.Bool("force-public", false, "форсировать публичную достижимость (relay)")
 	ownWallet := flag.String("own-wallet", "", "адрес собственного кошелька (light)")
-	walletID := flag.String("wallet", "", "кошелёк узла для подписи чекпоинтов (V1|V2|V3 — посевной круг)")
+	walletID := flag.String("wallet", "", "кошелёк узла для подписи чекпоинтов (метка посевного круга)")
+	walletDomain := flag.String("wallet-domain", "seed", "деривация ключа кошелька: seed (tnp-node-seed:) | wallet (tnp-testnet-wallet:; участники утилиты tnp-testnet)")
+	linkGroups := flag.Bool("link-groups", true, "несвязанность eclipse-пиров по подсетям (№35); false для localhost/флота — все пиры в одной /24")
 	quiet := flag.Bool("quiet", false, "тихий режим")
 	var peers, relays multiaddrList
 	flag.Var(&peers, "peer", "multiaddr пира (повторяется)")
@@ -103,8 +109,10 @@ func main() {
 		NoAnnounce:  *noAnnounce,
 		ForcePublic: *forcePublic,
 		// несвязанность eclipse-пиров по подсетям (№35, этап 6):
-		// продакшен-дефолт — оценка включена (обоснование — отчёт этапа 6)
-		LinkGroups: true,
+		// продакшен-дефолт — оценка включена (обоснование — отчёт этапа 6);
+		// флот на localhost — false: /24-классификатор схлопывает все узлы
+		// в одну группу связи (подэтап 8.1)
+		LinkGroups: *linkGroups,
 	}
 	if *level == "light" {
 		cfg.Level = net.LevelLight
@@ -117,9 +125,16 @@ func main() {
 		}
 		cfg.OwnWallet = w
 	}
-	// кошелёк узла: подпись чекпоинтов (этап 5) и вес голоса
+	// кошелёк узла: подпись чекпоинтов (этап 5) и вес голоса;
+	// домен деривации: seed — посевной круг (как tx-драйверы tnp-testnet),
+	// wallet — кошельки-участники tnp-testnet (tnp-testnet-wallet:),
+	// чтобы узел-участник подписывал чекпоинты после seed_sunset
 	if *walletID != "" {
-		key := crypto.DeterministicKey("tnp-node-seed:" + *walletID)
+		domain := "tnp-node-seed:"
+		if *walletDomain == "wallet" {
+			domain = "tnp-testnet-wallet:"
+		}
+		key := crypto.DeterministicKey(domain + *walletID)
 		pub := crypto.MarshalPubKey(&key.PublicKey)
 		fp := crypto.Fingerprint(pub)
 		cfg.WalletKey = key
