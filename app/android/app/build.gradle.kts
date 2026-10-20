@@ -31,6 +31,13 @@ android {
         release {
             // подпись debug — релизная подпись отдельно (этап 8)
             signingConfig = signingConfigs.getByName("debug")
+            // R8-минификация (этап 8, задача 2): tnp.** — JNI-связка AAR
+            // (Go вызывает методы Java через JNI — обфускация ломает связку)
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }
