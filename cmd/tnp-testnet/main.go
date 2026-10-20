@@ -21,6 +21,7 @@
 //	state     — снимок состояния реестра узла-драйвера (8.1)
 //	export    — экспорт реестра песочницы для анализа (6.5, этап 10):
 //	            кошельки/пулы/обороты/предложение/неравенство (Gini)
+//	configure — конфигуратор сети по шаблону профиля (раздел 5, этап 10)
 //	fleet     — супервизор 48 persistent headless-узлов (8.1)
 //
 // Параметры профиля — KNOWLEDGE 4/17 (база params.TestGenesis); сеть
@@ -79,6 +80,12 @@ const usage = `tnp-testnet — утилита закрытой тестовой 
   export    -genesis Ф [-out ФАЙЛ] [-format json|csv] [-peer M]...
             (6.5: экспорт реестра для анализа — оборот, предложение,
             неравенство считаются из публичного реестра)
+  configure -list | -template 1..7 -network-id ИМЯ [-out КАТ]
+            [-genesis-time T] [-seeds V1,V2,V3] [-issuance-amount N]
+            [-vouch-k N] [-epoch-seconds N] [-resource-id ID]
+            [-display-name ИМЯ] [-invite-key-hex HEX]
+            (конфигуратор: шаблон профиля → параметры → genesis-пакет
+            + приложение + уровень гарантий из манифеста, 3.3)
 
 Общие флаги tx-режимов: -peer (multiaddr пиров, повторяется),
 -wait СЕК (после публикации, по умолчанию 2), -node-seed СТРОКА,
@@ -120,6 +127,8 @@ func main() {
 		err = fleetCmd(os.Args[2:])
 	case "export":
 		err = exportCmd(os.Args[2:])
+	case "configure":
+		err = configureCmd(os.Args[2:])
 	default:
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
