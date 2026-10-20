@@ -17,6 +17,9 @@
 //	migrate   — MIGRATE propose (гардианы подписывают statements) или
 //	            cancel старым ключом (-mode cancel)
 //	evidence  — EVIDENCE на эквивокации (две ветки одного seq)
+//	findlabels — метки кошельков со слотом челленджа в полосе (8.1)
+//	state     — снимок состояния реестра узла-драйвера (8.1)
+//	fleet     — супервизор 48 persistent headless-узлов (8.1)
 //
 // Параметры профиля — KNOWLEDGE 4/17 (база params.TestGenesis); сеть
 // закрытая: network_access = invite_only, вход invite_only_vouch, ключ
@@ -66,10 +69,16 @@ const usage = `tnp-testnet — утилита закрытой тестовой 
   migrate   -genesis Ф -mode propose -new МЕТКА -old HEX -guardians V2,V3 [-peer M]...
   migrate   -genesis Ф -mode cancel -old МЕТКА -new HEX -propose-seq N [-peer M]...
   evidence  -genesis Ф -seed МЕТКА -txa Ф -txb Ф [-peer M]...
+  findlabels -network-id ИМЯ -genesis-time T -kind seed|wallet -count N
+            -period P [-band-hours 24] [-from N]
+  state     -genesis Ф [-watch-seeds М] [-watch-wallets М] [-peer M]...
+  fleet     -genesis Ф -out КАТ -nodes N [-seeds М,М] [-wallets М,М]
+            [-base-port 4100] [-bin ПУТЬ] [-duration СЕК] [-poll СЕК]
 
 Общие флаги tx-режимов: -peer (multiaddr пиров, повторяется),
 -wait СЕК (после публикации, по умолчанию 2), -node-seed СТРОКА,
--db ПУТЬ (SQLite; по умолчанию — в памяти).`
+-db ПУТЬ (SQLite; по умолчанию — в памяти), -link-groups БУЛЕВ
+(по умолчанию true; false для localhost — №35).`
 
 func main() {
 	if len(os.Args) < 2 {
@@ -98,6 +107,12 @@ func main() {
 		err = migrateCmd(os.Args[2:])
 	case "evidence":
 		err = evidenceCmd(os.Args[2:])
+	case "findlabels":
+		err = findlabelsCmd(os.Args[2:])
+	case "state":
+		err = stateCmd(os.Args[2:])
+	case "fleet":
+		err = fleetCmd(os.Args[2:])
 	default:
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
@@ -165,12 +180,13 @@ type txEnv struct {
 
 // txFlags — общие флаги tx-режимов.
 type txFlags struct {
-	genesis  string
-	wait     int
-	nodeSeed string
-	db       string
-	listen   string
-	peers    []string
+	genesis    string
+	wait       int
+	nodeSeed   string
+	db         string
+	listen     string
+	peers      []string
+	linkGroups bool
 }
 
 func addCommonFlags(fs *flag.FlagSet, c *txFlags) {
@@ -180,6 +196,7 @@ func addCommonFlags(fs *flag.FlagSet, c *txFlags) {
 	fs.StringVar(&c.db, "db", "", "путь к SQLite (пусто — в памяти)")
 	fs.StringVar(&c.listen, "listen", "/ip4/0.0.0.0/udp/0/quic-v1,/ip4/0.0.0.0/tcp/0", "адреса прослушивания")
 	fs.Var((*peerList)(&c.peers), "peer", "multiaddr пира (повторяется)")
+	fs.BoolVar(&c.linkGroups, "link-groups", true, "несвязанность пиров по подсетям (№35); false для localhost")
 }
 
 func startEnv(c *txFlags) (*txEnv, func(), error) {
@@ -214,8 +231,10 @@ func startEnv(c *txFlags) (*txEnv, func(), error) {
 		ListenAddrs:  strings.Split(c.listen, ","),
 		ManualAddrs:  c.peers,
 		TrustedRoots: roots,
-		LinkGroups:   true,
-		Log:          func(f string, a ...any) { fmt.Fprintf(os.Stderr, "узел: "+f+"\n", a...) },
+		// localhost: /24-классификатор (№35) схлопывает все узлы флота
+		// в одну группу связи — несвязанность = уникальные Peer ID (8.1)
+		LinkGroups: c.linkGroups,
+		Log:        func(f string, a ...any) { fmt.Fprintf(os.Stderr, "узел: "+f+"\n", a...) },
 	}
 	node, err := net.NewNode(cfg)
 	if err != nil {
@@ -308,6 +327,9 @@ func generate(args []string) error {
 	genesisTime := fs.Int64("genesis-time", 0, "genesis-время, unix (0 = сейчас − 95 сут)")
 	seeds := fs.String("seeds", "V1,V2,V3", "метки посевного круга, через запятую")
 	inviteHex := fs.String("invite-key-hex", "", "ключ приглашения (hex; по умолчанию детерминирован от имени)")
+	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds профиля (0 — 86400, №16); симуляция: 90/300")
+	smallPow := fs.Bool("small-pow", false, "малые PoW-таргеты и Argon2 (тестовый оверрайд симуляции 8.1)")
+	anchorEpochZero := fs.Bool("anchor-epoch-zero", false, "EpochZero = текущая эпоха от genesis; DeadlineEpoch seed_sunset = EpochZero+24 (закат через 24 эпохи от generate)")
 	var peers peerList
 	fs.Var(&peers, "peer", "multiaddr первого узла (повторяется)")
 	if err := fs.Parse(args); err != nil {
@@ -334,6 +356,33 @@ func generate(args []string) error {
 	gp.Genesis.GenesisTime = uint64(*genesisTime)
 	gp.Genesis.EpochZero = 0
 	gp.Genesis.ProtocolVersion = 1
+	// симуляция 8.1: эпоха короче суток (№16 — сетевые параметры теста);
+	// малые PoW-таргеты (прогон без десятков секунд на транзакцию)
+	if *epochSeconds > 0 {
+		prof.EpochSeconds = *epochSeconds
+	}
+	if *smallPow {
+		prof.Pow = &wire.PowParams{
+			TargetLight: 0x0010_0000_0000_0000, TargetHard: 0x0010_0000_0000_0000,
+			Argon2MemoryKiB: 8, Argon2Iterations: 1, Argon2Parallelism: 1,
+		}
+	}
+	// симуляция 8.1: якорь абсолютной эпохи. DeadlineEpoch seed_sunset (№15)
+	// сравнивается с абсолютным номером эпохи (now-genesis)/epoch_seconds;
+	// при genesis 91 сут назад и эпохе 5 мин ветка эпох сработала бы на
+	// первой же транзакции. EpochZero = текущая эпоха, DeadlineEpoch =
+	// EpochZero+24 — закат ровно через 24 эпохи от generate. Механизм №15
+	// (порог active ИЛИ срок) не меняется; тестовая сеть — параметры
+	// теста, живая сеть генерируется с дефолтами KNOWLEDGE 4/17.
+	if *anchorEpochZero {
+		if prof.EpochSeconds == 0 {
+			prof.EpochSeconds = 86400
+		}
+		gp.Genesis.EpochZero = uint64(time.Now().Unix()-*genesisTime) / prof.EpochSeconds
+		if ss := gp.Manifest.SeedSunset; ss != nil {
+			ss.DeadlineEpoch = gp.Genesis.EpochZero + ss.DeadlineEpoch
+		}
+	}
 
 	var circle []wire.SeedMember
 	seedLabels := strings.Split(*seeds, ",")
@@ -408,9 +457,11 @@ func generate(args []string) error {
 		return err
 	}
 
-	fmt.Printf("сеть %s\n network_id: %s\n genesis_time: %d (%s)\n manifest_hash: %s\n invite_key: %s\n посевной круг: %d\n",
+	fmt.Printf("сеть %s\n network_id: %s\n genesis_time: %d (%s)\n epoch_seconds: %d\n epoch_zero: %d\n seed_sunset: active>=%d или эпоха>=%d\n manifest_hash: %s\n invite_key: %s\n посевной круг: %d\n",
 		*name, hex.EncodeToString(networkID), *genesisTime,
 		time.Unix(*genesisTime, 0).UTC().Format(time.RFC3339),
+		prof.EpochSeconds, gp.Genesis.EpochZero,
+		gp.Manifest.SeedSunset.ActiveWallets, gp.Manifest.SeedSunset.DeadlineEpoch,
 		hex.EncodeToString(mh[:]), hex.EncodeToString(inviteKey), len(circle))
 	printSlots(gp, seedLabels, "", "1,2,3,4,5,6")
 	fmt.Printf("артефакты: %s/{genesis.bin,manifest.json,seedlist.bin,invite.txt}\n", *out)
