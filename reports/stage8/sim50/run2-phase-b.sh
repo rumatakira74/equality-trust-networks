@@ -21,9 +21,19 @@ TX() { "$BIN/tnp-testnet" "$@" -peer "$BOOT" -link-groups=false -wait 4 >> "$WOR
 STATE() { "$BIN/tnp-testnet" state -genesis net/genesis.bin -peer "$BOOT" -link-groups=false \
   -wait 3 -node-seed "drv-st-$RANDOM" "$@" 2>/dev/null; }
 
-say "регистрация 28 участников (гардианы S01,S02)"
+say "адреса гардианов (метки -> hex из состояния сети)"
+STATE -watch-seeds "${SEEDARR[0]},${SEEDARR[1]}" > "$WORK/guardian-addrs.json"
+GUARD_HEX=$(python3 - "$WORK/guardian-addrs.json" "${SEEDARR[0]}" "${SEEDARR[1]}" <<'EOF'
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(",".join(d["wallets"][l]["address"] for l in sys.argv[2:]))
+EOF
+)
+echo "гардианы: $GUARD_HEX"
+
+say "регистрация 28 участников (гардианы ${SEEDARR[0]},${SEEDARR[1]})"
 for w in "${WALTARR[@]}"; do
-  if TX register -genesis net/genesis.bin -wallet "$w" -guardians "${SEEDARR[0]},${SEEDARR[1]}" \
+  if TX register -genesis net/genesis.bin -wallet "$w" -guardians "$GUARD_HEX" \
       -android-id "sim-$w" -node-seed "drv-r-$w"; then
     echo "$(date -u +%H:%M:%S) register $w OK" >> "$LOG"
   else
