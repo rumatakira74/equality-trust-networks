@@ -1,0 +1,690 @@
+{
+  "@@locale": "en",
+  "appTitle": "Trust Networks",
+  "navWallet": "Wallet",
+  "navVouching": "Vouching",
+  "navRegistry": "Registry",
+  "navMigration": "Migration",
+  "navSettings": "Settings",
+  "btnNext": "Next",
+  "btnCancel": "Cancel",
+  "btnConfirm": "Confirm",
+  "btnRefresh": "Refresh",
+  "btnSkip": "Skip",
+  "btnLogin": "Unlock",
+  "btnFingerprint": "Fingerprint",
+  "btnSend": "Send",
+  "btnSendBt": "Send via Bluetooth",
+  "btnVouch": "Vouch",
+  "btnMyQr": "My QR",
+  "btnHideQr": "Hide my QR",
+  "btnBtReceive": "Receive via BT",
+  "btnMint": "Mint (challenge)",
+  "btnMintDo": "Mint (heavy PoW)",
+  "btnTransfer": "Transfer",
+  "btnPublishAwaiting": "Publish (network available)",
+  "btnChangeThreshold": "Change threshold",
+  "btnCancelTransfer": "Cancel",
+  "btnRegister": "Register wallet",
+  "btnStartMigration": "Start migration (new device)",
+  "btnApproveMigration": "Approve someone's migration (I am a guardian)",
+  "btnRestart": "Restart wallet",
+  "btnUnderstandRestart": "I understand, restart",
+  "btnAddSig": "Add signature",
+  "btnPublishProposal": "Publish proposal",
+  "btnSignBiometric": "Sign (biometrics)",
+  "enterPin": "Enter PIN",
+  "errWrongPin": "Wrong PIN",
+  "confirmOperation": "Confirm operation",
+  "keyUnlockTitle": "Unlock key",
+  "rejectedWithCode": "Rejected: {code}",
+  "@rejectedWithCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWith": "Error: {e}",
+  "@errorWith": {
+    "placeholders": {
+      "e": {
+        "type": "String"
+      }
+    }
+  },
+  "obTitle": "Creating a wallet",
+  "obBioRequired": "The wallet requires a hardware key with biometrics (BIOMETRIC_STRONG). Registration is impossible without a configured fingerprint.",
+  "obBioNotSetup": "No fingerprint configured. Open the system settings screen and add a fingerprint.",
+  "obBioSetup": "Set up fingerprint",
+  "obPinIntro": "PIN protects the app. A duress PIN (optional) opens a decoy mode: the same interface, but a plausible small balance; the signing key is not used.",
+  "obPinNormal": "PIN (normal)",
+  "obWantDuress": "Set a duress PIN",
+  "obDuressPin": "Duress PIN",
+  "obDecoyLegend": "Decoy mode legend (what the coercer will see):",
+  "obDecoyBalance": "Plausible balance (not 0)",
+  "obDecoyHistory": "History (lines: date — amount — recipient)",
+  "pinMinDigits": "minimum 4 digits",
+  "duressPinMinDigits": "duress PIN: minimum 4 digits",
+  "pinsMatch": "PINs match",
+  "obGuardiansIntro": "Assign personal guardians (2 of 3). They will be able to approve migration to a new device. Adding a new fingerprint invalidates the key — without guardians access to the wallet is lost.",
+  "obGuardiansEmpty": "There are no other members in the network yet. You may skip guardians for now, but the offer is mandatory: the list cannot be changed later (only at creation).",
+  "guardianRowStatus": "{status}, age {age} days",
+  "@guardianRowStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "obSelectedCount": "Selected: {count}",
+  "@obSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "regStatusReady": "Ready to register",
+  "regStatusPow": "Attestation and PoW (may take a while)…",
+  "regConfirmTitle": "Confirm registration",
+  "regStatusDone": "Wallet registered",
+  "pendingCount": "Delayed transfers: {count}",
+  "@pendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingHint": "Large transfers execute after delay D; they can be cancelled within D",
+  "historyTitle": "History",
+  "historyEmpty": "Nothing yet",
+  "effBalance": "effective balance",
+  "effBalanceDem": "effective balance (demurrage applied)",
+  "lockedReserve": "reserved for delayed transfers: {amount}",
+  "@lockedReserve": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "flaggedNotice": "Wallet is flagged — the mark is public, no verdicts",
+  "registeredNeedK": "Status registered: activation requires K vouches (the \"Vouching\" tab)",
+  "btAwaitingTitle": "Received via Bluetooth — awaiting publication",
+  "btAwaitingRow": "{amount} from {hash}",
+  "@btAwaitingRow": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "hash": {
+        "type": "String"
+      }
+    }
+  },
+  "btStatus": "status: {status}",
+  "@btStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "txRegister": "Wallet registration",
+  "txVouch": "Vouching",
+  "txMint": "Mint (period {period})",
+  "@txMint": {
+    "placeholders": {
+      "period": {
+        "type": "int"
+      }
+    }
+  },
+  "txTransfer": "Transfer {amount} → {hash}",
+  "@txTransfer": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "hash": {
+        "type": "String"
+      }
+    }
+  },
+  "mintTitle": "Mint",
+  "mintPeriod": "Period: {period}",
+  "@mintPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "int"
+      }
+    }
+  },
+  "mintWindowOpen": "Challenge window is open (±{hours} h around the slot). You can mint.",
+  "@mintWindowOpen": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "mintWindowOff": "Challenge window check is disabled (sandbox). You can mint.",
+  "mintWindowClosed": "Challenge window is closed. The slot inside the month is unpredictable in advance; a miss is carried over within the accrual window ({periods} periods), funds are not blocked.",
+  "@mintWindowClosed": {
+    "placeholders": {
+      "periods": {
+        "type": "int"
+      }
+    }
+  },
+  "mintLastClaimed": "Last claimed period: {period}",
+  "@mintLastClaimed": {
+    "placeholders": {
+      "period": {
+        "type": "int"
+      }
+    }
+  },
+  "mintClaimPeriod": "Period to claim: {period} (completed periods, M4)",
+  "@mintClaimPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "mintClaimAmount": "Amount to mint: {amount}",
+  "@mintClaimAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "mintIssuance": "Issuance per period: {amount}",
+  "@mintIssuance": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "mintConfirmTitle": "Confirm mint",
+  "mintPowStatus": "Heavy PoW (Argon2id)…",
+  "mintNoPeriods": "No periods to claim",
+  "mintPublished": "Mint published",
+  "transferTitle": "Transfer",
+  "segNetwork": "Via network",
+  "segBluetooth": "Bluetooth",
+  "recipientLabel": "Recipient address (hex)",
+  "recipientHint": "64 hex characters",
+  "amountLabel": "Amount (the recipient gets exactly this)",
+  "feeHelper": "Fee: {fee} (on top of the amount, burned) — paid by the sender",
+  "@feeHelper": {
+    "placeholders": {
+      "fee": {
+        "type": "int"
+      }
+    }
+  },
+  "delayedWarn": "The amount is above threshold P: the transfer will be delayed. Execution in {hours} h; it can be cancelled during the delay (the \"Delayed\" screen).",
+  "@delayedWarn": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "btModeHint": "Bluetooth offline: the recipient will see \"received via Bluetooth — awaiting publication\". Until the network confirms, it is not a payment (12.4).",
+  "moratoriumNote": "Moratorium: transfers are available {days} days after registration.",
+  "@moratoriumNote": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "transferConfirmTitle": "Confirm transfer",
+  "btConfirmTitle": "Confirm Bluetooth payment",
+  "transferSent": "Transfer sent",
+  "transferDelayed": "Transfer delayed: execution in {hours} h, it can be cancelled during the delay",
+  "@transferDelayed": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "signNotConfirmed": "Signature not confirmed",
+  "btNoDevices": "No paired devices",
+  "btSent": "Sent via Bluetooth. The recipient must wait for network confirmation — until publication it is not a payment",
+  "btError": "Bluetooth: {error}",
+  "@btError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingTitle": "Delayed transfers",
+  "thresholdP": "Threshold P: {value}",
+  "@thresholdP": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "thresholdPendingRaise": "Increase to {value} takes effect after {time}",
+  "@thresholdPendingRaise": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "newThresholdLabel": "New threshold P",
+  "newThresholdHelper": "limit P_max = {max}; increase — after 48 h, decrease — immediately",
+  "@newThresholdHelper": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingEmpty": "No active delayed transfers",
+  "pendingRow": "{amount} → {hash}",
+  "@pendingRow": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      },
+      "hash": {
+        "type": "String"
+      }
+    }
+  },
+  "pendingRowSub": "execution in {time} (fee {fee})",
+  "@pendingRowSub": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "fee": {
+        "type": "int"
+      }
+    }
+  },
+  "cancelConfirmTitle": "Confirm transfer cancellation",
+  "canceledMsg": "Cancelled",
+  "invalidThreshold": "Invalid threshold",
+  "thresholdRaised": "The increase takes effect in 48 h (coercion protection)",
+  "thresholdLowered": "Threshold lowered immediately",
+  "timeHm": "{h} h {m} min",
+  "@timeHm": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "vouchingTitle": "Vouching",
+  "segMyStatus": "My status",
+  "segVouch": "Vouch",
+  "segMySlots": "My slots",
+  "walletActive": "Wallet is active",
+  "vouchProgress": "Vouches: {received} of {k}",
+  "@vouchProgress": {
+    "placeholders": {
+      "received": {
+        "type": "int"
+      },
+      "k": {
+        "type": "int"
+      }
+    }
+  },
+  "vouchFindHelpers": "Find K vouchers in person: show them the QR code of your address on the \"Vouch\" tab (the \"My QR\" button).",
+  "vouchFlagged": "Flagged mark: nobody can vouch for you (vouching from a flagged wallet is forbidden, decision No. 14)",
+  "vouchConfirmTitle": "Confirm vouching",
+  "vouchPublished": "Vouch published",
+  "btWaiting": "Waiting for address via Bluetooth (60 s)…",
+  "btAddrReceived": "Address received via Bluetooth",
+  "vouchWarning": "In-person vouching (QR or Bluetooth) does NOT prove the person's presence. You are responsible for the choice: the slot is limited, and if evidence is presented against the vouched person you lose the reward (not money).",
+  "vouchOnlyActive": "Only an active wallet aged ≥ 3 months with ≥ 2 completed mint periods can vouch (7.4).",
+  "candidateLabel": "Candidate address (hex)",
+  "candidateHint": "64 hex characters — from QR or Bluetooth",
+  "myQrHint": "My address — show it to the voucher",
+  "slotsSummary": "Slots: {occupied} occupied of {capacity}",
+  "@slotsSummary": {
+    "placeholders": {
+      "occupied": {
+        "type": "int"
+      },
+      "capacity": {
+        "type": "int"
+      }
+    }
+  },
+  "slotsFreeStats": "Free: {free}. Voucher statistics: vouched for {total}, active {active} (public reputation, 7.4)",
+  "@slotsFreeStats": {
+    "placeholders": {
+      "free": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "active": {
+        "type": "int"
+      }
+    }
+  },
+  "slotsEmpty": "Slots are free",
+  "slotActiveSub": "candidate is active: the slot frees after {periods} mint periods without evidence",
+  "@slotActiveSub": {
+    "placeholders": {
+      "periods": {
+        "type": "int"
+      }
+    }
+  },
+  "slotInactiveSub": "candidate is not active: the slot frees in {days} days",
+  "@slotInactiveSub": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "registryTitle": "Network registry",
+  "registryRowSub": "{status} • age {age} days",
+  "@registryRowSub": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "chipAge": "age {age} days",
+  "@chipAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "chipSeed": "seed circle",
+  "chipFlagged": "flagged",
+  "chipPublicGuardian": "public guardian",
+  "vouchDepthLabel": "Vouching graph depth: {depth}",
+  "@vouchDepthLabel": {
+    "placeholders": {
+      "depth": {
+        "type": "int"
+      }
+    }
+  },
+  "vouchDepthUnlinked": "Vouching graph depth: not linked to the seed circle",
+  "rewardLine": "Reward to vouchers: {periods} completed mint periods",
+  "@rewardLine": {
+    "placeholders": {
+      "periods": {
+        "type": "int"
+      }
+    }
+  },
+  "asVoucher": "As voucher: for {count} (free slots: {free})",
+  "@asVoucher": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "free": {
+        "type": "int"
+      }
+    }
+  },
+  "publicHistory": "Public history",
+  "migrationTitle": "Migration",
+  "migrationIntro": "Wallet recovery: guardians are assigned in advance (at creation). Personal — 2 of 3; with public ones — 3 of 5 (thresholds combine).",
+  "migrationTo": "Migration to {hash}",
+  "@migrationTo": {
+    "placeholders": {
+      "hash": {
+        "type": "String"
+      }
+    }
+  },
+  "migrationRowSub": "execution in {days} days (delay {delay} days); guardian signatures: {sigs}",
+  "@migrationRowSub": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "delay": {
+        "type": "int"
+      },
+      "sigs": {
+        "type": "int"
+      }
+    }
+  },
+  "publicGuardiansTitle": "Public guardians of the network (guardian_offer, 11)",
+  "noGuardians": "Nobody has declared themselves a public guardian yet",
+  "guardianOfferRow": "age {age} days, wards: {wards}",
+  "@guardianOfferRow": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      },
+      "wards": {
+        "type": "int"
+      }
+    }
+  },
+  "restartIntro": "If there are no guardians: a restart is a regular registration with a new key and new K vouches. The old wallet remains in the registry untouched and inaccessible.",
+  "cancelMigrationTitle": "Confirm migration cancellation (old key)",
+  "migrationCanceled": "Migration cancelled",
+  "restartDialogTitle": "Loss of funds",
+  "restartDialogBody": "A restart gives nothing beyond registering a new wallet: funds at the old address are lost, history is not transferred. Migration with guardians transfers age, mint history and vouches.",
+  "restartFlowNote": "Restart: delete the app data and go through wallet creation again (new key, new K vouches).",
+  "startMigrationTitle": "Starting migration",
+  "startMigrationIntro": "You are on the NEW device. Enter the old wallet address and guardian signatures (each guardian signs the statement in their own app — the \"Approve someone's migration\" tab).",
+  "oldAddressLabel": "Old address (hex)",
+  "newAddressLabel": "New address (hex)",
+  "sigsCollected": "Signatures collected: {count} (personal threshold {personal} of {personalCount}; with public — {public} of {publicCount})",
+  "@sigsCollected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "personal": {
+        "type": "int"
+      },
+      "personalCount": {
+        "type": "int"
+      },
+      "public": {
+        "type": "int"
+      },
+      "publicCount": {
+        "type": "int"
+      }
+    }
+  },
+  "guardianAddrLabel": "Guardian address (hex)",
+  "guardianSigLabel": "Guardian signature (hex)",
+  "migrationConfirmTitle": "Confirm migration",
+  "migrationStarted": "Migration started: execution in {days} days; the old key can cancel during the delay",
+  "@migrationStarted": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "approveTitle": "Migration approval (guardian)",
+  "approveIntro": "Verify the ward's identity through your own channels. The signature binds the pair of addresses and the nonce; hand it to the ward in person.",
+  "nonceLabel": "Nonce (from the ward)",
+  "wardSignTitle": "Confirm the ward's migration (you are the guardian)",
+  "sigToCopy": "Signature (hand it to the ward):",
+  "settingsTitle": "Settings",
+  "networkLine": "Network: {name}",
+  "@networkLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "paramUnit": "Unit",
+  "paramTransfer": "Transfer",
+  "paramIssuance": "Issuance",
+  "paramIssuanceValue": "{amount} per {months} months",
+  "@paramIssuanceValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "months": {
+        "type": "String"
+      }
+    }
+  },
+  "paramVouchK": "K (vouching)",
+  "paramThresholdP": "Threshold P",
+  "paramThresholdPValue": "{p} (P_max {max})",
+  "@paramThresholdPValue": {
+    "placeholders": {
+      "p": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "paramDelayD": "Delay D",
+  "paramDelayDValue": "{hours} h",
+  "@paramDelayDValue": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "paramMoratorium": "Moratorium",
+  "paramMoratoriumValue": "{days} days",
+  "@paramMoratoriumValue": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "paramDemurrage": "Demurrage",
+  "demurrageOn": "enabled",
+  "demurrageOff": "disabled",
+  "paramAccrual": "Accrual window",
+  "paramAccrualValue": "{periods} periods",
+  "@paramAccrualValue": {
+    "placeholders": {
+      "periods": {
+        "type": "String"
+      }
+    }
+  },
+  "paramGuardians": "Guardians",
+  "paramGuardiansValue": "personal {pt} of {pc}; public {pubt} of {pubc}",
+  "@paramGuardiansValue": {
+    "placeholders": {
+      "pt": {
+        "type": "String"
+      },
+      "pc": {
+        "type": "String"
+      },
+      "pubt": {
+        "type": "String"
+      },
+      "pubc": {
+        "type": "String"
+      }
+    }
+  },
+  "paramMigration": "Migration",
+  "paramMigrationValue": "delay {days} days",
+  "@paramMigrationValue": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "paramEpoch": "Checkpoint epoch",
+  "paramEpochValue": "{seconds} s",
+  "@paramEpochValue": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "sandboxNote": "Sandbox (synthetic attestation)",
+  "guardianOfferTitle": "Declare yourself a public guardian",
+  "guardianAlready": "You are already a public guardian (wards: {wards})",
+  "@guardianAlready": {
+    "placeholders": {
+      "wards": {
+        "type": "int"
+      }
+    }
+  },
+  "guardianReq": "Requirements: active, age ≥ {days} days",
+  "@guardianReq": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "guardianConfirmTitle": "Confirm becoming a public guardian",
+  "guardianPublished": "Declaration published",
+  "nodeRunning": "Node is running",
+  "nodeStopped": "Node is stopped",
+  "nodeLevelHint": "Full level — when charging and on Wi-Fi, otherwise light (12.2)",
+  "lockApp": "Lock the app",
+  "relockNote": "Locked. Restart the app.",
+  "languageTitle": "Language",
+  "languageSystem": "System",
+  "languageRu": "Русский",
+  "languageEn": "English",
+  "languageEs": "Español",
+  "languagePt": "Português",
+  "languageZh": "中文",
+  "recoveryTitle": "Recovery card",
+  "recoveryIntro": "Save this data outside the phone: it is needed to recover the wallet if the device is lost (migration with guardians, section 11).",
+  "recoveryAddress": "Wallet address",
+  "recoveryNetwork": "Network",
+  "recoveryGuardians": "Your guardians",
+  "recoveryNoGuardians": "No guardians assigned: recovery is impossible, only a restart is available (regular registration with new vouches).",
+  "recoveryHowToSave": "How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.",
+  "recoveryNeverShare": "Never share migration data: the nonce and guardian signatures. Only the address and this card's QR may be shown to others.",
+  "recoverySavedDone": "Saved — continue",
+  "settingsRecovery": "Recovery card"
+}

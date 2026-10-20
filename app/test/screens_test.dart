@@ -5,7 +5,9 @@
 // о недоказанном присутствии (7.4), отложенные переводы (8.3),
 // «получено по Bluetooth — ожидает публикации» (12.4), приманка (8.2).
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:tnp_app/screens/lock_screen.dart';
 import 'package:tnp_app/screens/onboarding/onboarding_flow.dart';
@@ -13,6 +15,7 @@ import 'package:tnp_app/screens/vouching/vouching_screen.dart';
 import 'package:tnp_app/screens/wallet/pending_screen.dart';
 import 'package:tnp_app/screens/wallet/wallet_screen.dart';
 import 'package:tnp_app/services/models.dart';
+import 'package:tnp_app/l10n/app_localizations.dart';
 import 'package:tnp_app/services/platform_service.dart';
 import 'package:tnp_app/state/app_state.dart';
 
@@ -24,11 +27,26 @@ Widget _wrap(Widget child, FakePlatformService fake) {
       Provider<PlatformService>.value(value: fake),
       ChangeNotifierProvider(create: (_) => AppState(fake)..load()),
     ],
-    child: MaterialApp(home: child),
+    child: MaterialApp(
+      locale: const Locale('ru'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: child,
+    ),
   );
 }
-
 void main() {
+  // мок хранилища настроек (этап 10): выбор языка сохраняется в
+  // SharedPreferences; в тестах плагин подменяется
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('онбординг: без биометрии — отказ и системный экран (8.1)',
       (tester) async {
     final fake = FakePlatformService()..biometrics = false;

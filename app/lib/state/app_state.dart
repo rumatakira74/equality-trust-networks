@@ -3,7 +3,8 @@
 // статус узла; экраны запрашивают остальное по требованию.
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/models.dart';
 import '../services/platform_service.dart';
@@ -37,6 +38,33 @@ class AppState extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
+  /// Язык интерфейса (этап 10): null — системный, иначе один из
+  /// поддерживаемых (ru, en, es, pt, zh); выбор — в настройках,
+  /// сохраняется в SharedPreferences.
+  Locale? _locale;
+  Locale? get locale => _locale;
+
+  /// Установить язык (null — системный) и сохранить выбор.
+  Future<void> setLocale(Locale? locale) async {
+    _locale = locale;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ui_locale', locale?.languageCode ?? '');
+  }
+
+  /// Восстановить сохранённый выбор языка. Ошибка хранилища (нет
+  /// плагина в тестах) не ломает загрузку приложения.
+  Future<void> _loadLocale() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString('ui_locale') ?? '';
+      if (code.isEmpty) return;
+      _locale = Locale(code);
+    } catch (_) {
+      // язык — по системному
+    }
+  }
+
   /// Ошибка последней операции (для SnackBar).
   String? lastError;
   void setError(String? e) {
@@ -49,6 +77,7 @@ class AppState extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
+      await _loadLocale();
       _manifest = await platform.manifest();
       _pinSet = await platform.pinIsSet();
       _walletRegistered = await platform.walletRegistered();
@@ -118,7 +147,7 @@ class AppState extends ChangeNotifier {
     final ok = await platform.signTx(id, title);
     if (!ok) {
       await platform.discardTx(id);
-      throw TnpPlatformException('SIGN', 'подпись не подтверждена');
+      throw TnpPlatformException('SIGN', 'SIGN_NOT_CONFIRMED');
     }
     return platform.submitTx(id);
   }

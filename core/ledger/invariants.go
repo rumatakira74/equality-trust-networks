@@ -43,11 +43,17 @@ func (l *Ledger) CheckInvariants() []string {
 		}
 	}
 
-	// INV-8: сохранение предложения: Σ балансов + burned = minted
+	// INV-8: сохранение предложения: Σ балансов + burned = minted.
+	// Единицы вне кошельков тоже в предложении: балансы пулов (6.3) и
+	// общий фонд сети (fee_mode = POOL, раздел 4) — этап 10.
 	var sum uint64
 	for _, w := range st.Wallets {
 		sum += w.TotalBalance()
 	}
+	for _, pool := range st.Pools {
+		sum += pool.Balance
+	}
+	sum += st.CommonFund
 	if sum+st.TotalBurned != st.TotalMinted {
 		bad = append(bad, fmt.Sprintf("INV-8: %d + %d != %d", sum, st.TotalBurned, st.TotalMinted))
 	}

@@ -117,6 +117,31 @@ type State struct {
 	GenesisTime      uint64
 	SeedRightsActive bool // посевной круг: особые права (до seed_sunset)
 	AndroidIDSeen    map[string]int
+	// FeeRate — текущая ставка комиссии в micros (10.2, этап 10):
+	// инициализируется значением rate_min, пересчитывается на границе
+	// эпохи (settleEpoch) детерминированно из истории предложения.
+	FeeRate uint64
+	// SupplySnapshots — предложение на границах эпох (total_minted, как
+	// в чекпоинте total_supply) для адаптивного пересчёта ставки (10.2).
+	SupplySnapshots []SupplySnapshot
+	// CommonFund — общий фонд сети (fee_mode = POOL, раздел 4).
+	CommonFund uint64
+	// Модули (раздел 6, этап 10): пулы, заявки вклада, погашения,
+	// квитанции, счётчики подтверждений и потолков on_contribution.
+	Pools                    map[string]*Pool
+	Claims                   map[string]*ContributionClaim
+	Redeems                  map[string]*RedeemInfo
+	Receipts                 map[string]bool
+	ConfirmsPerPeriod        map[string]uint64 // подтверждающий|период → count
+	ContributionPaidPerPeriod map[uint64]uint64 // период → эмитировано (on_contribution)
+	ContributionPaidPerson    map[string]uint64 // заявитель|период → выплачено
+}
+
+// SupplySnapshot — предложение на границе эпохи (данные чекпоинта:
+// total_supply = total_minted на момент сборки чекпоинта эпохи).
+type SupplySnapshot struct {
+	Epoch   uint64
+	Supply  uint64
 }
 
 func key(b []byte) string { return string(b) }
@@ -133,15 +158,22 @@ func u64str(v uint64) string {
 // NewState создаёт состояние из genesis.
 func NewState(net *params.Network) *State {
 	return &State{
-		Net:                  net,
-		Wallets:              make(map[string]*Wallet),
-		FingerprintIndex:     make(map[string][]byte),
-		FingerprintBlacklist: make(map[string]bool),
-		PendingTransfers:     make(map[string]*PendingTransfer),
-		EvidenceFacts:        make(map[string]bool),
-		GuardianLastReward:   make(map[string]uint64),
-		SeedRightsActive:     true,
-		AndroidIDSeen:        make(map[string]int),
+		Net:                      net,
+		Wallets:                  make(map[string]*Wallet),
+		FingerprintIndex:         make(map[string][]byte),
+		FingerprintBlacklist:    make(map[string]bool),
+		PendingTransfers:         make(map[string]*PendingTransfer),
+		EvidenceFacts:            make(map[string]bool),
+		GuardianLastReward:       make(map[string]uint64),
+		SeedRightsActive:         true,
+		AndroidIDSeen:            make(map[string]int),
+		Pools:                    make(map[string]*Pool),
+		Claims:                   make(map[string]*ContributionClaim),
+		Redeems:                  make(map[string]*RedeemInfo),
+		Receipts:                 make(map[string]bool),
+		ConfirmsPerPeriod:        make(map[string]uint64),
+		ContributionPaidPerPeriod: make(map[uint64]uint64),
+		ContributionPaidPerson:    make(map[string]uint64),
 	}
 }
 

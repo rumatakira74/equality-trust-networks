@@ -245,6 +245,16 @@ type ProfileParams struct {
 	TimestampToleranceSeconds uint64
 	MintChallengeWindowHours  uint64
 	Pow                       *PowParams
+	// FeeAdjustEpochs — окно K эпох адаптивной комиссии (поле 57; 10.2,
+	// этап 10): на границе эпохи rate пересчитывается по росту предложения
+	// за последние K эпох. 0 — адаптивный пересчёт выключен (rate
+	// постоянен, равен rate_min; векторы этапа 0).
+	FeeAdjustEpochs uint64
+	// FeeTargetGrowthMicros — целевой рост предложения за K эпох в micros
+	// (поле 58; 10.2: «выше целевого — rate растёт на шаг, иначе снижается»).
+	FeeTargetGrowthMicros uint64
+	// FeeStepMicros — шаг пересчёта rate в micros (поле 59).
+	FeeStepMicros uint64
 }
 
 func (p *ProfileParams) Encode() []byte {
@@ -290,6 +300,9 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 54, p.EclipseN)
 	b = appendU64Field(b, 55, p.ValidatorsM)
 	b = appendU64Field(b, 56, p.CpBuilderQueue)
+	b = appendU64Field(b, 57, p.FeeAdjustEpochs)
+	b = appendU64Field(b, 58, p.FeeTargetGrowthMicros)
+	b = appendU64Field(b, 59, p.FeeStepMicros)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)

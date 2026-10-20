@@ -158,25 +158,6 @@ class HistoryEntry {
 
   static int _i(dynamic v) => v is num ? v.toInt() : 0;
 
-  String describe() {
-    switch (type) {
-      case 'REGISTER':
-        return 'Регистрация кошелька';
-      case 'VOUCH':
-        return 'Поручительство';
-      case 'MINT':
-        return 'Выпуск (период $period)';
-      case 'TRANSFER':
-        if (note.isNotEmpty) return note;
-        return 'Перевод $amount → ${recipient.shortHash()}';
-      case 'MIGRATE':
-        return note;
-      case 'GUARDIAN_OFFER':
-        return note;
-      default:
-        return type;
-    }
-  }
 }
 
 /// Отложенный перевод (8.3).

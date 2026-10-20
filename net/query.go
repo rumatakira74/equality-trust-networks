@@ -199,7 +199,18 @@ func (n *Node) QueryFee(amount uint64) uint64 {
 	}
 	n.applyMu.RLock()
 	defer n.applyMu.RUnlock()
-	return n.Ledger.State.Net.Fee(amount)
+	return n.Ledger.State.Net.Fee(amount, n.Ledger.State.FeeRate)
+}
+
+// QueryFeeRate — текущая ставка комиссии в micros (адаптивный пересчёт
+// из чекпоинтов, 10.2; для UI и диагностики).
+func (n *Node) QueryFeeRate() uint64 {
+	if n.Ledger == nil {
+		return 0
+	}
+	n.applyMu.RLock()
+	defer n.applyMu.RUnlock()
+	return n.Ledger.FeeRateNow()
 }
 
 // QueryVouchDepth — расстояние по графу поручительств от посевного круга
@@ -312,5 +323,16 @@ func (n *Node) QueryRegistry() [][]byte {
 	for _, w := range n.Ledger.State.Wallets {
 		out = append(out, append([]byte(nil), w.Address...))
 	}
+	return out
+}
+
+// CheckpointChain — финализированная цепочка чекпоинтов узла (копия):
+// источник для лёгкого клиента-синхронизатора проверяющей библиотеки
+// (6.1: синхронизация с любым узлом, серверы проекта не нужны).
+func (n *Node) CheckpointChain() []*wire.Checkpoint {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	out := make([]*wire.Checkpoint, len(n.Chain))
+	copy(out, n.Chain)
 	return out
 }

@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -42,31 +43,32 @@ class _MintScreenState extends State<MintScreen> {
     // ввод PIN; тревожный PIN открывает приманку (неотличимо)
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
-    if (!await confirmPin(context, title: 'Подтвердите выпуск')) {
+    final l = AppLocalizations.of(context)!;
+    if (!await confirmPin(context, title: l.mintConfirmTitle)) {
       return;
     }
     setState(() {
       _busy = true;
-      _result = 'Усиленный PoW (Argon2id)…';
+      _result = l.mintPowStatus;
     });
     try {
       // период и сумма к заявлению — из узла (M4–M6: только завершённые
       // периоды, amount = эмиссия × diff от base; формула — в ядре)
       final w = _window!;
       if (w.claimPeriod <= 0) {
-        setState(() => _result = 'Нет периодов к заявлению');
+        setState(() => _result = l.mintNoPeriods);
         return;
       }
       // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
       final res = await app.signAndSubmit(
         () => platform.buildMint(w.claimPeriod, w.claimAmount),
-        'Разблокировка ключа',
+        l.keyUnlockTitle,
       );
       setState(() => _result =
-          res.accepted ? 'Выпуск опубликован' : 'Отклонено: ${res.code}');
+          res.accepted ? l.mintPublished : l.rejectedWithCode(res.code));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -75,8 +77,9 @@ class _MintScreenState extends State<MintScreen> {
   @override
   Widget build(BuildContext context) {
     final w = _window;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Выпуск')),
+      appBar: AppBar(title: Text(l.mintTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -84,35 +87,28 @@ class _MintScreenState extends State<MintScreen> {
           children: [
             if (w != null) ...[
               Text(
-                'Период: ${w.currentPeriod}',
+                l.mintPeriod(w.currentPeriod),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
                 w.open
                     ? (w.windowHours > 0
-                          ? 'Окно челленджа открыто (±${w.windowHours} ч вокруг '
-                                'слота). Можно выпускать.'
-                          : 'Проверка окна челленджа отключена (песочница). '
-                                'Можно выпускать.')
-                    : 'Окно челленджа закрыто. Слот внутри месяца '
-                      'непредсказуем заранее; пропуск переносится в '
-                      'пределах окна накопления (${w.accrualWindowPeriods} '
-                      'периодов), средства не блокируются.',
+                          ? l.mintWindowOpen(w.windowHours)
+                          : l.mintWindowOff)
+                    : l.mintWindowClosed(w.accrualWindowPeriods),
               ),
               const SizedBox(height: 16),
-              Text('Последний заявленный период: ${w.lastClaimedPeriod}'),
-              Text(
-                'Период к заявлению: ${w.claimPeriod > 0 ? w.claimPeriod : "—"}'
-                ' (завершённые периоды, M4)',
-              ),
-              Text('Сумма к выпуску: ${w.claimAmount}'),
-              Text('Эмиссия за период: ${w.issuanceAmount}'),
+              Text(l.mintLastClaimed(w.lastClaimedPeriod)),
+              Text(l.mintClaimPeriod(
+                  w.claimPeriod > 0 ? '${w.claimPeriod}' : '—')),
+              Text(l.mintClaimAmount(w.claimAmount)),
+              Text(l.mintIssuance(w.issuanceAmount)),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed:
                     w.open && w.claimPeriod > 0 && !_busy ? _mint : null,
-                child: const Text('Выпустить (усиленный PoW)'),
+                child: Text(l.btnMintDo),
               ),
             ],
             if (_result != null) ...[

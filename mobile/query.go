@@ -806,6 +806,12 @@ func (nd *Node) FeeQuote(amount int64) int64 {
 	return int64(nd.n.QueryFee(uint64(amount)))
 }
 
+// CurrentFeeRate — текущая ставка комиссии в micros (адаптивный
+// пересчёт из чекпоинтов, 10.2): 10000 = 1%.
+func (nd *Node) CurrentFeeRate() int64 {
+	return int64(nd.n.QueryFeeRate())
+}
+
 // SyncDiag — диагностика синхронизации (этап 7): принудительная сверка
 // с каждым подключённым пиром, результат строкой (applied/ошибка) для
 // журнала моста. Только диагностика песочницы.

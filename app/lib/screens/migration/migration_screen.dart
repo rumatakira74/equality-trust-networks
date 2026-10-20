@@ -8,10 +8,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
+import '../recovery/recovery_card_screen.dart';
 
 class MigrationScreen extends StatefulWidget {
   const MigrationScreen({super.key});
@@ -46,37 +48,36 @@ class _MigrationScreenState extends State<MigrationScreen> {
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final manifest = app.manifest;
+    final l = AppLocalizations.of(context)!;
     final active = _pending.where((m) => !m.canceled && !m.executed).toList();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Миграция'),
+        title: Text(l.migrationTitle),
         actions: [IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh))],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Восстановление кошелька: гардианы назначаются заранее '
-            '(при создании). Личные — 2 из 3; с публичными — 3 из 5 '
-            '(пороги комбинируются).',
-          ),
+          Text(l.migrationIntro),
           const SizedBox(height: 12),
           if (active.isNotEmpty) ...[
             for (final m in active)
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.schedule),
-                  title: Text('Миграция на ${m.newAddress.shortHash()}'),
+                  title: Text(l.migrationTo(m.newAddress.shortHash())),
                   subtitle: Text(
-                    'исполнение через ${(m.remainingSec / 86400).round()} дн. '
-                    '(задержка ${manifest?.migrateDelayDays ?? 14} дн.); '
-                    'подписей гардианов: ${m.approvals.length}',
+                    l.migrationRowSub(
+                      (m.remainingSec / 86400).round(),
+                      manifest?.migrateDelayDays ?? 14,
+                      m.approvals.length,
+                    ),
                   ),
                   // отмена живым старым ключом (11)
                   trailing: m.oldAddress == app.address
                       ? OutlinedButton(
                           onPressed: () => _cancel(m),
-                          child: const Text('Отменить'),
+                          child: Text(l.btnCancelTransfer),
                         )
                       : null,
                 ),
@@ -88,7 +89,7 @@ class _MigrationScreenState extends State<MigrationScreen> {
               MaterialPageRoute(builder: (_) => const StartMigrationScreen()),
             ),
             icon: const Icon(Icons.add),
-            label: const Text('Запустить миграцию (новое устройство)'),
+            label: Text(l.btnStartMigration),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
@@ -96,18 +97,25 @@ class _MigrationScreenState extends State<MigrationScreen> {
               MaterialPageRoute(builder: (_) => const ApproveMigrationScreen()),
             ),
             icon: const Icon(Icons.how_to_reg),
-            label: const Text('Подтвердить чужую миграцию (я — гардиан)'),
+            label: Text(l.btnApproveMigration),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const RecoveryCardScreen(),
+                )),
+            icon: const Icon(Icons.badge_outlined),
+            label: Text(l.settingsRecovery),
           ),
           const SizedBox(height: 24),
-          Text('Публичные гардианы сети (guardian_offer, 11)',
+          Text(l.publicGuardiansTitle,
               style: Theme.of(context).textTheme.titleMedium),
-          if (_offers.isEmpty)
-            const Text('Пока никто не объявил себя публичным гардианом'),
+          if (_offers.isEmpty) Text(l.noGuardians),
           for (final o in _offers)
             ListTile(
               leading: const Icon(Icons.volunteer_activism),
               title: Text(o.address.shortHash()),
-              subtitle: Text('возраст ${o.ageDays} дн., подопечных: ${o.wards}'),
+              subtitle: Text(l.guardianOfferRow(o.ageDays, o.wards)),
               trailing: o.flagged ? const Text('flagged') : null,
             ),
           const SizedBox(height: 24),
@@ -119,16 +127,14 @@ class _MigrationScreenState extends State<MigrationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Если гардианов нет: перезапуск — обычная регистрация '
-                    'с новым ключом и новыми K поручительствами. Старый '
-                    'кошелёк остаётся в реестре нетронутым и недоступным.',
-                    style: TextStyle(color: Colors.red),
+                  Text(
+                    l.restartIntro,
+                    style: const TextStyle(color: Colors.red),
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
                     onPressed: () => _restartWarning(context),
-                    child: const Text('Перезапустить кошелёк'),
+                    child: Text(l.btnRestart),
                   ),
                 ],
               ),
@@ -142,37 +148,36 @@ class _MigrationScreenState extends State<MigrationScreen> {
   Future<void> _cancel(PendingMigration m) async {
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    final l = AppLocalizations.of(context)!;
     try {
       final res = await app.signAndSubmit(
         () => platform.buildMigrateCancel(m.newAddress, m.proposeSeq),
-        'Подтвердите отмену миграции (старый ключ)',
+        l.cancelMigrationTitle,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(res.accepted ? 'Миграция отменена' : 'Отклонено: ${res.code}'),
+        content: Text(
+            res.accepted ? l.migrationCanceled : l.rejectedWithCode(res.code)),
       ));
       _refresh();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+            .showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
       }
     }
   }
 
   Future<void> _restartWarning(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Потеря средств'),
-        content: const Text(
-          'Перезапуск не даёт ничего сверх регистрации нового кошелька: '
-          'средства на старом адресе теряются, история не переносится. '
-          'Миграция с гардианами переносит возраст, историю выпусков и '
-          'поручительства.',
-        ),
+        title: Text(l.restartDialogTitle),
+        content: Text(l.restartDialogBody),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Отмена')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(), child: Text(l.btnCancel)),
           FilledButton(
             onPressed: () {
               Navigator.of(ctx).pop();
@@ -182,7 +187,7 @@ class _MigrationScreenState extends State<MigrationScreen> {
                 MaterialPageRoute(builder: (_) => const _RestartFlow()),
               );
             },
-            child: const Text('Понимаю, перезапустить'),
+            child: Text(l.btnUnderstandRestart),
           ),
         ],
       ),
@@ -196,10 +201,9 @@ class _RestartFlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text('Перезапуск: удалите данные приложения и пройдите '
-            'создание кошелька заново (новый ключ, новые K поручительств).'),
+        child: Text(AppLocalizations.of(context)!.restartFlowNote),
       ),
     );
   }
@@ -247,7 +251,8 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
     // ввод PIN; тревожный PIN открывает приманку (неотличимо)
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
-    if (!await confirmPin(context, title: 'Подтвердите миграцию')) {
+    final l = AppLocalizations.of(context)!;
+    if (!await confirmPin(context, title: l.migrationConfirmTitle)) {
       return;
     }
     try {
@@ -258,43 +263,42 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
           _approvals,
           _nonce,
         ),
-        'Разблокировка ключа',
+        l.keyUnlockTitle,
       );
       setState(() => _result = res.accepted
-          ? 'Миграция запущена: исполнение через '
-              '${app.manifest?.migrateDelayDays ?? 14} дн.; старый ключ '
-              'может отменить в течение задержки'
-          : 'Отклонено: ${res.code}');
+          ? l.migrationStarted(app.manifest?.migrateDelayDays ?? 14)
+          : l.rejectedWithCode(res.code));
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final manifest = context.watch<AppState>().manifest;
+    final l = AppLocalizations.of(context)!;
     final needPersonal = manifest?.guardianPersonalThreshold ?? 2;
     final needPublic = manifest?.guardianPublicThreshold ?? 3;
     final enough = _approvals.length >= needPersonal;
     return Scaffold(
-      appBar: AppBar(title: const Text('Запуск миграции')),
+      appBar: AppBar(title: Text(l.startMigrationTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text(
-            'Вы на НОВОМ устройстве. Введите адрес старого кошелька и '
-            'подписи гардианов (каждый гардиан подписывает утверждение в '
-            'своём приложении — вкладка «Подтвердить чужую миграцию»).',
-          ),
+          Text(l.startMigrationIntro),
           const SizedBox(height: 12),
           TextField(
             controller: _oldAddress,
-            decoration: const InputDecoration(labelText: 'Старый адрес (hex)'),
+            decoration: InputDecoration(labelText: l.oldAddressLabel),
           ),
           const SizedBox(height: 8),
-          Text('Подписей собрано: ${_approvals.length} '
-              '(личный порог $needPersonal из ${manifest?.guardianPersonalCount ?? 3}; '
-              'с публичными — $needPublic из ${manifest?.guardianPublicCount ?? 5})'),
+          Text(l.sigsCollected(
+            _approvals.length,
+            needPersonal,
+            manifest?.guardianPersonalCount ?? 3,
+            needPublic,
+            manifest?.guardianPublicCount ?? 5,
+          )),
           for (final a in _approvals)
             ListTile(
               dense: true,
@@ -303,18 +307,18 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
             ),
           TextField(
             controller: _guardianInput,
-            decoration: const InputDecoration(labelText: 'Адрес гардиана (hex)'),
+            decoration: InputDecoration(labelText: l.guardianAddrLabel),
           ),
           TextField(
             controller: _sigInput,
-            decoration: const InputDecoration(labelText: 'Подпись гардиана (hex)'),
+            decoration: InputDecoration(labelText: l.guardianSigLabel),
           ),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: _addApproval, child: const Text('Добавить подпись')),
+          OutlinedButton(onPressed: _addApproval, child: Text(l.btnAddSig)),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: enough ? _propose : null,
-            child: const Text('Опубликовать предложение'),
+            child: Text(l.btnPublishProposal),
           ),
           if (_result != null) ...[
             const SizedBox(height: 12),
@@ -345,54 +349,52 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
 
   Future<void> _sign() async {
     final platform = context.read<PlatformService>();
+    final l = AppLocalizations.of(context)!;
     try {
       final r = await platform.signMigrateStatement(
         _oldAddress.text.trim(),
         _newAddress.text.trim(),
         int.tryParse(_nonce.text) ?? 0,
-        'Подтвердите миграцию подопечного (вы — гардиан)',
+        l.wardSignTitle,
       );
       final sig = r['sig'] as String? ?? '';
       setState(() {
         _sig = sig.isEmpty ? null : sig;
-        _error = sig.isEmpty ? 'Подпись не подтверждена' : null;
+        _error = sig.isEmpty ? l.signNotConfirmed : null;
       });
     } catch (e) {
-      setState(() => _error = 'Ошибка: $e');
+      setState(() => _error = l.errorWith('$e'));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Подтверждение миграции (гардиан)')),
+      appBar: AppBar(title: Text(l.approveTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text(
-            'Проверьте личность подопечного по своим каналам. Подпись '
-            'связывает пару адресов и nonce; передайте её подопечному '
-            'лично.',
-          ),
+          Text(l.approveIntro),
           const SizedBox(height: 12),
           TextField(
             controller: _oldAddress,
-            decoration: const InputDecoration(labelText: 'Старый адрес (hex)'),
+            decoration: InputDecoration(labelText: l.oldAddressLabel),
           ),
           TextField(
             controller: _newAddress,
-            decoration: const InputDecoration(labelText: 'Новый адрес (hex)'),
+            decoration: InputDecoration(labelText: l.newAddressLabel),
           ),
           TextField(
             controller: _nonce,
-            decoration: const InputDecoration(labelText: 'Nonce (от подопечного)'),
+            decoration: InputDecoration(labelText: l.nonceLabel),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _sign, child: const Text('Подписать (биометрия)')),
+          FilledButton(onPressed: _sign, child: Text(l.btnSignBiometric)),
           if (_sig != null) ...[
             const SizedBox(height: 12),
-            const Text('Подпись (передайте подопечному):'),
+            Text(l.sigToCopy),
             SelectableText(_sig!, style: const TextStyle(fontSize: 11)),
           ],
           if (_error != null)

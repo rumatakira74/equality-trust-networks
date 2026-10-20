@@ -55,6 +55,10 @@ func (s *Store) migrate() error {
 			epoch INTEGER PRIMARY KEY,
 			hash BLOB NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS checkpoint_supply (
+			epoch INTEGER PRIMARY KEY,
+			supply INTEGER NOT NULL
+		)`,
 		`CREATE TABLE IF NOT EXISTS meta (
 			key TEXT PRIMARY KEY,
 			value BLOB NOT NULL
@@ -151,6 +155,32 @@ func (s *Store) LoadBlacklist() (map[string]bool, error) {
 func (s *Store) SaveCheckpointHeader(epoch uint64, hash []byte) error {
 	_, err := s.db.Exec(`INSERT OR REPLACE INTO checkpoint_headers (epoch, hash) VALUES (?,?)`, epoch, hash)
 	return err
+}
+
+// SaveCheckpointSupply — предложение на эпохе (total_supply финализированного
+// чекпоинта) для адаптивной комиссии (10.2, этап 10).
+func (s *Store) SaveCheckpointSupply(epoch, supply uint64) error {
+	_, err := s.db.Exec(`INSERT OR REPLACE INTO checkpoint_supply (epoch, supply) VALUES (?,?)`, epoch, supply)
+	return err
+}
+
+// LoadCheckpointSupply — весь ряд предложения по возрастанию эпох.
+func (s *Store) LoadCheckpointSupply() ([]uint64, []uint64, error) {
+	rows, err := s.db.Query(`SELECT epoch, supply FROM checkpoint_supply ORDER BY epoch`)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+	var epochs, supplies []uint64
+	for rows.Next() {
+		var e, v uint64
+		if err := rows.Scan(&e, &v); err != nil {
+			return nil, nil, err
+		}
+		epochs = append(epochs, e)
+		supplies = append(supplies, v)
+	}
+	return epochs, supplies, rows.Err()
 }
 
 func (s *Store) LatestCheckpointHeader() (uint64, []byte, bool, error) {

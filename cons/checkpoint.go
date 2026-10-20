@@ -46,6 +46,40 @@ func stateLeafOf(w *ledger.Wallet) *wire.StateLeaf {
 	}
 }
 
+// StateLeaf — лист состояния кошелька (для сборки предъявления, 6.1).
+func StateLeaf(l *ledger.Ledger, addr []byte) *wire.StateLeaf {
+	w := l.State.Wallet(addr)
+	if w == nil {
+		return nil
+	}
+	return stateLeafOf(w)
+}
+
+// StateProof — Merkle-доказательство листа состояния addr из корня
+// состояния (6.1: к предъявлению прилагается доказательство из чекпоинта).
+// Возвращает хеш листа, лист и соседей по пути; проверка — smt.VerifyProof
+// с индексом = адрес (32 байта).
+func StateProof(l *ledger.Ledger, addr []byte) (leafHash [32]byte, leaf *wire.StateLeaf, siblings [][32]byte, ok bool) {
+	w := l.State.Wallet(addr)
+	if w == nil {
+		return leafHash, nil, nil, false
+	}
+	tree := smt.New()
+	for _, wl := range l.State.Wallets {
+		lf := stateLeafOf(wl)
+		var idx [32]byte
+		copy(idx[:], wl.Address)
+		tree.SetLeaf(idx, sha256.Sum256(lf.Encode()))
+	}
+	var idx [32]byte
+	copy(idx[:], addr)
+	sibs, lh, found := tree.Prove(idx)
+	if !found {
+		return leafHash, nil, nil, false
+	}
+	return lh, stateLeafOf(w), sibs, true
+}
+
 // Build — сборка чекпоинта эпохи (без подписей; подписи собирает Collector).
 // prev — предыдущий финализированный чекпоинт (nil — эпоха 1 после genesis).
 func Build(networkID []byte, epoch uint64, l *ledger.Ledger, prev *wire.Checkpoint,

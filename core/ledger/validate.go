@@ -233,8 +233,24 @@ func (l *Ledger) Apply(tx *wire.Transaction) Result {
 		res = l.applyEvidence(tx)
 	case wire.GuardianOffer:
 		res = l.applyGuardianOffer(tx)
+	case wire.PoolCreate:
+		res = l.applyPoolCreate(tx)
+	case wire.PoolDonate:
+		res = l.applyPoolDonate(tx)
+	case wire.PoolClose:
+		res = l.applyPoolClose(tx)
+	case wire.PoolClaim:
+		res = l.applyPoolClaim(tx)
+	case wire.Redeem:
+		res = l.applyRedeem(tx)
+	case wire.Receipt:
+		res = l.applyReceipt(tx)
+	case wire.ContributionClaim:
+		res = l.applyContributionClaim(tx)
+	case wire.ContributionConfirm:
+		res = l.applyContributionConfirm(tx)
 	default:
-		return reject("E_TYPE") // модульные типы — этап 10
+		return reject("E_TYPE")
 	}
 	if res.Outcome != Accepted {
 		return res
@@ -461,8 +477,14 @@ func (l *Ledger) applyMint(tx *wire.Transaction) Result {
 	if mp.Period < w.ActivatedPeriod { // без ретро-начислений (10.1)
 		return reject("E_MINT_PERIOD")
 	}
-	// M5: окно накопления (10.1)
-	if diff > prof.AccrualWindowPeriods {
+	// M5: окно накопления (10.1); quota_reset (раздел 4, 6.2): квота за
+	// период, неиспользованное сгорает — заявляется ровно один период,
+	// накопления нет
+	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+		if diff != 1 {
+			return reject("E_ACCRUAL_WINDOW")
+		}
+	} else if diff > prof.AccrualWindowPeriods {
 		return reject("E_ACCRUAL_WINDOW")
 	}
 	// M6: amount = issuance × diff (10.1)
@@ -533,7 +555,7 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		if now-w.RegisteredAt < prof.TransferMoratoriumDays*86400 {
 			return reject("E_MORATORIUM")
 		}
-		fee := l.State.Net.Fee(amount)
+		fee := l.State.Net.Fee(amount, l.State.FeeRate)
 		// T4/T8: переводимый остаток (когорты + liquid − резерв) >= amount + fee
 		if w.Spendable(period, prof.FreshTransferWindowPeriods) < amount+fee {
 			return reject("E_BALANCE")
@@ -559,6 +581,8 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		}
 		if prof.FeeMode == wire.FeeModeBurn {
 			l.State.TotalBurned += fee
+		} else if prof.FeeMode == wire.FeeModePool {
+			l.State.CommonFund += fee // общий фонд сети (раздел 4)
 		}
 		w.LastTouchEpoch = l.Clock.Epoch()
 		return accept(tx.TxID())

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/app_state.dart';
 import 'migration/migration_screen.dart';
 import 'registry/registry_screen.dart';
@@ -42,17 +43,23 @@ class _HomeShellState extends State<HomeShell> {
       const MigrationScreen(),
       const SettingsScreen(),
     ];
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       body: IndexedStack(index: _tab, children: screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet), label: 'Кошелёк'),
-          NavigationDestination(icon: Icon(Icons.handshake), label: 'Поручительства'),
-          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Реестр'),
-          NavigationDestination(icon: Icon(Icons.switch_account), label: 'Миграция'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Настройки'),
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.account_balance_wallet), label: l.navWallet),
+          NavigationDestination(
+              icon: const Icon(Icons.handshake), label: l.navVouching),
+          NavigationDestination(
+              icon: const Icon(Icons.list_alt), label: l.navRegistry),
+          NavigationDestination(
+              icon: const Icon(Icons.switch_account), label: l.navMigration),
+          NavigationDestination(
+              icon: const Icon(Icons.settings), label: l.navSettings),
         ],
       ),
     );

@@ -5,8 +5,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
+import '../wallet/wallet_screen.dart' show describeHistory;
 
 class RegistryScreen extends StatefulWidget {
   const RegistryScreen({super.key});
@@ -41,9 +43,10 @@ class _RegistryScreenState extends State<RegistryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Реестр сети'),
+        title: Text(l.registryTitle),
         actions: [IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh))],
       ),
       body: _loading
@@ -59,7 +62,7 @@ class _RegistryScreenState extends State<RegistryScreen> {
                     size: row.flagged ? 24 : 12,
                   ),
                   title: Text(row.address.shortHash()),
-                  subtitle: Text('${row.status} • возраст ${row.ageDays} дн.'),
+                  subtitle: Text(l.registryRowSub(row.status, row.ageDays)),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => MemberScreen(address: row.address),
@@ -110,6 +113,7 @@ class _MemberScreenState extends State<MemberScreen> {
   @override
   Widget build(BuildContext context) {
     final info = _info;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(widget.address.shortHash())),
       body: info == null
@@ -124,33 +128,32 @@ class _MemberScreenState extends State<MemberScreen> {
                   spacing: 8,
                   children: [
                     Chip(label: Text(info.status)),
-                    Chip(label: Text('возраст ${info.ageDays} дн.')),
-                    if (info.seed) const Chip(label: Text('посевной круг')),
+                    Chip(label: Text(l.chipAge(info.ageDays))),
+                    if (info.seed) Chip(label: Text(l.chipSeed)),
                     if (info.flagged)
                       const Chip(
                         label: Text('flagged'),
                         backgroundColor: Colors.orange,
                       ),
                     if (info.publicGuardian)
-                      const Chip(label: Text('публичный гардиан')),
+                      Chip(label: Text(l.chipPublicGuardian)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 // глубина графа поручительств (7.4): -1 — не связан
-                Text('Глубина графа поручительств: '
-                    '${info.vouchDepth < 0 ? 'не связан с посевным кругом' : info.vouchDepth}'),
-                Text('Вознаграждение поручителям: '
-                    '${info.completedMintPeriods} выполненных периодов выпуска'),
+                Text(info.vouchDepth < 0
+                    ? l.vouchDepthUnlinked
+                    : l.vouchDepthLabel(info.vouchDepth)),
+                Text(l.rewardLine(info.completedMintPeriods)),
                 if (_slots != null && _slots!.exists)
-                  Text('Как поручитель: за ${_slots!.occupied.length} '
-                      '(свободно слотов: ${_slots!.free})'),
+                  Text(l.asVoucher(_slots!.occupied.length, _slots!.free)),
                 const Divider(),
-                const Text('Публичная история'),
+                Text(l.publicHistory),
                 for (final h in _history)
                   ListTile(
                     dense: true,
                     leading: const Icon(Icons.circle, size: 8),
-                    title: Text(h.describe()),
+                    title: Text(describeHistory(l, h)),
                     subtitle: h.timestamp > 0
                         ? Text(DateTime.fromMillisecondsSinceEpoch(
                               h.timestamp * 1000,

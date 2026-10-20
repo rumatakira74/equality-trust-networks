@@ -19,6 +19,9 @@
 //	evidence  — EVIDENCE на эквивокации (две ветки одного seq)
 //	findlabels — метки кошельков со слотом челленджа в полосе (8.1)
 //	state     — снимок состояния реестра узла-драйвера (8.1)
+//	export    — экспорт реестра песочницы для анализа (6.5, этап 10):
+//	            кошельки/пулы/обороты/предложение/неравенство (Gini)
+//	configure — конфигуратор сети по шаблону профиля (раздел 5, этап 10)
 //	fleet     — супервизор 48 persistent headless-узлов (8.1)
 //
 // Параметры профиля — KNOWLEDGE 4/17 (база params.TestGenesis); сеть
@@ -74,6 +77,15 @@ const usage = `tnp-testnet — утилита закрытой тестовой 
   state     -genesis Ф [-watch-seeds М] [-watch-wallets М] [-peer M]...
   fleet     -genesis Ф -out КАТ -nodes N [-seeds М,М] [-wallets М,М]
             [-base-port 4100] [-bin ПУТЬ] [-duration СЕК] [-poll СЕК]
+  export    -genesis Ф [-out ФАЙЛ] [-format json|csv] [-peer M]...
+            (6.5: экспорт реестра для анализа — оборот, предложение,
+            неравенство считаются из публичного реестра)
+  configure -list | -template 1..7 -network-id ИМЯ [-out КАТ]
+            [-genesis-time T] [-seeds V1,V2,V3] [-issuance-amount N]
+            [-vouch-k N] [-epoch-seconds N] [-resource-id ID]
+            [-display-name ИМЯ] [-invite-key-hex HEX]
+            (конфигуратор: шаблон профиля → параметры → genesis-пакет
+            + приложение + уровень гарантий из манифеста, 3.3)
 
 Общие флаги tx-режимов: -peer (multiaddr пиров, повторяется),
 -wait СЕК (после публикации, по умолчанию 2), -node-seed СТРОКА,
@@ -113,6 +125,10 @@ func main() {
 		err = stateCmd(os.Args[2:])
 	case "fleet":
 		err = fleetCmd(os.Args[2:])
+	case "export":
+		err = exportCmd(os.Args[2:])
+	case "configure":
+		err = configureCmd(os.Args[2:])
 	default:
 		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(2)
@@ -702,6 +718,7 @@ func registerCmd(args []string) error {
 	wallet := fs.String("wallet", "", "метка кошелька (ключ детерминирован)")
 	guardians := fs.String("guardians", "", "личные гардианы, hex через запятую")
 	androidID := fs.String("android-id", "", "android_id устройства")
+	synthetic := fs.Bool("synthetic", false, "синтетический кошелёк (только песочница, 6.5)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -739,6 +756,7 @@ func registerCmd(args []string) error {
 		AttestationChallenge: challenge,
 		AndroidID:            *androidID,
 		PersonalGuardians:    personal,
+		Synthetic:            *synthetic,
 	}
 	tx, err := buildTx(env, key, addr, wire.Register, payload, true)
 	if err != nil {
@@ -882,7 +900,7 @@ func transferCmd(args []string) error {
 	}
 	key := seedKey(*seed)
 	addr := addrOf(key, env.gp.Genesis.NetworkID)
-	fee := env.node.Ledger.State.Net.Fee(*amount)
+	fee := env.node.Ledger.State.Net.Fee(*amount, env.node.Ledger.State.FeeRate)
 	payload := &wire.TransferPayload{Send: &wire.TransferSend{Recipient: rcpt, Amount: *amount}}
 	tx, err := buildTx(env, key, addr, wire.Transfer, payload, false)
 	if err != nil {

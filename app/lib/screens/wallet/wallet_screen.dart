@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -55,9 +56,10 @@ class _WalletScreenState extends State<WalletScreen> {
     final app = context.watch<AppState>();
     final wallet = app.wallet;
     final manifest = app.manifest;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Кошелёк'),
+        title: Text(l.navWallet),
         actions: [
           IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh)),
         ],
@@ -73,11 +75,8 @@ class _WalletScreenState extends State<WalletScreen> {
                   Card(
                     child: ListTile(
                       leading: const Icon(Icons.schedule),
-                      title: Text('Отложенных переводов: ${_pending.length}'),
-                      subtitle: const Text(
-                        'Крупные переводы исполняются через задержку D; '
-                        'отменить можно в течение D',
-                      ),
+                      title: Text(l.pendingCount(_pending.length)),
+                      subtitle: Text(l.pendingHint),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const PendingScreen()),
                       ),
@@ -92,7 +91,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           ))
                       : null,
                   icon: const Icon(Icons.download),
-                  label: const Text('Выпуск (челлендж)'),
+                  label: Text(l.btnMint),
                 ),
                 const SizedBox(height: 8),
                 FilledButton.icon(
@@ -102,18 +101,17 @@ class _WalletScreenState extends State<WalletScreen> {
                           ))
                       : null,
                   icon: const Icon(Icons.send),
-                  label: const Text('Перевод'),
+                  label: Text(l.btnTransfer),
                 ),
                 const SizedBox(height: 16),
-                Text('История', style: Theme.of(context).textTheme.titleMedium),
+                Text(l.historyTitle, style: Theme.of(context).textTheme.titleMedium),
                 const Divider(),
-                if (_history.isEmpty)
-                  const Text('Пока пусто'),
+                if (_history.isEmpty) Text(l.historyEmpty),
                 for (final h in _history)
                   ListTile(
                     dense: true,
                     leading: _iconFor(h.type),
-                    title: Text(h.describe()),
+                    title: Text(describeHistory(l, h)),
                     subtitle: h.timestamp > 0
                         ? Text(DateTime.fromMillisecondsSinceEpoch(
                               h.timestamp * 1000,
@@ -127,6 +125,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _balanceCard(
       BuildContext context, WalletInfo wallet, ManifestParams? manifest) {
+    final l = AppLocalizations.of(context)!;
     final demurrage = manifest?.demurrageEnabled == true;
     return Card(
       child: Padding(
@@ -150,26 +149,22 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'эффективный остаток${demurrage ? ' (демередж применён)' : ''}',
+              demurrage ? l.effBalanceDem : l.effBalance,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            if (wallet.locked > 0)
-              Text('в резерве отложенных: ${wallet.locked}'),
+            if (wallet.locked > 0) Text(l.lockedReserve(wallet.locked)),
             if (wallet.flagged)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Кошелёк помечен (flagged) — метка публична, вердиктов нет',
-                  style: TextStyle(color: Colors.orange),
+                  l.flaggedNotice,
+                  style: const TextStyle(color: Colors.orange),
                 ),
               ),
             if (wallet.registered && !wallet.active)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'Статус registered: для активации нужно K поручительств '
-                  '(вкладка «Поручительства»)',
-                ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(l.registeredNeedK),
               ),
           ],
         ),
@@ -190,6 +185,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _awaitingCard(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Card(
       color: Colors.amber.withValues(alpha: 0.15),
       child: Padding(
@@ -197,9 +193,9 @@ class _WalletScreenState extends State<WalletScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Получено по Bluetooth — ожидает публикации',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              l.btAwaitingTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             // 12.4: «получено по Bluetooth» ≠ оплата, до подтверждения
             // сети платёж не считается
@@ -207,15 +203,15 @@ class _WalletScreenState extends State<WalletScreen> {
               ListTile(
                 dense: true,
                 leading: const Icon(Icons.bluetooth),
-                title: Text('${a.amount} от ${a.recipient.shortHash()}'),
-                subtitle: Text('статус: ${a.status}'),
+                title: Text(l.btAwaitingRow(a.amount, a.recipient.shortHash())),
+                subtitle: Text(l.btStatus(a.status)),
               ),
             TextButton(
               onPressed: () async {
                 await context.read<PlatformService>().publishAwaiting();
                 _refresh();
               },
-              child: const Text('Опубликовать (сеть доступна)'),
+              child: Text(l.btnPublishAwaiting),
             ),
           ],
         ),
@@ -240,5 +236,27 @@ class _WalletScreenState extends State<WalletScreen> {
       default:
         return const Icon(Icons.circle_outlined);
     }
+  }
+}
+
+/// Описание записи истории (л10н, этап 10): строки вынесены из моделей
+/// в UI-слой — перевод зависит от локали.
+String describeHistory(AppLocalizations l, HistoryEntry h) {
+  switch (h.type) {
+    case 'REGISTER':
+      return l.txRegister;
+    case 'VOUCH':
+      return l.txVouch;
+    case 'MINT':
+      return l.txMint(h.period);
+    case 'TRANSFER':
+      if (h.note.isNotEmpty) return h.note;
+      return l.txTransfer(h.amount, h.recipient.shortHash());
+    case 'MIGRATE':
+      return h.note;
+    case 'GUARDIAN_OFFER':
+      return h.note;
+    default:
+      return h.type;
   }
 }
