@@ -92,9 +92,15 @@ object FlutterBridge {
         // API 35/36 даёт SIGSYS (вопрос №38, отчёт этапа 7); проверка
         // на живом телефоне — чек-лист
         NodeController.inMemoryDb = true
-        val netDir = appContext.getExternalFilesDir("networks")
-        val genesisFile = netDir?.let { java.io.File(it, "genesis.bin") }
-        if (genesisFile != null && genesisFile.isFile) {
+        // внутренний каталог (adb: run-as <pkg> — debug-сборка) или внешний
+        // (<external files>, adb push до первого запуска)
+        var netDir: java.io.File? = java.io.File(java.io.File(appContext.filesDir, "networks"), "")
+        var genesisFile = java.io.File(netDir, "genesis.bin")
+        if (!genesisFile.isFile) {
+            netDir = appContext.getExternalFilesDir("networks")
+            genesisFile = netDir?.let { java.io.File(it, "genesis.bin") } ?: genesisFile
+        }
+        if (genesisFile.isFile) {
             val gen = tnp.Tnp.loadGenesis(genesisFile.readBytes())
             genesis = gen
             NodeController.genesis = gen
