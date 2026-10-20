@@ -64,7 +64,9 @@ func SignSeedList(s *SeedList, keys []*ecdsa.PrivateKey) []byte {
 	sig := &wire.ThresholdSignature{}
 	h := sha256.Sum256(payload)
 	for _, k := range keys {
-		sigBytes, err := ecdsa.SignASN1(nil, k, h[:]) //nolint:staticcheck // rand nil = crypto/rand
+		// crypto.SignDER: каноничный DER + low-s (аудит криптографии,
+		// этап 9) — строгий верификатор принимает все собственные подписи
+		sigBytes, err := crypto.SignDER(k, h[:])
 		if err != nil {
 			continue
 		}
