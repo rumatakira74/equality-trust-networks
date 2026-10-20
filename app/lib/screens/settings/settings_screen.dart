@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
+import '../recovery/recovery_card_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -100,6 +101,16 @@ class SettingsScreen extends StatelessWidget {
             leading: const Icon(Icons.lock),
             title: Text(l.lockApp),
             onTap: () => _lock(context),
+          ),
+          // карточка восстановления доступна и позже (решение
+          // владельца 20.10.2026): настройки, экран миграции
+          ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: Text(l.settingsRecovery),
+            subtitle: Text(l.recoveryIntro),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const RecoveryCardScreen(),
+                )),
           ),
         ],
       ),

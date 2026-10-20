@@ -801,4 +801,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get languageZh => '中文';
+
+  @override
+  String get recoveryTitle => '恢复卡';
+
+  @override
+  String get recoveryIntro => '请在手机之外保存这些数据：丢失设备时需要它们来恢复钱包（由守护人迁移，第 11 节）。';
+
+  @override
+  String get recoveryAddress => '钱包地址';
+
+  @override
+  String get recoveryNetwork => '网络';
+
+  @override
+  String get recoveryGuardians => '您的守护人';
+
+  @override
+  String get recoveryNoGuardians => '未指定守护人：无法恢复，只能重置（普通注册并获得新的担保）。';
+
+  @override
+  String get recoveryHowToSave => '保存方法：抄写在纸上或存入密码管理器——在手机之外。可从此界面打印二维码。';
+
+  @override
+  String get recoveryNeverShare =>
+      '切勿向任何人透露迁移数据：nonce 和守护人签名。只能向他人展示地址和本卡的二维码。';
+
+  @override
+  String get recoverySavedDone => '已保存 — 继续';
+
+  @override
+  String get settingsRecovery => '恢复卡';
 }

@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
+import '../recovery/recovery_card_screen.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -19,7 +20,9 @@ class OnboardingFlow extends StatefulWidget {
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
-  int _step = 0; // 0 биометрия, 1 PIN, 2 гардианы, 3 регистрация
+  // 0 биометрия, 1 PIN, 2 гардианы, 3 регистрация, 4 карточка
+  // восстановления (решение владельца 20.10.2026: «сохраните эти данные»)
+  int _step = 0;
 
   @override
   void initState() {
@@ -51,7 +54,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         0 => _BiometricsStep(onDone: _next),
         1 => _PinStep(onDone: _next),
         2 => _GuardiansStep(onDone: _toRegister),
-        _ => const _RegisterStep(),
+        3 => _RegisterStep(onDone: () => setState(() => _step = 4)),
+        _ => RecoveryCardScreen(onDone: () {
+          context.read<AppState>().onboardingDone();
+        }),
       },
     );
   }
@@ -382,7 +388,8 @@ class _GuardiansStepState extends State<_GuardiansStep> {
 /// Шаг 4: register — аттестация + усиленный PoW + биометрическая
 /// подпись + публикация; затем запуск узла.
 class _RegisterStep extends StatefulWidget {
-  const _RegisterStep();
+  final VoidCallback onDone;
+  const _RegisterStep({required this.onDone});
 
   @override
   State<_RegisterStep> createState() => _RegisterStepState();
@@ -413,7 +420,8 @@ class _RegisterStepState extends State<_RegisterStep> {
           ? l.regStatusDone
           : l.rejectedWithCode(res.code));
       if (res.accepted) {
-        await app.onboardingDone();
+        // карточка восстановления — до завершения онбординга (этап 10)
+        widget.onDone();
       }
     } catch (e) {
       setState(() => _status = l.errorWith('$e'));

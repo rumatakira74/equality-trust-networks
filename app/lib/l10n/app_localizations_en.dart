@@ -822,4 +822,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageZh => '中文';
+
+  @override
+  String get recoveryTitle => 'Recovery card';
+
+  @override
+  String get recoveryIntro =>
+      'Save this data outside the phone: it is needed to recover the wallet if the device is lost (migration with guardians, section 11).';
+
+  @override
+  String get recoveryAddress => 'Wallet address';
+
+  @override
+  String get recoveryNetwork => 'Network';
+
+  @override
+  String get recoveryGuardians => 'Your guardians';
+
+  @override
+  String get recoveryNoGuardians =>
+      'No guardians assigned: recovery is impossible, only a restart is available (regular registration with new vouches).';
+
+  @override
+  String get recoveryHowToSave =>
+      'How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.';
+
+  @override
+  String get recoveryNeverShare =>
+      'Never share migration data: the nonce and guardian signatures. Only the address and this card\'s QR may be shown to others.';
+
+  @override
+  String get recoverySavedDone => 'Saved — continue';
+
+  @override
+  String get settingsRecovery => 'Recovery card';
 }

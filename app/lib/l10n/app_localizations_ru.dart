@@ -822,4 +822,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get languageZh => '中文';
+
+  @override
+  String get recoveryTitle => 'Карточка восстановления';
+
+  @override
+  String get recoveryIntro =>
+      'Сохраните эти данные вне телефона: они нужны для восстановления кошелька при утрате устройства (миграция с гардианами, раздел 11).';
+
+  @override
+  String get recoveryAddress => 'Адрес кошелька';
+
+  @override
+  String get recoveryNetwork => 'Сеть';
+
+  @override
+  String get recoveryGuardians => 'Ваши гардианы';
+
+  @override
+  String get recoveryNoGuardians =>
+      'Гардианы не назначены: восстановление невозможно, доступен только перезапуск (обычная регистрация с новыми поручительствами).';
+
+  @override
+  String get recoveryHowToSave =>
+      'Как сохранить: перепишите на бумагу или внесите в менеджер паролей — вне телефона. QR-код можно распечатать с этого экрана.';
+
+  @override
+  String get recoveryNeverShare =>
+      'Никому не передавайте данные миграции: nonce и подписи гардианов. Сторонним лицам можно показывать только адрес и QR этой карточки.';
+
+  @override
+  String get recoverySavedDone => 'Сохранено — продолжить';
+
+  @override
+  String get settingsRecovery => 'Карточка восстановления';
 }

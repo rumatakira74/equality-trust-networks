@@ -823,4 +823,38 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get languageZh => '中文';
+
+  @override
+  String get recoveryTitle => 'Cartão de recuperação';
+
+  @override
+  String get recoveryIntro =>
+      'Guarde estes dados fora do telefone: eles são necessários para recuperar a carteira se o dispositivo for perdido (migração com guardiões, seção 11).';
+
+  @override
+  String get recoveryAddress => 'Endereço da carteira';
+
+  @override
+  String get recoveryNetwork => 'Rede';
+
+  @override
+  String get recoveryGuardians => 'Seus guardiões';
+
+  @override
+  String get recoveryNoGuardians =>
+      'Nenhum guardião designado: a recuperação é impossível, resta apenas o reinício (registro comum com avais novos).';
+
+  @override
+  String get recoveryHowToSave =>
+      'Como guardar: copie no papel ou num gerenciador de senhas — fora do telefone. O QR pode ser impresso a partir desta tela.';
+
+  @override
+  String get recoveryNeverShare =>
+      'Nunca compartilhe os dados de migração: o nonce e as assinaturas dos guardiões. A terceiros mostre apenas o endereço e o QR deste cartão.';
+
+  @override
+  String get recoverySavedDone => 'Salvo — continuar';
+
+  @override
+  String get settingsRecovery => 'Cartão de recuperação';
 }

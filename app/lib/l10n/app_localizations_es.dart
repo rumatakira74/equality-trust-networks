@@ -826,4 +826,38 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get languageZh => '中文';
+
+  @override
+  String get recoveryTitle => 'Tarjeta de recuperación';
+
+  @override
+  String get recoveryIntro =>
+      'Guarde estos datos fuera del teléfono: son necesarios para recuperar el monedero si pierde el dispositivo (migración con guardianes, sección 11).';
+
+  @override
+  String get recoveryAddress => 'Dirección del monedero';
+
+  @override
+  String get recoveryNetwork => 'Red';
+
+  @override
+  String get recoveryGuardians => 'Sus guardianes';
+
+  @override
+  String get recoveryNoGuardians =>
+      'Sin guardianes asignados: la recuperación es imposible, solo queda el reinicio (registro normal con avales nuevos).';
+
+  @override
+  String get recoveryHowToSave =>
+      'Cómo guardar: cópielo en papel o en un gestor de contraseñas — fuera del teléfono. El código QR puede imprimirse desde esta pantalla.';
+
+  @override
+  String get recoveryNeverShare =>
+      'Nun comparta los datos de migración: el nonce y las firmas de los guardianes. A terceros puede mostrar solo la dirección y el QR de esta tarjeta.';
+
+  @override
+  String get recoverySavedDone => 'Guardado — continuar';
+
+  @override
+  String get settingsRecovery => 'Tarjeta de recuperación';
 }

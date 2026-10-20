@@ -13,6 +13,7 @@ import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
+import '../recovery/recovery_card_screen.dart';
 
 class MigrationScreen extends StatefulWidget {
   const MigrationScreen({super.key});
@@ -97,6 +98,14 @@ class _MigrationScreenState extends State<MigrationScreen> {
             ),
             icon: const Icon(Icons.how_to_reg),
             label: Text(l.btnApproveMigration),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const RecoveryCardScreen(),
+                )),
+            icon: const Icon(Icons.badge_outlined),
+            label: Text(l.settingsRecovery),
           ),
           const SizedBox(height: 24),
           Text(l.publicGuardiansTitle,

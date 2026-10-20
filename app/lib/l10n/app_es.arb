@@ -223,5 +223,15 @@
   "languageEn": "English",
   "languageEs": "Español",
   "languagePt": "Português",
-  "languageZh": "中文"
+  "languageZh": "中文",
+  "recoveryTitle": "Tarjeta de recuperación",
+  "recoveryIntro": "Guarde estos datos fuera del teléfono: son necesarios para recuperar el monedero si pierde el dispositivo (migración con guardianes, sección 11).",
+  "recoveryAddress": "Dirección del monedero",
+  "recoveryNetwork": "Red",
+  "recoveryGuardians": "Sus guardianes",
+  "recoveryNoGuardians": "Sin guardianes asignados: la recuperación es imposible, solo queda el reinicio (registro normal con avales nuevos).",
+  "recoveryHowToSave": "Cómo guardar: cópielo en papel o en un gestor de contraseñas — fuera del teléfono. El código QR puede imprimirse desde esta pantalla.",
+  "recoveryNeverShare": "Nun comparta los datos de migración: el nonce y las firmas de los guardianes. A terceros puede mostrar solo la dirección y el QR de esta tarjeta.",
+  "recoverySavedDone": "Guardado — continuar",
+  "settingsRecovery": "Tarjeta de recuperación"
 }

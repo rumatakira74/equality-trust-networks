@@ -223,5 +223,15 @@
   "languageEn": "English",
   "languageEs": "Español",
   "languagePt": "Português",
-  "languageZh": "中文"
+  "languageZh": "中文",
+  "recoveryTitle": "Cartão de recuperação",
+  "recoveryIntro": "Guarde estes dados fora do telefone: eles são necessários para recuperar a carteira se o dispositivo for perdido (migração com guardiões, seção 11).",
+  "recoveryAddress": "Endereço da carteira",
+  "recoveryNetwork": "Rede",
+  "recoveryGuardians": "Seus guardiões",
+  "recoveryNoGuardians": "Nenhum guardião designado: a recuperação é impossível, resta apenas o reinício (registro comum com avais novos).",
+  "recoveryHowToSave": "Como guardar: copie no papel ou num gerenciador de senhas — fora do telefone. O QR pode ser impresso a partir desta tela.",
+  "recoveryNeverShare": "Nunca compartilhe os dados de migração: o nonce e as assinaturas dos guardiões. A terceiros mostre apenas o endereço e o QR deste cartão.",
+  "recoverySavedDone": "Salvo — continuar",
+  "settingsRecovery": "Cartão de recuperação"
 }

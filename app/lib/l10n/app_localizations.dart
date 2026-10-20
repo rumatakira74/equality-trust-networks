@@ -1453,6 +1453,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'中文'**
   String get languageZh;
+
+  /// No description provided for @recoveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery card'**
+  String get recoveryTitle;
+
+  /// No description provided for @recoveryIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this data outside the phone: it is needed to recover the wallet if the device is lost (migration with guardians, section 11).'**
+  String get recoveryIntro;
+
+  /// No description provided for @recoveryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet address'**
+  String get recoveryAddress;
+
+  /// No description provided for @recoveryNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get recoveryNetwork;
+
+  /// No description provided for @recoveryGuardians.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guardians'**
+  String get recoveryGuardians;
+
+  /// No description provided for @recoveryNoGuardians.
+  ///
+  /// In en, this message translates to:
+  /// **'No guardians assigned: recovery is impossible, only a restart is available (regular registration with new vouches).'**
+  String get recoveryNoGuardians;
+
+  /// No description provided for @recoveryHowToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.'**
+  String get recoveryHowToSave;
+
+  /// No description provided for @recoveryNeverShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Never share migration data: the nonce and guardian signatures. Only the address and this card\'s QR may be shown to others.'**
+  String get recoveryNeverShare;
+
+  /// No description provided for @recoverySavedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved — continue'**
+  String get recoverySavedDone;
+
+  /// No description provided for @settingsRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery card'**
+  String get settingsRecovery;
 }
 
 class _AppLocalizationsDelegate
