@@ -882,7 +882,7 @@ func transferCmd(args []string) error {
 	}
 	key := seedKey(*seed)
 	addr := addrOf(key, env.gp.Genesis.NetworkID)
-	fee := env.node.Ledger.State.Net.Fee(*amount)
+	fee := env.node.Ledger.State.Net.Fee(*amount, env.node.Ledger.State.FeeRate)
 	payload := &wire.TransferPayload{Send: &wire.TransferSend{Recipient: rcpt, Amount: *amount}}
 	tx, err := buildTx(env, key, addr, wire.Transfer, payload, false)
 	if err != nil {

@@ -81,6 +81,9 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 	st.Epoch = gp.Genesis.EpochZero
 	st.CurrentPeriod = 0
 	st.GenesisTime = gp.Genesis.GenesisTime
+	// стартовая ставка комиссии = rate_min (10.2); дальше — адаптивный
+	// пересчёт на границах эпох (settleEpoch)
+	st.FeeRate = p.RateMin
 	// Посевной круг: active из genesis-чекпоинта эпохи 0 (решение D8)
 	st.SeedMembers(m.SeedCircle, gp.Genesis.EpochZero, gp.Genesis.GenesisTime)
 

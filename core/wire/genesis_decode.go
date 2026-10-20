@@ -320,6 +320,12 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.ValidatorsM = v
 	case 56:
 		p.CpBuilderQueue = v
+	case 57:
+		p.FeeAdjustEpochs = v
+	case 58:
+		p.FeeTargetGrowthMicros = v
+	case 59:
+		p.FeeStepMicros = v
 	default:
 		return errUnknownField
 	}

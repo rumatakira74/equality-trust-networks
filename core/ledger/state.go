@@ -117,6 +117,22 @@ type State struct {
 	GenesisTime      uint64
 	SeedRightsActive bool // посевной круг: особые права (до seed_sunset)
 	AndroidIDSeen    map[string]int
+	// FeeRate — текущая ставка комиссии в micros (10.2, этап 10):
+	// инициализируется значением rate_min, пересчитывается на границе
+	// эпохи (settleEpoch) детерминированно из истории предложения.
+	FeeRate uint64
+	// SupplySnapshots — предложение на границах эпох (total_minted, как
+	// в чекпоинте total_supply) для адаптивного пересчёта ставки (10.2).
+	SupplySnapshots []SupplySnapshot
+	// CommonFund — общий фонд сети (fee_mode = POOL, раздел 4).
+	CommonFund uint64
+}
+
+// SupplySnapshot — предложение на границе эпохи (данные чекпоинта:
+// total_supply = total_minted на момент сборки чекпоинта эпохи).
+type SupplySnapshot struct {
+	Epoch   uint64
+	Supply  uint64
 }
 
 func key(b []byte) string { return string(b) }

@@ -748,6 +748,17 @@ func (n *Node) adoptCheckpoint(cp *wire.Checkpoint) bool {
 	n.mu.Unlock()
 	if n.Store != nil {
 		_ = n.Store.SaveCheckpointHeader(cp.Epoch, cpHashOf(cp))
+		// ряд предложения для адаптивной комиссии (10.2, этап 10):
+		// рестарт из БД восстанавливает пересчёт ставки
+		_ = n.Store.SaveCheckpointSupply(cp.Epoch, cp.TotalSupply)
+	}
+	// пересчёт ставки комиссии из данных финализированного чекпоинта
+	// (10.2): значение одинаково на всех узлах — цепочка чекпоинтов
+	// едина; порядок блокировок applyMu → mu (мьютекс уже отпущен)
+	if n.Ledger != nil {
+		n.applyMu.Lock()
+		n.Ledger.OnCheckpointSupply(cp.Epoch, cp.TotalSupply)
+		n.applyMu.Unlock()
 	}
 	n.consClock.OnCheckpoint(cp)
 	// противоречит ли состояние финализированному выбору — перестроиться

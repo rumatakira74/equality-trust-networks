@@ -87,14 +87,15 @@ func (n *Network) SlotCapacity(ageDays uint64, seed bool, seedAgeDays uint64) ui
 }
 
 // Fee — комиссия на движение (10.2): fee = max(fee_min, rate × amount).
-// rate — в micros (1% = 10000); fee сжигается при fee_mode = BURN.
-func (n *Network) Fee(amount uint64) uint64 {
+// rate — в micros (1% = 10000), текущее значение передаёт ядро (адаптивный
+// пересчёт на границе эпохи — 10.2, этап 10; до K эпох истории rate равен
+// стартовому = rate_min). fee сжигается при fee_mode = BURN, при
+// fee_mode = POOL уходит в общий фонд сети.
+func (n *Network) Fee(amount, rate uint64) uint64 {
 	if n.Profile.FeeMode == wire.FeeModeNone {
 		return 0
 	}
-	// Текущая ставка: адаптивный пересчёт на границе эпохи — этап 5;
-	// детерминированная заглушка этапа 3 — константа RateMin (старт 1%, 1.2).
-	fee := amount * n.Profile.RateMin / 1_000_000
+	fee := amount * rate / 1_000_000
 	if fee < n.Profile.FeeMin {
 		fee = n.Profile.FeeMin
 	}
@@ -160,6 +161,12 @@ func TestGenesis() *wire.GenesisPackage {
 		MigrateDelayDays:           14,
 		TimestampToleranceSeconds:  1800, // ±30 мин (9.2)
 		MintChallengeWindowHours:   48,   // ±48 ч (7.6)
+		// Адаптивная комиссия (10.2, этап 10): окно K = 6 эпох, целевой
+		// рост предложения за окно 6%, шаг 0,05 п.п. Числа в Документе
+		// не заданы — предположение этапа 10, вопрос №44 в QUESTIONS.md.
+		FeeAdjustEpochs:       6,
+		FeeTargetGrowthMicros: 60000,
+		FeeStepMicros:         500,
 		Pow: &wire.PowParams{
 			// Решение №9 (утверждено 19.10.2026, замеры —
 			// reports/stage6/pow-host.md): лёгкий PoW SHA-256 с таргетом
@@ -175,9 +182,10 @@ func TestGenesis() *wire.GenesisPackage {
 			RepeatAndroidIDTarget: 0,
 		},
 	}
-	// Стартовая ставка 1% (1.2); поле RateMin несёт текущее значение ставки
-	// (адаптивный пересчёт на границе эпохи — этап 5, детерминированная
-	// заглушка этапа 3: константа).
+	// Стартовая ставка 1% (1.2); поле RateMin несёт стартовое значение
+	// ставки и нижнюю границу (адаптивный пересчёт на границе эпохи —
+	// 10.2, этап 10: State.FeeRate инициализируется значением RateMin
+	// и дальше движется в границах [RateMin, RateMax]).
 	profile.RateMin = 10000
 	manifest := &wire.Manifest{
 		NetworkID:   networkID,

@@ -232,6 +232,15 @@ func (n *Node) initLedger() error {
 		for _, tx := range l.AcceptedTxs() {
 			n.indexTx(tx)
 		}
+		// восстановление ряда предложения чекпоинтов (адаптивная
+		// комиссия, 10.2, этап 10): та же цепочка пересчётов ставки
+		epochs, supplies, err := n.Store.LoadCheckpointSupply()
+		if err != nil {
+			return fmt.Errorf("net: fee supply: %w", err)
+		}
+		for i := range epochs {
+			l.OnCheckpointSupply(epochs[i], supplies[i])
+		}
 	}
 	return nil
 }

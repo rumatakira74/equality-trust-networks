@@ -145,6 +145,8 @@ func (l *Ledger) flushPending(now uint64) {
 		}
 		if prof.FeeMode == wire.FeeModeBurn {
 			l.State.TotalBurned += pt.Fee
+		} else if prof.FeeMode == wire.FeeModePool {
+			l.State.CommonFund += pt.Fee // общий фонд сети (раздел 4)
 		}
 		pt.Executed = true
 	}

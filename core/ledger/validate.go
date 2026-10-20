@@ -533,7 +533,7 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		if now-w.RegisteredAt < prof.TransferMoratoriumDays*86400 {
 			return reject("E_MORATORIUM")
 		}
-		fee := l.State.Net.Fee(amount)
+		fee := l.State.Net.Fee(amount, l.State.FeeRate)
 		// T4/T8: переводимый остаток (когорты + liquid − резерв) >= amount + fee
 		if w.Spendable(period, prof.FreshTransferWindowPeriods) < amount+fee {
 			return reject("E_BALANCE")
@@ -559,6 +559,8 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		}
 		if prof.FeeMode == wire.FeeModeBurn {
 			l.State.TotalBurned += fee
+		} else if prof.FeeMode == wire.FeeModePool {
+			l.State.CommonFund += fee // общий фонд сети (раздел 4)
 		}
 		w.LastTouchEpoch = l.Clock.Epoch()
 		return accept(tx.TxID())
