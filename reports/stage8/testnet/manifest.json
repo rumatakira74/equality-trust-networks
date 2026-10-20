@@ -1,0 +1,82 @@
+{
+  "accrual_window_periods": 6,
+  "argon2_iterations": 1,
+  "argon2_mem_kib": 32768,
+  "checkpoint_mode": "decentralized",
+  "delayed_threshold": 3000,
+  "delayed_threshold_max": 30000,
+  "demurrage_floor": 3000,
+  "demurrage_rate_micros": 10000,
+  "device_policy": "strict",
+  "display_name": "TNP Closed Testnet tnp-testnet-alpha",
+  "eclipse_n": 3,
+  "entry_mode": "invite_only_vouch",
+  "epoch_seconds": 86400,
+  "epoch_zero": 0,
+  "fee_min": 1,
+  "fee_mode": "burn",
+  "fresh_transfer_window_periods": 3,
+  "genesis_time": 1760000000,
+  "guardian_min_age_days": 365,
+  "guardian_personal_count": 3,
+  "guardian_personal_threshold": 2,
+  "guardian_public_threshold": 3,
+  "guardian_reward_micros": 50000,
+  "invite_key": "11d4d90584f9e54d9651bb8a04afaf1f1446beb5ffe899e2c094de8c8d21375a",
+  "invite_key_note": "тестовая сеть: детерминирован от имени; живая — случайный, вне репозитория",
+  "issuance_amount": 1000,
+  "issuance_period_months": 1,
+  "manifest_hash": "bc944df55a94b3b688796af0ef6741a8b77ef13bb48a64ffd5a970885454f3a3",
+  "migrate_delay_days": 14,
+  "mint_challenge_window_hours": 48,
+  "name": "tnp-testnet-alpha",
+  "network_access": "invite_only",
+  "network_id": "c257dfbe3052948f3ba66df5155c9e4a4e10d8604c4eb01da1ff2fa9d531004b",
+  "pow_target_hard": 18014398509481984,
+  "pow_target_light": 1099511627776,
+  "protocol_version": 1,
+  "rate_max_micros": 20000,
+  "rate_min_micros": 10000,
+  "sandbox": false,
+  "seed_circle": [
+    {
+      "label": "V1",
+      "address": "0deb1039805d90679d7799fb9a72eec1ecea1b00ecb91ad622a815ca40d4fef5",
+      "public_key": "0401b1858eca257715fa765a4f322c43c37136dbdee4a4f23c2d4ebc47a0f0752f958dfdb335d47d9d53c5dce258a842c7116d4742be2236466019ba04e0ba30c2"
+    },
+    {
+      "label": "V2",
+      "address": "c30983ac21869edf9e203b96d283539e29e4167be19306f096b12c6ded64fdfc",
+      "public_key": "0409ec666b47fbfa896297347a8a07d11cc5aef2e86f9ec38a0adcf9c9cf60f0c22c32ab9955619e96af9a9959773c3430764e327ce02efdf3783391e7669f8814"
+    },
+    {
+      "label": "V3",
+      "address": "c31bb485f2ccbe0c2677979f1da3b40e5847bb06ff822f8acafb95a184a382ee",
+      "public_key": "0464e3dc11421817f686feae30620765dfcf94dce2d35beac3a2080ad9fcc7c4da5394696a46793261d2ae5a607867e629988448c4cf6ff58c09a23cca650581ef"
+    }
+  ],
+  "seed_circle_note": "ключи детерминированы от меток (тестовая сеть); рекомендация ≥ 300 — 7.7",
+  "seed_slot_count": 10,
+  "seed_sunset_active_wallets": 100,
+  "seed_sunset_deadline_epoch": 24,
+  "signing_auth": "biometric_strong",
+  "slot_tiers": [
+    {
+      "MinAgeDays": 90,
+      "Slots": 3
+    },
+    {
+      "MinAgeDays": 365,
+      "Slots": 5
+    }
+  ],
+  "timestamp_tolerance_seconds": 1800,
+  "transfer_delay_hours": 48,
+  "transfer_moratorium_days": 14,
+  "validators_m": 21,
+  "vouch_k": 3,
+  "voucher_min_age_days": 90,
+  "voucher_min_mint_periods": 2,
+  "voucher_reward_micros": 100000,
+  "voucher_reward_periods": 12
+}

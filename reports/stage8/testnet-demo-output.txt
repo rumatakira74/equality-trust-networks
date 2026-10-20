@@ -1,0 +1,53 @@
+
+### ЭРА 1 (2025-12-08): окно челленджа V3/период 1 открыто
+Mon Dec  8 13:00:02 CET 2025
+A journal: 0 conflicts: 0 peers: 1 root: fdea511383a4
+B journal: 0 conflicts: 0 peers: 1 root: fdea511383a4
+tx 04d3a71131d104f4: accept/OK seq=1
+tx 5b7aa7d4ed9cdd8c: reject/E_POW_HARD seq=2
+
+### ЭРА 2 (2026-03-08): окно V3/период 4; эквивокация
+Sun Mar  8 18:20:02 CET 2026
+A journal: 1 conflicts: 0 peers: 1 root: 0714d0be05c8
+B journal: 1 conflicts: 0 peers: 1 root: 0714d0be05c8
+mint: собран, не опубликован (seq=2 amount=3000)
+mint: собран, не опубликован (seq=2 amount=3000)
+tx 76b5be2b3330d258: accept/OK seq=2
+tx 356d5c04c7384025: conflict/EQUIVOCATION_BRANCH_LOST seq=2
+
+### ЭРА 3 (2026-05-08, период 7): переводы
+Thu May  7 11:53:22 CEST 2026
+A journal: 2 conflicts: 1 peers: 1 root: 7d7e1ef9a022
+B journal: 2 conflicts: 1 peers: 1 root: 7d7e1ef9a022
+transfer: 3500 → 0deb1039805d90679d7799fb9a72eec1ecea1b00ecb91ad622a815ca40d4fef5, комиссия 35 (сжигается)
+tx 567666616086d660: accept/OK seq=3
+tx bfa6d6a189bd81bc: accept/OK seq=4
+transfer: 100 → c30983ac21869edf9e203b96d283539e29e4167be19306f096b12c6ded64fdfc, комиссия 1 (сжигается)
+tx 62610edb0005ef71: accept/OK seq=5
+
+### ЭРА 4 (реальное время +1 ч): регистрация, поручительства, evidence, миграция
+Tue Oct 20 05:00:48 CEST 2026
+A journal: 5 conflicts: 1 peers: 1 root: 702a3128fdb2
+B journal: 5 conflicts: 1 peers: 1 root: 702a3128fdb2
+W1=794d107de7b8ba0970ff47b2ed89c9713dd98fb43b62dbed3dd0f260d28c990f W2=1875cf4b284ebd194ea7335e049e86118c3e28f4c83d64fa06022eaf78cdc07c
+vouch: V3 → 794d107de7b8ba0970ff47b2ed89c9713dd98fb43b62dbed3dd0f260d28c990f (эпоха 375)
+tx 907a029adf96e320: accept/OK seq=6
+vouch: V1 → 794d107de7b8ba0970ff47b2ed89c9713dd98fb43b62dbed3dd0f260d28c990f (эпоха 375)
+tx 6ef81d1b19cf1d78: reject/E_VOUCH_PERIODS seq=1
+evidence: эквивокация c31bb485f2ccbe0c seq=2
+tx e5294fa7315131eb: accept/OK seq=1
+vouch: V3 → 794d107de7b8ba0970ff47b2ed89c9713dd98fb43b62dbed3dd0f260d28c990f (эпоха 375)
+tx 9882b0d97c5e910c: reject/E_VOUCH_FLAGGED seq=7
+migrate propose: 794d107de7b8ba09 → 1875cf4b284ebd19, гардианов 2
+tx c942ba194ddf614f: accept/OK seq=2
+tx 5e6949e19262fbcc: accept/OK seq=2
+A journal: 11 conflicts: 1 peers: 2 root: 1ef939abeb6e
+B journal: 11 conflicts: 1 peers: 2 root: 1ef939abeb6e
+
+### ХОЛОДНЫЙ СТАРТ: свежий узел C без БД
+C journal: 11 conflicts: 0 peers: 2 root: 0f3acd861a5b
+
+### ИТОГ
+A journal: 11 conflicts: 1 peers: 2 root: 1ef939abeb6e
+B journal: 11 conflicts: 1 peers: 2 root: 1ef939abeb6e
+C journal: 11 conflicts: 0 peers: 2 root: 0f3acd861a5b
