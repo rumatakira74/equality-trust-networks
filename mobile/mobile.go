@@ -662,3 +662,21 @@ func marshalPriv(k *ecdsa.PrivateKey) []byte {
 	}
 	return b
 }
+
+// LoadGenesis — genesis-пакет из блоба (файл genesis.bin утилиты
+// cmd/tnp-testnet, этап 8): закрытая тестовая сеть собирается из файла,
+// а не кодом. Валидация связки манифест↔запись — в ledger.New при старте
+// узла; здесь только разбор пакета.
+func LoadGenesis(data []byte) (*Genesis, error) {
+	if len(data) == 0 {
+		return nil, errors.New("пустой genesis-пакет")
+	}
+	gp, err := wire.DecodeGenesisPackage(data)
+	if err != nil {
+		return nil, err
+	}
+	return &Genesis{gp: gp}, nil
+}
+
+// Encode — блоб genesis-пакета (парен к LoadGenesis; передача файла).
+func (g *Genesis) Encode() []byte { return g.gp.EncodeGenesisPackage() }

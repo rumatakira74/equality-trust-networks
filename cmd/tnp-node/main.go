@@ -36,12 +36,14 @@ import (
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/params"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
+	tnp "github.com/rumatakira74/equality-trust-networks/mobile"
 	"github.com/rumatakira74/equality-trust-networks/net"
 )
 
 func main() {
 	level := flag.String("level", "full", "уровень узла: full | light")
 	networkID := flag.String("network-id", "tnp-testnet-0001", "network_id тестовой сети")
+	genesisFile := flag.String("genesis-file", "", "genesis.bin утилиты cmd/tnp-testnet (замена встроенному тестовому genesis)")
 	nodeKey := flag.String("node-key", "", "seed ключа узла (Peer ID); по умолчанию — network-id+hostname")
 	dbPath := flag.String("db", "", "путь к SQLite")
 	statusFile := flag.String("status-file", "", "файл JSON-статуса")
@@ -63,6 +65,27 @@ func main() {
 	}
 
 	gp := testGenesis(*networkID)
+	var rootsDER []byte
+	if *genesisFile != "" {
+		// закрытая тестовая сеть (этап 8): genesis-пакет из файла утилиты
+		// cmd/tnp-testnet; корни аттестации — та же синтетическая деривация
+		// от network_id, что у приложения (mobile.TrustedRootsDER)
+		b, err := os.ReadFile(*genesisFile)
+		if err != nil {
+			fatal("genesis-файл: %v", err)
+		}
+		decoded, err := wire.DecodeGenesisPackage(b)
+		if err != nil {
+			fatal("genesis-файл: %v", err)
+		}
+		gp = decoded
+		mgen, err := tnp.LoadGenesis(b)
+		if err != nil {
+			fatal("genesis-файл: %v", err)
+		}
+		rootsDER = mgen.TrustedRootsDER()
+		*networkID = string(gp.Genesis.NetworkID)
+	}
 	if *nodeKey == "" {
 		hostname, _ := os.Hostname()
 		*nodeKey = *networkID + "/" + hostname
@@ -100,13 +123,20 @@ func main() {
 		cfg.WalletKey = key
 		cfg.WalletAddr = crypto.DeriveAddress(fp, []byte(*networkID))
 	}
-	// корни аттестации: синтетический корень (распространение реальных — этап 6)
-	rootKey := crypto.DeterministicKey("tnp-node-root:" + *networkID)
-	cert, _, err := attest.SyntheticRoot("tnp-node", rootKey)
-	if err != nil {
-		fatal("synthetic root: %v", err)
+	// корни аттестации: синтетический корень (распространение реальных — этап 6);
+	// для genesis-файла — деривация приложения (mobile), общая с cmd/tnp-testnet
+	if rootsDER != nil {
+		if cert, err := x509.ParseCertificate(rootsDER); err == nil {
+			cfg.TrustedRoots = []*x509.Certificate{cert}
+		}
+	} else {
+		rootKey := crypto.DeterministicKey("tnp-node-root:" + *networkID)
+		cert, _, err := attest.SyntheticRoot("tnp-node", rootKey)
+		if err != nil {
+			fatal("synthetic root: %v", err)
+		}
+		cfg.TrustedRoots = []*x509.Certificate{cert}
 	}
-	cfg.TrustedRoots = []*x509.Certificate{cert}
 	cfg.Log = log
 
 	node, err := net.NewNode(cfg)
