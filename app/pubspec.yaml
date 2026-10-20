@@ -15,11 +15,18 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   # управление состоянием: ChangeNotifier + Provider (обоснование —
-  # отчёт этапа 7: минимум зависимостей, без кодогенерации, мокается
+  # отчёт этапа 7: минимум зависимаций, без кодогенерации, мокается
   # в тестах)
   provider: ^6.1.2
   # QR-код адреса для поручительства при личной встрече (7.4)
   qr_flutter: ^4.1.0
+  # локализация UI (этап 10): ru, en, es, pt, zh — состав подтверждён
+  # владельцем 20.10.2026; fallback — английский
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  # выбор языка в настройках (этап 10): сохранение предпочтения
+  shared_preferences: ^2.5.0
 
 dev_dependencies:
   flutter_test:
@@ -28,3 +35,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -43,8 +44,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Создание кошелька')),
+      appBar: AppBar(title: Text(l.obTitle)),
       body: switch (_step) {
         0 => _BiometricsStep(onDone: _next),
         1 => _PinStep(onDone: _next),
@@ -83,30 +85,28 @@ class _BiometricsStepState extends State<_BiometricsStep> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Кошелёк требует аппаратного ключа с биометрией '
-            '(BIOMETRIC_STRONG). Без настроенного отпечатка регистрация '
-            'невозможна.',
+          Text(
+            l.obBioRequired,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           if (_available == null)
             const CircularProgressIndicator()
           else if (_available!)
-            FilledButton(onPressed: widget.onDone, child: const Text('Далее'))
+            FilledButton(onPressed: widget.onDone, child: Text(l.btnNext))
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Отпечаток не настроен. Откройте системный экран '
-                  'настройки и добавьте отпечаток.',
+                Text(
+                  l.obBioNotSetup,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -117,7 +117,7 @@ class _BiometricsStepState extends State<_BiometricsStep> {
                         .openBiometricsEnroll();
                     _check();
                   },
-                  child: const Text('Настроить отпечаток'),
+                  child: Text(l.obBioSetup),
                 ),
               ],
             ),
@@ -156,22 +156,23 @@ class _PinStepState extends State<_PinStep> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context)!;
     setState(() => _busy = true);
     try {
       final duress = _wantDuress && _duress.text.isNotEmpty ? _duress.text : null;
       if (_normal.text.length < 4) {
-        throw TnpPlatformException('PIN', 'минимум 4 цифры');
+        throw TnpPlatformException('PIN', l.pinMinDigits);
       }
       if (duress != null && duress.length < 4) {
-        throw TnpPlatformException('PIN', 'тревожный PIN: минимум 4 цифры');
+        throw TnpPlatformException('PIN', l.duressPinMinDigits);
       }
       if (duress != null && duress == _normal.text) {
-        throw TnpPlatformException('PIN', 'PIN-ы совпадают');
+        throw TnpPlatformException('PIN', l.pinsMatch);
       }
       final history = _decoyHistory.text
           .split('\n')
-          .map((l) => l.trim())
-          .where((l) => l.isNotEmpty)
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
           .toList();
       // легенда: правдоподобный небольшой остаток (ноль показывать
       // нельзя, 8.2); история — строки «дата — сумма — получатель»
@@ -193,19 +194,16 @@ class _PinStepState extends State<_PinStep> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text(
-          'PIN защищает приложение. Тревожный PIN (по желанию) открывает '
-          'режим-приманку: тот же интерфейс, но правдоподобный небольшой '
-          'остаток; ключ подписи при этом не используется.',
-        ),
+        Text(l.obPinIntro),
         const SizedBox(height: 16),
         TextField(
           controller: _normal,
-          decoration: const InputDecoration(
-            labelText: 'PIN (обычный)',
+          decoration: InputDecoration(
+            labelText: l.obPinNormal,
             errorText: null,
           ),
           obscureText: true,
@@ -215,25 +213,25 @@ class _PinStepState extends State<_PinStep> {
         SwitchListTile(
           value: _wantDuress,
           onChanged: (v) => setState(() => _wantDuress = v),
-          title: const Text('Задать тревожный PIN'),
+          title: Text(l.obWantDuress),
         ),
         if (_wantDuress) ...[
           TextField(
             controller: _duress,
-            decoration: const InputDecoration(labelText: 'Тревожный PIN'),
+            decoration: InputDecoration(labelText: l.obDuressPin),
             obscureText: true,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
           const SizedBox(height: 12),
           Text(
-            'Легенда режима-приманки (что увидит принуждающий):',
+            l.obDecoyLegend,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           TextField(
             controller: _decoyBalance,
-            decoration: const InputDecoration(
-              labelText: 'Правдоподобный остаток (не 0)',
+            decoration: InputDecoration(
+              labelText: l.obDecoyBalance,
             ),
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -241,8 +239,8 @@ class _PinStepState extends State<_PinStep> {
           TextField(
             controller: _decoyHistory,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'История (строки: дата — сумма — получатель)',
+            decoration: InputDecoration(
+              labelText: l.obDecoyHistory,
               hintText: '2026-09-03 — 150 — aa12…ff90',
             ),
           ),
@@ -255,7 +253,7 @@ class _PinStepState extends State<_PinStep> {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: _busy ? null : _save,
-          child: const Text('Далее'),
+          child: Text(l.btnNext),
         ),
       ],
     );
@@ -317,6 +315,7 @@ class _GuardiansStepState extends State<_GuardiansStep> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final manifest = context.watch<AppState>().manifest;
     final maxG = manifest?.guardianPersonalCount ?? 3;
     return Column(
@@ -327,21 +326,12 @@ class _GuardiansStepState extends State<_GuardiansStep> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    const Text(
-                      'Назначьте личных гардианов (2 из 3). Они смогут '
-                      'подтвердить миграцию на новое устройство. Добавление '
-                      'нового отпечатка инвалидирует ключ — без гардианов '
-                      'доступ к кошельку теряется.',
-                    ),
+                    Text(l.obGuardiansIntro),
                     const SizedBox(height: 8),
                     if (_error != null)
                       Text(_error!, style: const TextStyle(color: Colors.red)),
                     if (_candidates.isEmpty)
-                      const Text(
-                        'В сети пока нет других участников. Гардианов можно '
-                        'не назначать сейчас, но предложение обязательно: '
-                        'позже список не меняется (только при создании).',
-                      ),
+                      Text(l.obGuardiansEmpty),
                     for (final row in _candidates)
                       CheckboxListTile(
                         value: _selected.contains(row.address),
@@ -355,9 +345,7 @@ class _GuardiansStepState extends State<_GuardiansStep> {
                           }
                         }),
                         title: Text(row.address.shortHash()),
-                        subtitle: Text(
-                          '${row.status}, возраст ${row.ageDays} дн.',
-                        ),
+                        subtitle: Text(l.guardianRowStatus(row.status, row.ageDays)),
                       ),
                   ],
                 ),
@@ -370,18 +358,18 @@ class _GuardiansStepState extends State<_GuardiansStep> {
               // отказаться можно, но предложение — обязательный шаг (11)
               TextButton(
                 onPressed: () => widget.onDone(const []),
-                child: const Text('Пропустить'),
+                child: Text(l.btnSkip),
               ),
               OutlinedButton(
                 onPressed: () {
                   setState(() => _loading = true);
                   _load();
                 },
-                child: const Text('Обновить'),
+                child: Text(l.btnRefresh),
               ),
               FilledButton(
                 onPressed: () => widget.onDone(_selected.toList()),
-                child: Text('Выбрано: ${_selected.length}'),
+                child: Text(l.obSelectedCount(_selected.length)),
               ),
             ],
           ),
@@ -401,13 +389,14 @@ class _RegisterStep extends StatefulWidget {
 }
 
 class _RegisterStepState extends State<_RegisterStep> {
-  String _status = 'Готово к регистрации';
+  String? _status;
   bool _busy = false;
 
   Future<void> _register() async {
+    final l = AppLocalizations.of(context)!;
     setState(() {
       _busy = true;
-      _status = 'Аттестация и PoW (может занять время)…';
+      _status = l.regStatusPow;
     });
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
@@ -417,17 +406,17 @@ class _RegisterStepState extends State<_RegisterStep> {
       final guardians = flow?.guardians ?? const <String>[];
       final res = await app.signAndSubmit(
         () => platform.buildRegister(guardians),
-        'Подтвердите регистрацию',
+        l.regConfirmTitle,
       );
       if (!mounted) return;
       setState(() => _status = res.accepted
-          ? 'Кошелёк зарегистрирован'
-          : 'Отклонено: ${res.code}');
+          ? l.regStatusDone
+          : l.rejectedWithCode(res.code));
       if (res.accepted) {
         await app.onboardingDone();
       }
     } catch (e) {
-      setState(() => _status = 'Ошибка: $e');
+      setState(() => _status = l.errorWith('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -435,18 +424,19 @@ class _RegisterStepState extends State<_RegisterStep> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(_status, textAlign: TextAlign.center),
+          Text(_status ?? l.regStatusReady, textAlign: TextAlign.center),
           const SizedBox(height: 16),
           if (!_busy)
             FilledButton(
               onPressed: _register,
-              child: const Text('Зарегистрировать кошелёк'),
+              child: Text(l.btnRegister),
             ),
         ],
       ),

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/platform_service.dart';
 
 class LockScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _LockScreenState extends State<LockScreen> {
     } else {
       // одинаковое сообщение для неверного и тревожного-неверного
       setState(() {
-        _error = 'Неверный PIN';
+        _error = AppLocalizations.of(context)!.errWrongPin;
         _busy = false;
       });
       _controller.clear();
@@ -78,15 +79,16 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     if (_unlocked) return widget.child;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Сети доверия')),
+      appBar: AppBar(title: Text(l.appTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Введите PIN', textAlign: TextAlign.center),
+            Text(l.enterPin, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             TextField(
               controller: _controller,
@@ -100,14 +102,14 @@ class _LockScreenState extends State<LockScreen> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _busy ? null : _submit,
-              child: const Text('Войти'),
+              child: Text(l.btnLogin),
             ),
             if (_biometricAllowed) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: _busy ? null : _biometric,
                 icon: const Icon(Icons.fingerprint),
-                label: const Text('Отпечаток'),
+                label: Text(l.btnFingerprint),
               ),
             ],
           ],

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/platform_service.dart';
 
 /// Подтверждение деструктивной операции вводом PIN.
@@ -17,12 +18,14 @@ import '../services/platform_service.dart';
 /// отменено пользователем.
 Future<bool> confirmPin(
   BuildContext context, {
-  String title = 'Подтвердите операцию',
+  String? title,
 }) async {
+  title ??= AppLocalizations.of(context)!.confirmOperation;
+  final resolvedTitle = title;
   final ok = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _PinDialog(title: title),
+    builder: (_) => _PinDialog(title: resolvedTitle),
   );
   return ok ?? false;
 }
@@ -62,7 +65,7 @@ class _PinDialogState extends State<_PinDialog> {
     } else {
       // неверный и тревожный-неверный — одинаковое сообщение
       setState(() {
-        _error = 'Неверный PIN';
+        _error = AppLocalizations.of(context)!.errWrongPin;
         _busy = false;
       });
       _controller.clear();
@@ -85,11 +88,11 @@ class _PinDialogState extends State<_PinDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Отмена'),
+          child: Text(AppLocalizations.of(context)!.btnCancel),
         ),
         FilledButton(
           onPressed: _busy ? null : _submit,
-          child: const Text('Подтвердить'),
+          child: Text(AppLocalizations.of(context)!.btnConfirm),
         ),
       ],
     );

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -24,15 +25,16 @@ class _VouchingScreenState extends State<VouchingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Поручительства')),
+      appBar: AppBar(title: Text(l.vouchingTitle)),
       body: Column(
         children: [
           SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, label: Text('Мой статус')),
-              ButtonSegment(value: 1, label: Text('Поручиться')),
-              ButtonSegment(value: 2, label: Text('Мои слоты')),
+            segments: [
+              ButtonSegment(value: 0, label: Text(l.segMyStatus)),
+              ButtonSegment(value: 1, label: Text(l.segVouch)),
+              ButtonSegment(value: 2, label: Text(l.segMySlots)),
             ],
             selected: {_tab},
             onSelectionChanged: (s) => setState(() => _tab = s.first),
@@ -82,6 +84,7 @@ class _CandidateStatusState extends State<_CandidateStatus> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final received = _progress['received'] ?? 0;
     final k = _progress['k'] ?? 3;
     final active = _wallet?.active ?? false;
@@ -89,22 +92,17 @@ class _CandidateStatusState extends State<_CandidateStatus> {
       padding: const EdgeInsets.all(24),
       children: [
         Text(
-          active ? 'Кошелёк активен' : 'Поручительств: $received из $k',
+          active ? l.walletActive : l.vouchProgress(received, k),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
         LinearProgressIndicator(value: k == 0 ? 0 : received / k),
         const SizedBox(height: 12),
-        if (!active)
-          const Text(
-            'Найдите K поручителей при личной встрече: покажите им QR-код '
-            'своего адреса на вкладке «Поручиться» (кнопка «Мой QR»).',
-          ),
+        if (!active) Text(l.vouchFindHelpers),
         if (_wallet?.flagged == true)
-          const Text(
-            'Метка flagged: поручиться за вас нельзя (vouch от '
-            'flagged-кошелька запрещён, решение №14)',
-            style: TextStyle(color: Colors.orange),
+          Text(
+            l.vouchFlagged,
+            style: const TextStyle(color: Colors.orange),
           ),
       ],
     );
@@ -131,23 +129,25 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
     setState(() => _busy = true);
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    final l = AppLocalizations.of(context)!;
     try {
       final res = await app.signAndSubmit(
         () => platform.buildVouch(_candidate.text.trim()),
-        'Подтвердите поручительство',
+        l.vouchConfirmTitle,
       );
       setState(() => _result = res.accepted
-          ? 'Поручительство опубликовано'
-          : 'Отклонено: ${res.code}');
+          ? l.vouchPublished
+          : l.rejectedWithCode(res.code));
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _receiveByBt() async {
-    setState(() => _result = 'Ожидание адреса по Bluetooth (60 с)…');
+    final l = AppLocalizations.of(context)!;
+    setState(() => _result = l.btWaiting);
     final platform = context.read<PlatformService>();
     try {
       if (!await platform.btPermissions()) {
@@ -156,16 +156,17 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
       final addr = await platform.btReceiveAddress();
       setState(() {
         _candidate.text = addr;
-        _result = 'Адрес получен по Bluetooth';
+        _result = l.btAddrReceived;
       });
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
+    final l = AppLocalizations.of(context)!;
     final wallet = app.wallet;
     final canVouch = wallet?.active == true && !(wallet?.flagged ?? false);
     return ListView(
@@ -174,28 +175,20 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
         // предупреждение обязательно (7.4): присутствие не доказано
         Card(
           color: Colors.amber.withValues(alpha: 0.15),
-          child: const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              'Поручительство при личной встрече (QR или Bluetooth) НЕ '
-              'доказывает присутствие человека. Вы отвечаете за выбор: '
-              'слот ограничен, при evidence против поручаемого вы '
-              'теряете вознаграждение (не деньги).',
-            ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(l.vouchWarning),
           ),
         ),
         const SizedBox(height: 12),
         if (!canVouch)
-          const Text(
-            'Поручителем может быть только active-кошелёк с возрастом '
-            '≥ 3 мес. и ≥ 2 выполненными периодами выпуска (7.4).',
-          )
+          Text(l.vouchOnlyActive)
         else ...[
           TextField(
             controller: _candidate,
-            decoration: const InputDecoration(
-              labelText: 'Адрес кандидата (hex)',
-              hintText: '64 hex-символа — из QR или Bluetooth',
+            decoration: InputDecoration(
+              labelText: l.candidateLabel,
+              hintText: l.candidateHint,
             ),
           ),
           const SizedBox(height: 12),
@@ -205,7 +198,7 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
                 child: OutlinedButton.icon(
                   onPressed: _receiveByBt,
                   icon: const Icon(Icons.bluetooth),
-                  label: const Text('Получить по BT'),
+                  label: Text(l.btnBtReceive),
                 ),
               ),
               const SizedBox(width: 8),
@@ -213,7 +206,7 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
                 child: OutlinedButton.icon(
                   onPressed: () => setState(() => _showQr = !_showQr),
                   icon: const Icon(Icons.qr_code),
-                  label: Text(_showQr ? 'Скрыть мой QR' : 'Мой QR'),
+                  label: Text(_showQr ? l.btnHideQr : l.btnMyQr),
                 ),
               ),
             ],
@@ -228,14 +221,14 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
                     size: 180,
                     backgroundColor: Colors.white,
                   ),
-                  const Text('Мой адрес — покажите поручителю'),
+                  Text(l.myQrHint),
                 ],
               ),
             ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy || _candidate.text.trim().isEmpty ? null : _vouch,
-            child: const Text('Поручиться'),
+            child: Text(l.btnVouch),
           ),
         ],
         if (_result != null) ...[
@@ -275,6 +268,7 @@ class _MySlotsState extends State<_MySlots> {
   Widget build(BuildContext context) {
     final s = _slots;
     final manifest = context.watch<AppState>().manifest;
+    final l = AppLocalizations.of(context)!;
     if (s == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -282,15 +276,14 @@ class _MySlotsState extends State<_MySlots> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('Слоты: ${s.occupied.length} занято из ${s.capacity}'),
+        Text(l.slotsSummary(s.occupied.length, s.capacity)),
         const SizedBox(height: 4),
         Text(
-          'Свободно: ${s.free}. Статистика поручителя: поручился за '
-          '${s.occupied.length}, активны $activeCount (публичная репутация, 7.4)',
+          l.slotsFreeStats(s.free, s.occupied.length, activeCount),
         ),
         const SizedBox(height: 12),
         const Divider(),
-        if (s.occupied.isEmpty) const Text('Слоты свободны'),
+        if (s.occupied.isEmpty) Text(l.slotsEmpty),
         for (final slot in s.occupied)
           ListTile(
             leading: Icon(
@@ -299,11 +292,8 @@ class _MySlotsState extends State<_MySlots> {
             ),
             title: Text(slot.candidate.shortHash()),
             subtitle: Text(slot.candidateActive
-                ? 'кандидат активен: слот освободится после '
-                  '${manifest?.slotFreeMintPeriods ?? 3} периодов выпуска '
-                  'без evidence'
-                : 'кандидат не активен: слот освободится через '
-                  '${manifest?.slotFreeDays ?? 90} дн.'),
+                ? l.slotActiveSub(manifest?.slotFreeMintPeriods ?? 3)
+                : l.slotInactiveSub(manifest?.slotFreeDays ?? 90)),
           ),
       ],
     );

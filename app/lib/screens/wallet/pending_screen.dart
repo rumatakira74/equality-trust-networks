@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -35,44 +36,43 @@ class _PendingScreenState extends State<PendingScreen> {
   Future<void> _cancel(PendingTransfer p) async {
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    final l = AppLocalizations.of(context)!;
     try {
       final res = await app.signAndSubmit(
         () => platform.buildCancel(p.seq),
-        'Подтвердите отмену перевода',
+        l.cancelConfirmTitle,
       );
       setState(() => _result =
-          res.accepted ? 'Отменено' : 'Отклонено: ${res.code}');
+          res.accepted ? l.canceledMsg : l.rejectedWithCode(res.code));
       _refresh();
       app.refreshWallet();
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     }
   }
 
   Future<void> _setThreshold() async {
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    final l = AppLocalizations.of(context)!;
     final newP = int.tryParse(_newP.text);
     if (newP == null) {
-      setState(() => _result = 'Некорректный порог');
+      setState(() => _result = l.invalidThreshold);
       return;
     }
     try {
       final res = await app.signAndSubmit(
         () => platform.buildSetThreshold(newP),
-        'Подтвердите смену порога',
+        l.btnChangeThreshold,
       );
       final wallet = app.wallet;
       final raising = newP > (wallet?.thresholdP ?? 0);
       setState(() => _result = res.accepted
-          ? (raising
-              ? 'Повышение порога вступит в силу через 48 ч '
-                '(защита от принуждения)'
-              : 'Порог понижен немедленно')
-          : 'Отклонено: ${res.code}');
+          ? (raising ? l.thresholdRaised : l.thresholdLowered)
+          : l.rejectedWithCode(res.code));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     }
   }
 
@@ -82,8 +82,9 @@ class _PendingScreenState extends State<PendingScreen> {
     final wallet = app.wallet;
     final manifest = app.manifest;
     final pMax = manifest?.delayedThresholdMax ?? 0;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Отложенные переводы')),
+      appBar: AppBar(title: Text(l.pendingTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -93,47 +94,46 @@ class _PendingScreenState extends State<PendingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Порог P: ${wallet?.thresholdP ?? 0}'),
+                  Text(l.thresholdP(wallet?.thresholdP ?? 0)),
                   if (wallet?.pendingThreshold != null &&
                       (wallet?.pendingThreshold ?? 0) > 0)
                     Text(
-                      'Повышение до ${wallet?.pendingThreshold} вступает '
-                      'после ${_fmtTime(wallet?.pendingThresholdNotBefore ?? 0)}',
+                      l.thresholdPendingRaise(
+                        wallet?.pendingThreshold ?? 0,
+                        _fmtTime(wallet?.pendingThresholdNotBefore ?? 0),
+                      ),
                     ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _newP,
                     decoration: InputDecoration(
-                      labelText: 'Новый порог P',
-                      helperText: 'предел P_max = $pMax; повышение — через '
-                          '48 ч, понижение — сразу',
+                      labelText: l.newThresholdLabel,
+                      helperText: l.newThresholdHelper(pMax),
                     ),
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 8),
                   OutlinedButton(
                     onPressed: _setThreshold,
-                    child: const Text('Сменить порог'),
+                    child: Text(l.btnChangeThreshold),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 8),
-          if (_items.isEmpty)
-            const Text('Нет активных отложенных переводов'),
+          if (_items.isEmpty) Text(l.pendingEmpty),
           for (final p in _items.where((x) => !x.canceled && !x.executed))
             Card(
               child: ListTile(
                 leading: const Icon(Icons.schedule),
-                title: Text('${p.amount} → ${p.recipient.shortHash()}'),
+                title: Text(l.pendingRow(p.amount, p.recipient.shortHash())),
                 subtitle: Text(
-                  'исполнение через ${_fmt(p.remainingSec)} '
-                  '(комиссия ${p.fee})',
+                  l.pendingRowSub(_fmt(p.remainingSec), p.fee),
                 ),
                 trailing: OutlinedButton(
                   onPressed: () => _cancel(p),
-                  child: const Text('Отменить'),
+                  child: Text(l.btnCancelTransfer),
                 ),
               ),
             ),
@@ -151,7 +151,7 @@ class _PendingScreenState extends State<PendingScreen> {
     if (sec <= 0) return '—';
     final h = sec ~/ 3600;
     final m = (sec % 3600) ~/ 60;
-    return '$h ч $m мин';
+    return AppLocalizations.of(context)!.timeHm(h, m);
   }
 
   String _fmtTime(int unix) =>

@@ -1,0 +1,5 @@
+# Генерация локализаций (этап 10): ARB-каталоги в lib/l10n,
+# шаблон — английский (fallback), языки: ru, en, es, pt, zh
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart

@@ -1,8 +1,12 @@
 // Точка входа приложения (этап 7). Провайдеры состояния, маршрут:
 // загрузка -> (онбординг | экран блокировки) -> главная навигация.
+// Локализация (этап 10): ru, en, es, pt, zh — состав подтверждён
+// владельцем 20.10.2026; fallback — английский; выбор — в настройках.
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'l10n/app_localizations.dart';
 import 'screens/home_shell.dart';
 import 'screens/lock_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
@@ -25,14 +29,26 @@ class TnpApp extends StatelessWidget {
           create: (ctx) => AppState(ctx.read<PlatformService>())..load(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Сети доверия',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E6E4E)),
-          useMaterial3: true,
+      child: Consumer<AppState>(
+        builder: (context, app, _) => MaterialApp(
+          onGenerateTitle: (ctx) =>
+              AppLocalizations.of(ctx)?.appTitle ?? 'Trust Networks',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E6E4E)),
+            useMaterial3: true,
+          ),
+          // пять языков этапа 10; null — язык системы, fallback — en
+          locale: app.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const _Gate(),
         ),
-        home: const _Gate(),
       ),
     );
   }

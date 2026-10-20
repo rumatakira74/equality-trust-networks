@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
@@ -60,7 +61,8 @@ class _TransferScreenState extends State<TransferScreen> {
     // подписи не будет — мост ответит правдоподобно
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
-    if (!await confirmPin(context, title: 'Подтвердите перевод')) {
+    final l = AppLocalizations.of(context)!;
+    if (!await confirmPin(context, title: l.transferConfirmTitle)) {
       return;
     }
     setState(() => _busy = true);
@@ -72,22 +74,21 @@ class _TransferScreenState extends State<TransferScreen> {
       final id = built['id'] as String;
       // подтверждение уже дано PIN-ом: биометрия здесь — только
       // разблокировка ключа Keystore (не подтверждение операции)
-      final signed = await platform.signTx(id, 'Разблокировка ключа');
+      final signed = await platform.signTx(id, l.keyUnlockTitle);
       if (!signed) {
         await platform.discardTx(id);
-        setState(() => _result = 'Подпись не подтверждена');
+        setState(() => _result = l.signNotConfirmed);
         return;
       }
       final res = await platform.submitTx(id);
       setState(() => _result = res.accepted
           ? (_willBeDelayed
-              ? 'Перевод отложен: исполнение через $_delayHours ч, '
-                'отменить можно в течение задержки'
-              : 'Перевод отправлен')
-          : 'Отклонено: ${res.code}');
+              ? l.transferDelayed(_delayHours)
+              : l.transferSent)
+          : l.rejectedWithCode(res.code));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -98,7 +99,8 @@ class _TransferScreenState extends State<TransferScreen> {
   Future<void> _sendBt() async {
     // деструктивная операция (8.2, этап 9): подтверждение — только PIN
     final platform = context.read<PlatformService>();
-    if (!await confirmPin(context, title: 'Подтвердите Bluetooth-платёж')) {
+    final l = AppLocalizations.of(context)!;
+    if (!await confirmPin(context, title: l.btConfirmTitle)) {
       return;
     }
     setState(() => _busy = true);
@@ -109,25 +111,24 @@ class _TransferScreenState extends State<TransferScreen> {
       );
       final id = built['id'] as String;
       // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
-      final signed = await platform.signTx(id, 'Разблокировка ключа');
+      final signed = await platform.signTx(id, l.keyUnlockTitle);
       if (!signed) {
         await platform.discardTx(id);
-        setState(() => _result = 'Подпись не подтверждена');
+        setState(() => _result = l.signNotConfirmed);
         return;
       }
       final device = _btDevices.firstOrNull;
       if (device == null) {
-        setState(() => _result = 'Нет сопряжённых устройств');
+        setState(() => _result = l.btNoDevices);
         return;
       }
       final r = await platform.sendBluetooth(device, id);
       final ok = r['ok'] as bool? ?? false;
       setState(() => _result = ok
-          ? 'Передано по Bluetooth. Получатель обязан дождаться '
-            'подтверждения сети — до публикации это не оплата'
-          : 'Bluetooth: ${r['error']}');
+          ? l.btSent
+          : l.btError('${r['error']}'));
     } catch (e) {
-      setState(() => _result = 'Ошибка: $e');
+      setState(() => _result = l.errorWith('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -136,15 +137,16 @@ class _TransferScreenState extends State<TransferScreen> {
   @override
   Widget build(BuildContext context) {
     final manifest = context.watch<AppState>().manifest;
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Перевод')),
+      appBar: AppBar(title: Text(l.transferTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('Через сеть')),
-              ButtonSegment(value: true, label: Text('Bluetooth')),
+            segments: [
+              ButtonSegment(value: false, label: Text(l.segNetwork)),
+              ButtonSegment(value: true, label: Text(l.segBluetooth)),
             ],
             selected: {_btMode},
             onSelectionChanged: (s) async {
@@ -162,19 +164,17 @@ class _TransferScreenState extends State<TransferScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _recipient,
-            decoration: const InputDecoration(
-              labelText: 'Адрес получателя (hex)',
-              hintText: '64 hex-символа',
+            decoration: InputDecoration(
+              labelText: l.recipientLabel,
+              hintText: l.recipientHint,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _amount,
             decoration: InputDecoration(
-              labelText: 'Сумма (получатель получит ровно столько)',
-              helperText: _fee > 0
-                  ? 'Комиссия: $_fee (сверх суммы, сжигается) — платит отправитель'
-                  : null,
+              labelText: l.amountLabel,
+              helperText: _fee > 0 ? l.feeHelper(_fee) : null,
             ),
             keyboardType: TextInputType.number,
             onChanged: (_) => _quote(),
@@ -183,9 +183,7 @@ class _TransferScreenState extends State<TransferScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Сумма выше порога P: перевод будет отложен. Исполнение '
-                'через $_delayHours ч; отменить можно в течение задержки '
-                '(экран «Отложенные»).',
+                l.delayedWarn(_delayHours),
                 style: const TextStyle(color: Colors.orange),
               ),
             ),
@@ -193,16 +191,14 @@ class _TransferScreenState extends State<TransferScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Bluetooth офлайн: получатель увидит «получено по Bluetooth — '
-                'ожидает публикации». До подтверждения сети это не оплата '
-                '(12.4).',
+                l.btModeHint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy ? null : (_btMode ? _sendBt : _send),
-            child: Text(_btMode ? 'Передать по Bluetooth' : 'Отправить'),
+            child: Text(_btMode ? l.btnSendBt : l.btnSend),
           ),
           if (_result != null) ...[
             const SizedBox(height: 16),
@@ -212,8 +208,7 @@ class _TransferScreenState extends State<TransferScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                'Мораторий: переводы доступны через '
-                '${manifest.transferMoratoriumDays} дн. после регистрации.',
+                l.moratoriumNote(manifest.transferMoratoriumDays),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
