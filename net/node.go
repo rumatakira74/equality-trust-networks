@@ -85,6 +85,10 @@ type Node struct {
 	published  map[string]bool              // опубликованные из awaiting
 	spamCount  int64
 
+	// lastCpRepublish — момент последней перепубликации финализированного
+	// чекпоинта (догоняющий механизм цепочки, блокер 8.1)
+	lastCpRepublish time.Time
+
 	relayReserved int
 
 	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).
