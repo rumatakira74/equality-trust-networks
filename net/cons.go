@@ -323,7 +323,12 @@ func (n *Node) cpLoop(ctx context.Context) {
 }
 
 func (n *Node) cpTick(ctx context.Context) {
-	if n.Ledger == nil {
+	// чтение Ledger — под applyMu: rebuildToFinality меняет его
+	// (гонка cpTick/rebuild, найдена -race в прогонах этапа 10)
+	n.applyMu.RLock()
+	ledger := n.Ledger
+	n.applyMu.RUnlock()
+	if ledger == nil {
 		return
 	}
 	n.consClock.OnCheckpoint(n.lastCheckpoint())
