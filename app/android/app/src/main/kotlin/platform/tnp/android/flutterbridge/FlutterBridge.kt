@@ -304,6 +304,17 @@ object FlutterBridge {
                     result.success(null)
                 }
                 "biometricLoginAllowed" -> result.success(duress.biometricAllowed())
+                // вход по отпечатку (8.2, этап 9): разблокировка без
+                // подписи; при активном тревожном PIN отключён
+                "biometricLogin" -> {
+                    if (!duress.biometricAllowed()) {
+                        result.success(false)
+                        return
+                    }
+                    BiometricGate.authenticatePlain(activity, "Вход по отпечатку") {
+                        ok -> result.success(ok)
+                    }
+                }
 
                 // -- кошелёк --
                 "walletAddress" -> result.success(hex(address()))

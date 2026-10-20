@@ -44,6 +44,11 @@ class FakePlatformService implements PlatformService {
   bool registered = false;
   bool duress = false;
   String pinResult = 'normal'; // normal | none
+  // хранимые PIN (как PinManager: обычный обязателен, тревожный опционален;
+  // по файлу нельзя узнать, задан ли тревожный — тут хранится для проверок)
+  String? _normalPin;
+  String? _duressPin;
+  bool biometricLoginResult = true;
   WalletInfo wallet = WalletInfo.fromJson({
     'exists': true,
     'address': '11' * 32,
@@ -125,12 +130,26 @@ class FakePlatformService implements PlatformService {
       List<String> decoyHistory) async {
     calls.add('setupPin');
     setupDuressPin = duress;
+    // модель PinManager: оба хеша одним записывающим вызовом; проверка
+    // одного и того же кода для обоих PIN (неразличимость)
+    _normalPin = normal;
+    _duressPin = (duress == null || duress.isEmpty) ? null : duress;
   }
 
   @override
   Future<String> verifyPin(String pin) async {
     calls.add('verifyPin');
-    return pinResult;
+    // без заданного PIN — только none (мост без PinManager)
+    if (_normalPin == null) return pinResult;
+    if (pin == _normalPin) {
+      duress = false; // обычный PIN выводит из приманки
+      return 'normal';
+    }
+    if (_duressPin != null && pin == _duressPin) {
+      duress = true; // тревожный: приманка активна, ответ неотличим
+      return 'normal';
+    }
+    return 'none';
   }
 
   @override
@@ -141,6 +160,13 @@ class FakePlatformService implements PlatformService {
 
   @override
   Future<bool> biometricLoginAllowed() async => !duress;
+
+  @override
+  Future<bool> biometricLogin() async {
+    calls.add('biometricLogin');
+    if (duress) return false; // отпечаток при активной приманке отключён
+    return biometricLoginResult;
+  }
 
   @override
   Future<String> walletAddress() async => wallet.address;
@@ -218,12 +244,22 @@ class FakePlatformService implements PlatformService {
 
   @override
   Future<bool> signTx(String id, String title) async {
+    if (duress) {
+      // приманка (8.2): подпись НЕ выполняется, ответ правдоподобен
+      calls.add('signFake($id)');
+      return true;
+    }
     calls.add('sign($id)');
     return signOk;
   }
 
   @override
   Future<SubmitResult> submitTx(String id) async {
+    if (duress) {
+      // приманка (8.2): публикации нет, ответ как у обычного перевода
+      calls.add('submitFake($id)');
+      return SubmitResult('accepted', 'OK');
+    }
     calls.add('submit($id)');
     return submitResult;
   }

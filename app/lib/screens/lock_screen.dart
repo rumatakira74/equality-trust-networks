@@ -1,7 +1,9 @@
-// Экран блокировки (8.1, 8.2): вход по PIN — ОДИН экран, один ритм
-// для обычного и тревожного PIN; тревожный вход неотличим (мост сам
+// Экран блокировки (8.1, 8.2): вход — отпечаток или PIN, ОДИН экран, один
+// ритм для обычного и тревожного PIN; тревожный вход неотличим (мост сам
 // активирует приманку и отвечает «normal»). Отпечаток предлагается,
-// только если приманка не активна (biometricLoginAllowed).
+// только если приманка не активна (biometricLoginAllowed): при активном
+// тревожном PIN вход по отпечатку отключён (8.2) — иначе приманку
+// обходят на входе силой.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +23,19 @@ class _LockScreenState extends State<LockScreen> {
   bool _busy = false;
   String? _error;
   bool _unlocked = false;
+  bool _biometricAllowed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final platform = context.read<PlatformService>();
+    final allowed = await platform.biometricLoginAllowed();
+    if (mounted) setState(() => _biometricAllowed = allowed);
+  }
 
   Future<void> _submit() async {
     if (_busy) return;
@@ -42,6 +57,21 @@ class _LockScreenState extends State<LockScreen> {
         _busy = false;
       });
       _controller.clear();
+    }
+  }
+
+  // Вход по отпечатку (8.2, этап 9): разблокировка/просмотр — только когда
+  // приманка не активна; подтверждение деструктивных операций — PIN.
+  Future<void> _biometric() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final platform = context.read<PlatformService>();
+    final ok = await platform.biometricLogin();
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _unlocked = true);
+    } else {
+      setState(() => _busy = false);
     }
   }
 
@@ -72,6 +102,14 @@ class _LockScreenState extends State<LockScreen> {
               onPressed: _busy ? null : _submit,
               child: const Text('Войти'),
             ),
+            if (_biometricAllowed) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _busy ? null : _biometric,
+                icon: const Icon(Icons.fingerprint),
+                label: const Text('Отпечаток'),
+              ),
+            ],
           ],
         ),
       ),

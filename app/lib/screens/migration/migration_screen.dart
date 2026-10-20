@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
+import '../pin_gate.dart';
 
 class MigrationScreen extends StatefulWidget {
   const MigrationScreen({super.key});
@@ -242,16 +243,22 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
   }
 
   Future<void> _propose() async {
+    // деструктивная операция (8.2, этап 9): подтверждение — только явный
+    // ввод PIN; тревожный PIN открывает приманку (неотличимо)
     final app = context.read<AppState>();
     final platform = context.read<PlatformService>();
+    if (!await confirmPin(context, title: 'Подтвердите миграцию')) {
+      return;
+    }
     try {
+      // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
       final res = await app.signAndSubmit(
         () => platform.buildMigratePropose(
           _oldAddress.text.trim(),
           _approvals,
           _nonce,
         ),
-        'Подтвердите миграцию (новый кошелёк)',
+        'Разблокировка ключа',
       );
       setState(() => _result = res.accepted
           ? 'Миграция запущена: исполнение через '

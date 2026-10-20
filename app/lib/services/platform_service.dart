@@ -32,6 +32,7 @@ abstract class PlatformService {
   Future<bool> duressActive();
   Future<void> exitDuress();
   Future<bool> biometricLoginAllowed();
+  Future<bool> biometricLogin(); // вход по отпечатку (разблокировка)
 
   // -- кошелёк --
   Future<String> walletAddress();
@@ -154,6 +155,10 @@ class MethodChannelPlatformService implements PlatformService {
   @override
   Future<bool> biometricLoginAllowed() async =>
       await _call('biometricLoginAllowed') as bool;
+
+  @override
+  Future<bool> biometricLogin() async =>
+      await _call('biometricLogin') as bool;
 
   @override
   Future<String> walletAddress() async =>
