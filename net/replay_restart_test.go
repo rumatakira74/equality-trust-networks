@@ -18,15 +18,21 @@ import (
 // периодов/эпох в тестах сходимости); остальное как e.tx.
 func (e *testEnv) txAt(n *Node, id string, typ wire.TxType, payload wire.Payload, hard bool, ts uint64) *wire.Transaction {
 	e.t.Helper()
+	// под applyMu.RLock: фоновый gossip применяет параллельно (этап 9)
+	n.applyMu.RLock()
 	w := n.Ledger.State.Wallet(e.addr(id))
 	if w == nil {
+		n.applyMu.RUnlock()
 		e.t.Fatalf("кошелёк %s не зарегистрирован", id)
 	}
+	seq := w.Seq + 1
+	prev := append([]byte(nil), w.TipTxID...)
+	n.applyMu.RUnlock()
 	tx := &wire.Transaction{
 		NetworkID:       e.gp.Genesis.NetworkID,
 		Wallet:          e.addr(id),
-		Seq:             w.Seq + 1,
-		Prev:            append([]byte(nil), w.TipTxID...),
+		Seq:             seq,
+		Prev:            prev,
 		Type:            typ,
 		Payload:         payload,
 		ProtocolVersion: e.gp.Genesis.ProtocolVersion,

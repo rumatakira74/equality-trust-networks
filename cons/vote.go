@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"math/rand"
+	"sync"
 
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
@@ -54,11 +55,17 @@ type VoteState struct {
 	Rounds  int    // всего раундов
 }
 
-// Snowball — голосование по конфликтам (9.1).
+// Snowball — голосование по конфликтам (9.1). Потокобезопасен сам по
+// себе (race-аудит этапа 9, go test -race): доступ идёт из нескольких
+// горутин — postApply (под applyMu), voteLoop, перестройка/финальность,
+// тесты и мост; внешний лок-дисциплины «все под applyMu» недостаточно
+// (finalityView читает states без applyMu). Внутренний лок; State/States
+// возвращают КОПИИ — запись через возвращённый указатель невозможна.
 type Snowball struct {
 	K     int
 	Alpha float64
 	Beta  int
+	mu    sync.RWMutex
 	// states — конфликт -> состояние; сериализуется детерминированно.
 	states map[string]*VoteState
 }
@@ -69,14 +76,27 @@ func NewSnowball(p Params) *Snowball {
 		states: make(map[string]*VoteState)}
 }
 
-// State — состояние конфликта по ключу (nil — конфликт не известен).
-func (s *Snowball) State(key string) *VoteState { return s.states[key] }
+// State — состояние конфликта по ключу (nil — конфликт не известен);
+// возвращается копия.
+func (s *Snowball) State(key string) *VoteState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	st, ok := s.states[key]
+	if !ok {
+		return nil
+	}
+	cp := *st
+	return &cp
+}
 
-// States — все состояния (детерминированный порядок по key).
+// States — все состояния (детерминированный порядок по key); копии.
 func (s *Snowball) States() []*VoteState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	out := make([]*VoteState, 0, len(s.states))
 	for _, k := range sortedKeys(s.states) {
-		out = append(out, s.states[k])
+		cp := *s.states[k]
+		out = append(out, &cp)
 	}
 	return out
 }
@@ -85,6 +105,8 @@ func (s *Snowball) States() []*VoteState {
 // инициализирует состояние, предпочтение — ветка, применённая первой
 // (FirstWins ядра; голосование может его сменить).
 func (s *Snowball) Observe(key string, applied, alternative []byte) *VoteState {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	st, ok := s.states[key]
 	if !ok {
 		a, b := applied, alternative
@@ -94,18 +116,26 @@ func (s *Snowball) Observe(key string, applied, alternative []byte) *VoteState {
 		st = &VoteState{Key: key, A: a, B: b, Pref: applied}
 		s.states[key] = st
 	}
-	return st
+	cp := *st
+	return &cp
 }
 
 // PollRound — один раунд опроса по конфликту: k случайных пиров, кворум
 // α суммарного веса; β последовательных раундов — локальная финальность.
 // Возвращает true, если конфликт финализирован в этом раунде.
 func (s *Snowball) PollRound(key string, poller Poller, rng *rand.Rand) bool {
+	// снапшот под локом; опрос пиров (сеть) — ВНЕ лока: медленный раунд
+	// не блокирует Observe из горутины apply (иначе applyMu + сеть =
+	// задержка применения транзакций); результат — под локом
+	s.mu.Lock()
 	st := s.states[key]
 	if st == nil || st.Final {
+		s.mu.Unlock()
 		return false
 	}
 	st.Rounds++
+	snap := *st
+	s.mu.Unlock()
 	peers := poller.Sample(s.K, rng)
 	total, forA, forB := uint64(0), uint64(0), uint64(0)
 	for _, p := range peers {
@@ -115,12 +145,14 @@ func (s *Snowball) PollRound(key string, poller Poller, rng *rand.Rand) bool {
 		}
 		total += weight
 		switch string(pref) {
-		case string(st.A):
+		case string(snap.A):
 			forA += weight
-		case string(st.B):
+		case string(snap.B):
 			forB += weight
 		}
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if total == 0 {
 		return false
 	}
@@ -151,6 +183,8 @@ func (s *Snowball) PollRound(key string, poller Poller, rng *rand.Rand) bool {
 
 // Finalized — локально финализированные конфликты (ветка-победитель).
 func (s *Snowball) Finalized() map[string][]byte {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	out := make(map[string][]byte)
 	for k, st := range s.states {
 		if st.Final {

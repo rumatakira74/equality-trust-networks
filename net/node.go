@@ -967,11 +967,15 @@ func smtTreeOf(l *ledger.Ledger) *smt.Tree {
 }
 
 // StateRoot — корень SMT состояния (полный узел; для сверки узлов).
+// Чтение реестра — под applyMu.RLock: статус-файл/тесты/мост зовут без
+// applyMu, фоновый applyLive пишет параллельно (race-аудит этапа 9).
 func (n *Node) StateRoot() ([]byte, error) {
 	if n.Ledger == nil {
 		return nil, errors.New("net: нет ядра")
 	}
+	n.applyMu.RLock()
 	tree := smtTreeOf(n.Ledger)
+	n.applyMu.RUnlock()
 	r := tree.Root()
 	return r[:], nil
 }
