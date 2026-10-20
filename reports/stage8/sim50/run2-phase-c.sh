@@ -22,13 +22,18 @@ TX() { "$BIN/tnp-testnet" "$@" -peer "$BOOT" -link-groups=false -wait 4 >> "$WOR
 STATE() { "$BIN/tnp-testnet" state -genesis net/genesis.bin -peer "$BOOT" -link-groups=false \
   -wait 3 -node-seed "drv-st-$RANDOM" "$@" 2>/dev/null; }
 
-say "эра 2: сдвиг часов хоста +30 сут"
+say "эра 2: сдвиг часов хоста к границе периода 3 (genesis+120 сут + 12 ч)"
+# якорь — не «now+30 сут»: окна P=3 участников лежат в последних 24 ч
+# периода 3 (полоса findlabels), окно ±48 ч; заявлять можно только
+# завершённые периоды (M4). Коридор: [genesis+120d, min(slot)+48ч] —
+# якорь genesis+120d+12ч даёт ≥12 ч запаса с обеих сторон для ВСЕХ меток
 sudo -n systemctl stop systemd-timesyncd
 REAL_NOW=$(date +%s)
-SHIFTED=$(( REAL_NOW + 30*86400 ))
+GENESIS_T=$(python3 -c "import json;print(json.load(open('net/manifest.json'))['genesis_time'])")
+SHIFTED=$(( GENESIS_T + 120*86400 + 12*3600 ))
 sudo -n date -s "@$SHIFTED"
 date -u
-echo "сдвинуто с $REAL_NOW на $SHIFTED (+30 сут) — возврат: sudo date -s @$REAL_NOW" | tee -a "$LOG"
+echo "сдвинуто с $REAL_NOW на $SHIFTED (genesis+120 сут +12 ч) — возврат: sudo date -s @$REAL_NOW" | tee -a "$LOG"
 
 say "эра 2: рестарт 48 узлов из БД (чистый consClock, демонстрация №40)"
 # приложения эмуляторов: force-stop + relaunch + разблокировка PIN —
