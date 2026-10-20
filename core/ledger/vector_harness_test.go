@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
@@ -357,12 +358,15 @@ func (h *harness) buildAttestChain(id string) (pubKey, chain, challenge []byte) 
 	priv := h.key(id)
 	pub := crypto.MarshalPubKey(&priv.PublicKey)
 	challenge = attest.ChallengeFormula(pub, crypto.ProtocolID, h.ledger.State.Net.NetworkID)
+	// №43 (этап 9): дата патча — в прошлом относительно сетевого
+	// времени вектора (future-patch отклоняется Verify)
+	patch := time.Unix(int64(h.clock.NetTime()), 0).UTC().AddDate(0, -2, 0)
 	ext := attest.Extension{
 		SecurityLevel:     attest.LevelTEE,
 		VerifiedBootState: attest.BootVerified,
 		DeviceLocked:      true,
-		PatchYear:         2026,
-		PatchMonth:        10,
+		PatchYear:         patch.Year(),
+		PatchMonth:        int(patch.Month()),
 	}
 	serial := sha256.Sum256([]byte("serial:" + h.vec.ID + ":" + id))
 	leaf, err := attest.BuildLeaf(&priv.PublicKey, challenge, ext, h.rootKey,

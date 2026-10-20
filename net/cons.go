@@ -350,12 +350,30 @@ func (n *Node) cpTick(ctx context.Context) {
 	prev := n.lastCheckpoint()
 	epoch := uint64(1)
 	var prevHash []byte
-	if prev != nil {
+	var prevTime uint64
+	hasPrev := prev != nil
+	if hasPrev {
 		epoch = prev.Epoch + 1
 		h := prev.CheckpointHash()
 		prevHash = h[:]
+		prevTime = prev.NetworkTime
 	} else {
 		prevHash = make([]byte, 32)
+	}
+	// №42, решение владельца (A)+(D), этап 9: очередь строителей и
+	// пропуск застрявшей эпохи (замена фолббека «любой узел» — его окно
+	// мульти-строителей воспроизводило фрагментацию блокера 8.1).
+	elapsed := n.cpQueueElapsed(prevTime, hasPrev)
+	// (D): пропуск — только если у застрявшей эпохи нет живого
+	// предложения (есть предложение — подписи собираются, не перескакиваем)
+	n.mu.RLock()
+	dueSeen := hasPrev && n.hasProposalForEpochLocked(prev.Epoch+1)
+	n.mu.RUnlock()
+	if n.cpSkipDue(prevTime, hasPrev) && !dueSeen {
+		// (D): очередь исчерпана, чекпоинта нет — застрявшая эпоха
+		// закрывается пустой (гэп нумерации — маркер), строится
+		// следующая; стагнация ≤ 1 эпохи
+		epoch = prev.Epoch + 2
 	}
 	// Блокер 8.1 (48 узлов): предложение строится ОДИН раз на эпоху.
 	// Раньше cpTick строил новое предложение каждую секунду — каждая
@@ -370,6 +388,7 @@ func (n *Node) cpTick(ctx context.Context) {
 	if proposed {
 		own = n.lastProposal
 	}
+	seen := n.hasProposalForEpochLocked(epoch)
 	n.mu.RUnlock()
 	if proposed {
 		// своё предложение уже построено: переподпись доли каждый тик
@@ -377,6 +396,13 @@ func (n *Node) cpTick(ctx context.Context) {
 		if own != nil {
 			n.signAndPublishShare(ctx, own, own.Participants)
 		}
+		n.collectCpPending(ctx)
+		return
+	}
+	if seen {
+		// чужое предложение эпохи уже известно: вариант не строится
+		// (правило одного предложения, блокер 8.1), подпись — в
+		// onCpMessage, здесь — сбор долей
 		n.collectCpPending(ctx)
 		return
 	}
@@ -391,17 +417,26 @@ func (n *Node) cpTick(ctx context.Context) {
 		return
 	}
 	// Блокер 8.1 (48 узлов, порог 14): детерминированный строитель
-	// предложения — первый участник состава эпохи. Пока предлагал любой
-	// узел, варианты (разные NetworkTime/состояния) подписывались всеми
+	// предложения — один на окно очереди. Пока предлагал любой узел,
+	// варианты (разные NetworkTime/состояния) подписывались всеми
 	// подписантами и РАЗНЫЕ узлы финализировали разные цепочки — набор
-	// подписантов раскалывался ниже порога, цепочка умирала. Фолбэк
-	// (живость при оффлайне строителя): через 2×epoch_seconds после
-	// наступления эпохи предлагает любой узел. Протокольное решение
-	// (правило одного предложения) — на утверждение владельца, см. отчёт.
-	if len(part) > 0 && !n.isCpProposer(part[0]) && !n.cpEpochOverdue(epoch) {
+	// подписантов раскалывался ниже порога, цепочка умирала.
+	// №42 (A), этап 9: очередь — первые K участников состава,
+	// детерминированная ротация через epoch/2 от детерминированного
+	// момента due (prev.NetworkTime + epoch_seconds, данные консенсуса);
+	// строитель без узла не держит эпоху — окно уходит следующему.
+	if len(part) == 0 {
 		n.applyMu.RUnlock()
-		// не строитель: входящие предложения подписываются в onCpMessage,
-		// здесь — сбор долей уже полученных предложений
+		return
+	}
+	idx := n.cpBuilderIndex(elapsed)
+	if idx >= len(part) {
+		idx = len(part) - 1
+	}
+	if !n.isCpProposer(part[idx]) {
+		n.applyMu.RUnlock()
+		// не строитель этого окна: входящие предложения подписываются
+		// в onCpMessage, здесь — сбор долей уже полученных предложений
 		n.collectCpPending(ctx)
 		return
 	}
@@ -473,17 +508,72 @@ func (n *Node) isCpProposer(first []byte) bool {
 	return string(first) == string(n.Cfg.WalletAddr)
 }
 
-// cpEpochOverdue — эпоха давно due и не закрыта (строитель оффлайн):
-// фолбэк — предложение строит любой узел.
-func (n *Node) cpEpochOverdue(epoch uint64) bool {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if n.epochDueFor != epoch {
-		n.epochDueFor = epoch
-		n.epochDueAt = time.Now()
+// cpQueueElapsed — сколько секунд прошло с детерминированного момента
+// due эпохи после prev (prev.NetworkTime + epoch_seconds; без prev —
+// genesis + epoch_seconds). Локальные часы: консенсусное время зажато
+// окном последнего чекпоинта (9.2) и не измеряет простой; окна ротации
+// epoch/2 широкие — NTP-рассинхрон несопоставим с окном (№42 (A)).
+func (n *Node) cpQueueElapsed(prevTime uint64, hasPrev bool) uint64 {
+	base := n.Cfg.Genesis.Genesis.GenesisTime
+	if hasPrev {
+		base = prevTime
+	}
+	due := base + n.ConsParams.EpochSeconds
+	now := uint64(time.Now().Unix())
+	if now <= due {
+		return 0
+	}
+	return now - due
+}
+
+// cpBuilderQueueK — размер очереди строителей (№42 (A); genesis-поле 56,
+// дефолт 3 — значение черновое).
+func (n *Node) cpBuilderQueueK() int {
+	if k := n.ConsParams.BuilderQueue; k > 0 {
+		return k
+	}
+	return 1
+}
+
+// cpBuilderIndex — текущее окно очереди строителей: детерминированная
+// ротация первых K участников состава каждые epoch/2 от момента due;
+// после исчерпания очереди — последнее окно (затем срабатывает (D)).
+func (n *Node) cpBuilderIndex(elapsed uint64) int {
+	half := n.ConsParams.EpochSeconds / 2
+	if half == 0 {
+		half = 1
+	}
+	idx := int(elapsed / half)
+	if max := n.cpBuilderQueueK() - 1; idx > max {
+		idx = max
+	}
+	return idx
+}
+
+// cpSkipDue — пропуск застрявшей эпохи (№42 (D)): очередь строителей
+// исчерпана (elapsed >= K × epoch/2), чекпоинта нет — застрявшая эпоха
+// закрывается пустой, строится следующая. Первый чекпоинт (без prev)
+// обязан быть эпохой 1 — пропуска нет.
+func (n *Node) cpSkipDue(prevTime uint64, hasPrev bool) bool {
+	if !hasPrev {
 		return false
 	}
-	return time.Since(n.epochDueAt) > 2*time.Duration(n.ConsParams.EpochSeconds)*time.Second
+	half := n.ConsParams.EpochSeconds / 2
+	if half == 0 {
+		half = 1
+	}
+	return n.cpQueueElapsed(prevTime, hasPrev) >= uint64(n.cpBuilderQueueK())*half
+}
+
+// hasProposalForEpochLocked — известно ли предложение эпохи (любое);
+// вызывающий держит n.mu (RLock или Lock).
+func (n *Node) hasProposalForEpochLocked(epoch uint64) bool {
+	for _, cp := range n.CpProposals {
+		if cp.Epoch == epoch {
+			return true
+		}
+	}
+	return false
 }
 
 // publishCp — чекпоинт + доля подписи в тему checkpoint/<network_id>.
@@ -524,12 +614,27 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 	isNew := false
 	if _, ok := n.CpProposals[string(h[:])]; !ok {
 		// эпоха последнего чекпоинта — под уже взятым локом
-		// (lastCPEpock использует RLock — нельзя при живом Lock)
+		// (lastCPEpoch использует RLock — нельзя при живом Lock)
 		lastEpoch := uint64(0)
-		if len(n.Chain) > 0 {
+		var prevTime uint64
+		hasPrev := len(n.Chain) > 0
+		if hasPrev {
 			lastEpoch = n.Chain[len(n.Chain)-1].Epoch
+			prevTime = n.Chain[len(n.Chain)-1].NetworkTime
 		}
-		if cp.Epoch != lastEpoch+1 {
+		// №42 (D): предложение пропускающей эпохи (last+2) принимается,
+		// только если застрявшая эпоха действительно исчерпала очередь
+		// строителей по часам этого узла — преждевременный пропуск
+		// подписанты не подпишут, порог не соберётся
+		okEpoch := cp.Epoch == lastEpoch+1 ||
+			(cp.Epoch == lastEpoch+2 && n.cpSkipDue(prevTime, hasPrev))
+		if !okEpoch {
+			n.mu.Unlock()
+			return
+		}
+		// правило одного предложения (блокер 8.1): варианты одной эпохи
+		// не собираются и не подписываются — первый увиденный побеждает
+		if n.hasProposalForEpochLocked(cp.Epoch) {
 			n.mu.Unlock()
 			return
 		}
@@ -573,8 +678,10 @@ func (n *Node) collectCpPending(ctx context.Context) {
 		}
 		if cp.ThresholdSig != nil {
 			// финализированный (перепубликованный) чекпоинт следующей
-			// эпохи — кандидат на приём без локального сбора долей
-			if cp.Epoch == lastEpoch+1 {
+			// эпохи — кандидат на приём без локального сбора долей;
+			// гэп (пропуск застрявшей эпохи, №42 (D)) допустим —
+			// stateRootMatches и Verify защищают приём
+			if cp.Epoch > lastEpoch {
 				received = append(received, cp)
 			}
 			continue

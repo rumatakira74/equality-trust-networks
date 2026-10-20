@@ -285,3 +285,58 @@ func (t *testPoller) Sample(k int, rng *rand.Rand) []PollablePeer {
 func newTestRng(seed int64) *rand.Rand {
 	return rand.New(rand.NewSource(seed))
 }
+
+// TestCheckpointSkipGap — №42 (D), решение владельца, этап 9: пропуск
+// застрявшей эпохи — гэп нумерации в цепочке разрешён (пропущенная эпоха
+// закрыта пустой, маркер — разрыв), регрессия нумерации запрещена; окно
+// времени (9.2) — на чекпоинт, без масштабирования на пропуски.
+func TestCheckpointSkipGap(t *testing.T) {
+	e := newConsEnv(t)
+	p := DefaultParams()
+	cp1, err := Build(e.gp.Genesis.NetworkID, 1, e.ledger, nil,
+		e.gp.Genesis.GenesisTime+p.EpochSeconds, 1, nil, 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	part, n, err := Participants(wire.CheckpointModeDecentralized, e.ledger, e.gp, p, 1, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cp1.Participants, cp1.Threshold = part, n
+	col := NewCollector(cp1, e.pubOf)
+	for _, id := range []string{"S1", "S2"} {
+		share, _ := (&Signer{Wallet: e.addr(id), Priv: e.key(id)}).Sign(cp1)
+		col.Add(share)
+	}
+	cp1.ThresholdSig = col.Ready()
+	if err := Verify(cp1, nil, e.gp.Genesis.GenesisTime, p.EpochSeconds, p.MaxTimeShift, e.pubOf); err != nil {
+		t.Fatalf("чекпоинт 1: %v", err)
+	}
+
+	// чекпоинт эпохи 3 поверх эпохи 1 (эпоха 2 застряла — закрыта пустой)
+	cp3, err := Build(e.gp.Genesis.NetworkID, 3, e.ledger, cp1,
+		cp1.NetworkTime+p.EpochSeconds, 1, part, n, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	col3 := NewCollector(cp3, e.pubOf)
+	for _, id := range []string{"S1", "S2"} {
+		share, _ := (&Signer{Wallet: e.addr(id), Priv: e.key(id)}).Sign(cp3)
+		col3.Add(share)
+	}
+	cp3.ThresholdSig = col3.Ready()
+	if err := Verify(cp3, cp1, e.gp.Genesis.GenesisTime, p.EpochSeconds, p.MaxTimeShift, e.pubOf); err != nil {
+		t.Fatalf("пропуск застрявшей эпохи отклонён: %v", err)
+	}
+
+	// регрессия нумерации (эпоха 2 после эпохи 3) запрещена: Build
+	// отклоняет, Verify (если бы пропустили) — тоже
+	if cpBack, err := Build(e.gp.Genesis.NetworkID, 2, e.ledger, cp3,
+		cp3.NetworkTime+p.EpochSeconds, 1, part, n, nil); err == nil && cpBack != nil {
+		cpBack.ThresholdSig = cp3.ThresholdSig
+		if Verify(cpBack, cp3, e.gp.Genesis.GenesisTime, p.EpochSeconds, p.MaxTimeShift, e.pubOf) == nil {
+			t.Fatal("регрессия нумерации чекпоинтов прошла")
+		}
+		t.Fatal("Build принял регрессию нумерации")
+	}
+}

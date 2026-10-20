@@ -25,6 +25,10 @@ import (
 //   - ValidatorsM (№17): M = 21 валидатор в режиме decentralized
 //     (параметр genesis-профиля validators_m); порог N = ceil(2/3 M) = 14.
 //   - SeedSunsetActive/Epochs (№15): 100 active-кошельков или 24 эпохи.
+//   - BuilderQueue (№42, решение владельца (A), этап 9): K = 3 строителя —
+//     очередь первых K участников состава, ротация через epoch/2; после
+//     исчерпания очереди застрявшая эпоха пропускается (решение (D)).
+//     Значение черновое (как eclipse_n = 3), симуляцией не подбирали.
 type Params struct {
 	EpochSeconds     uint64
 	MaxTimeShift     uint64
@@ -32,6 +36,7 @@ type Params struct {
 	SnowballAlpha    float64
 	SnowballBeta     int
 	ValidatorsM      int
+	BuilderQueue     int
 	SeedSunsetActive uint64
 	SeedSunsetEpochs uint64
 }
@@ -45,6 +50,7 @@ func DefaultParams() Params {
 		SnowballAlpha:    0.6,
 		SnowballBeta:     4,
 		ValidatorsM:      21,
+		BuilderQueue:     3,
 		SeedSunsetActive: 100,
 		SeedSunsetEpochs: 24,
 	}
@@ -60,6 +66,9 @@ func FromProfile(p *wire.ProfileParams) Params {
 	}
 	if p != nil && p.ValidatorsM > 0 {
 		dp.ValidatorsM = int(p.ValidatorsM)
+	}
+	if p != nil && p.CpBuilderQueue > 0 {
+		dp.BuilderQueue = int(p.CpBuilderQueue)
 	}
 	return dp
 }

@@ -6,6 +6,7 @@ package cons
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"sort"
 
@@ -37,7 +38,10 @@ func Participants(mode wire.CheckpointMode, l *ledger.Ledger, gp *wire.GenesisPa
 		if m > len(acts) {
 			m = len(acts)
 		}
-		sample := weightedSample(acts, prevHash, m)
+		// эпоха в ключе выборки (№42 (D), этап 9): состав пропущенной
+		// эпохи обязан отличаться от застрявшей — иначе пропуск не
+		// меняет строителей
+		sample := weightedSample(acts, prevHash, epoch, m)
 		return sample, twoThirds(len(sample)), nil
 	case wire.CheckpointModeMembersQuorum:
 		acts := activeWallets(l)
@@ -114,14 +118,16 @@ func activeWallets(l *ledger.Ledger) [][]byte {
 // weightedSample — детерминированная выборка m из active: сортировка по
 // SHA256(prevHash ‖ адрес). Равномерна по адресам; взвешивание по весу
 // кошельков — этап 6 (нужны данные о распределении возрастов).
-func weightedSample(acts [][]byte, prevHash []byte, m int) [][]byte {
+func weightedSample(acts [][]byte, prevHash []byte, epoch uint64, m int) [][]byte {
 	type keyed struct {
 		addr []byte
 		h    [32]byte
 	}
+	var eb [8]byte
+	binary.BigEndian.PutUint64(eb[:], epoch)
 	ks := make([]keyed, 0, len(acts))
 	for _, a := range acts {
-		h := sha256.Sum256(append(append([]byte{}, prevHash...), a...))
+		h := sha256.Sum256(append(append(append([]byte{}, prevHash...), eb[:]...), a...))
 		ks = append(ks, keyed{addr: a, h: h})
 	}
 	sort.Slice(ks, func(i, j int) bool {

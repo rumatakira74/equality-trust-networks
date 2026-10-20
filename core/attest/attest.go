@@ -185,6 +185,11 @@ func Verify(chainBlob []byte, trustedRoots []*x509.Certificate, minLevel int,
 		return nil, errors.New("attest: deviceLocked = false")
 	}
 	patch := time.Date(ext.PatchYear, time.Month(ext.PatchMonth), 1, 0, 0, 0, 0, time.UTC)
+	// №43 (минор-фикс, этап 9): дата патча в будущем (months < 0) —
+	// отклоняется: устройство заявляет несуществующий патч
+	if patch.After(now) {
+		return nil, errors.New("attest: дата патча в будущем")
+	}
 	months := int(now.Sub(patch).Hours() / 24 / 30)
 	if months > maxPatchAgeMonths {
 		return nil, errors.New("attest: уровень патча просрочен")

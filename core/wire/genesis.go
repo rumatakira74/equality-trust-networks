@@ -235,7 +235,12 @@ type ProfileParams struct {
 	// ValidatorsM — размер выборки валидаторов эпохи в decentralized
 	// (поле 55; решение №17, утверждено 18.10.2026: M = 21,
 	// порог N = ceil(2/3 M)); 0 — дефолт 21.
-	ValidatorsM               uint64
+	ValidatorsM uint64
+	// CpBuilderQueue — очередь строителей чекпоинта (поле 56; №42,
+	// решение владельца (A), этап 9): первые K участников состава,
+	// ротация через epoch/2; 0 — дефолт 3. Значение черновое — как у
+	// соседних констант (eclipse_n = 3), симуляцией не подбирали.
+	CpBuilderQueue            uint64
 	MigrateDelayDays          uint64
 	TimestampToleranceSeconds uint64
 	MintChallengeWindowHours  uint64
@@ -284,6 +289,7 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 48, p.GuardianRewardCooldownDays)
 	b = appendU64Field(b, 54, p.EclipseN)
 	b = appendU64Field(b, 55, p.ValidatorsM)
+	b = appendU64Field(b, 56, p.CpBuilderQueue)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)

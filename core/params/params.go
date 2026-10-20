@@ -155,6 +155,7 @@ func TestGenesis() *wire.GenesisPackage {
 		GuardianReward:             50000, // решение №29 (этап 5): 5% месячного выпуска подопечного
 		EclipseN:                   3,     // решение №35 (этап 5)
 		ValidatorsM:                21,    // решение №17 (18.10.2026): M = 21, N = ceil(2/3·21) = 14
+		CpBuilderQueue:             3,     // №42 (A), этап 9 — черновое: как eclipse_n, симуляцией не подбирали
 		GuardianRewardCooldownDays: 365,
 		MigrateDelayDays:           14,
 		TimestampToleranceSeconds:  1800, // ±30 мин (9.2)
