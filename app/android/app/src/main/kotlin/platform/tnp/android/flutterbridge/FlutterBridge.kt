@@ -747,7 +747,13 @@ object FlutterBridge {
         val networkId = gen.networkID()
         val challenge = tnp.Tnp.attestationChallengeFor(pub, networkId)
         val sandbox = JSONObject(gen.manifestJSON()).optBoolean("sandbox", false)
-        val chain = if (sandbox) {
+        // 8.1: debug-сборка (FLAG_DEBUGGABLE) — закрытая тестовая сеть на
+        // эмуляторе: KeyMint-цепочка эмулятора не сходится с синтетическими
+        // корнями тестовой сети (E_ATTEST); release на живых устройствах —
+        // реальная цепочка (распространение корней — блок 8-live)
+        val debuggable = (activity.applicationInfo.flags and
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        val chain = if (sandbox || debuggable) {
             tnp.Tnp.sandboxAttestationChain(pub, networkId, challenge)
         } else {
             wallet.attestationChain()
