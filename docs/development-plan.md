@@ -136,7 +136,7 @@ type: "text/markdown"
 
 ---
 
-## Этап 7. Приложение (Flutter) — ✅ выполнено (ветка stage7-flutter, c14ee0f..c8a1388, не слита; отчёт reports/REPORT-STAGE-7.md, скриншоты reports/stage7/01–17)
+## Этап 7. Приложение (Flutter) — ✅ выполнено (ветка stage7-flutter, c14ee0f..fcc0644, слита в main merge 588dfed 20.10.2026; отчёт reports/REPORT-STAGE-7.md, скриншоты reports/stage7/01–17)
 
 - [x] Онбординг: создание кошелька, обязательное предложение гардианов при создании, настройка биометрии.
 - [x] Поручительства: QR и Bluetooth при личной встрече, статус кандидата, слоты.
