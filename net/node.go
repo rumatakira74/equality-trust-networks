@@ -89,6 +89,12 @@ type Node struct {
 	// чекпоинта (догоняющий механизм цепочки, блокер 8.1)
 	lastCpRepublish time.Time
 
+	// lastProposal — своё предложение чекпоинта текущей эпохи
+	// (8.1: строится один раз на эпоху, доля переподписывается каждый тик)
+	lastProposal      *wire.Checkpoint
+	lastProposalEpoch uint64
+	lastProposalHash  []byte
+
 	relayReserved int
 
 	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).

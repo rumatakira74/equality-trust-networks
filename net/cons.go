@@ -357,6 +357,29 @@ func (n *Node) cpTick(ctx context.Context) {
 	} else {
 		prevHash = make([]byte, 32)
 	}
+	// Блокер 8.1 (48 узлов): предложение строится ОДИН раз на эпоху.
+	// Раньше cpTick строил новое предложение каждую секунду — каждая
+	// секунда давала новый вариант (NetworkTime/состояние менялись),
+	// подписанты подписывают все варианты → разные узлы финализировали
+	// разные цепочки, набор подписантов раскалывался ниже порога N и
+	// цепочка умирала (эпоха 3 не собрала 14 подписей). Переподпись
+	// своей доли и перепубликация ниже — каждый тик (живость).
+	n.mu.RLock()
+	proposed := n.lastProposalEpoch == epoch && n.lastProposal != nil
+	var own *wire.Checkpoint
+	if proposed {
+		own = n.lastProposal
+	}
+	n.mu.RUnlock()
+	if proposed {
+		// своё предложение уже построено: переподпись доли каждый тик
+		// (живость при потерях gossip) и продолжение сбора
+		if own != nil {
+			n.signAndPublishShare(ctx, own, own.Participants)
+		}
+		n.collectCpPending(ctx)
+		return
+	}
 	// состав подписантов и сборка чекпоинта читают реестр — под
 	// applyMu.RLock (data race — net/query.go, этап 7)
 	n.applyMu.RLock()
@@ -387,26 +410,46 @@ func (n *Node) cpTick(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	// наблюдаемость (8.1): новый вариант предложения эпохи — метрика
+	// времени сбора подписей и диагностика фрагментации вариантов
+	h := cp.CheckpointHash()
+	n.mu.Lock()
+	n.lastProposalEpoch = cp.Epoch
+	n.lastProposalHash = append(n.lastProposalHash[:0], h[:]...)
+	n.lastProposal = cp
+	n.mu.Unlock()
+	n.logf("чекпоинт: предложение эпохи %d t=%d корень=%s", cp.Epoch, cp.NetworkTime,
+		hex.EncodeToString(cp.StateRoot)[:12])
 	n.onCpMessage(cp, wire.SignatureShare{}, true)
 	// публикация предложения в тему (даже если узел не участник)
 	if err := n.publishCp(ctx, cp, wire.SignatureShare{}); err != nil {
 		n.logf("чекпоинт: публикация: %v", err)
 	}
 	// подпись участником
-	for _, p := range part {
-		if string(p) == string(n.Cfg.WalletAddr) && n.Signer != nil {
-			share, err := n.Signer.Sign(cp)
-			if err != nil {
-				return
-			}
-			n.onCpMessage(cp, share, true)
-			if err := n.publishCp(ctx, cp, share); err != nil {
-				n.logf("чекпоинт: публикация доли: %v", err)
-			}
-			break
-		}
-	}
+	n.signAndPublishShare(ctx, cp, part)
 	n.collectCpPending(ctx)
+}
+
+// signAndPublishShare — подпись предложения участником (кошелёк узла) и
+// публикация доли; повторяется каждый тик (живость при потерях gossip).
+func (n *Node) signAndPublishShare(ctx context.Context, cp *wire.Checkpoint, part [][]byte) {
+	if n.Signer == nil {
+		return
+	}
+	for _, p := range part {
+		if string(p) != string(n.Cfg.WalletAddr) {
+			continue
+		}
+		share, err := n.Signer.Sign(cp)
+		if err != nil {
+			return
+		}
+		n.onCpMessage(cp, share, true)
+		if err := n.publishCp(ctx, cp, share); err != nil {
+			n.logf("чекпоинт: публикация доли: %v", err)
+		}
+		return
+	}
 }
 
 // publishCp — чекпоинт + доля подписи в тему checkpoint/<network_id>.
