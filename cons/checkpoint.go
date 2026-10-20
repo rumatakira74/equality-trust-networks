@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/smt"
@@ -151,6 +152,7 @@ func (s *Signer) Sign(cp *wire.Checkpoint) (wire.SignatureShare, error) {
 // Collector — сбор подписей чекпоинта (дедуп по подписанту; подписи
 // композициональны, агрегирующий узел — любой участник, spec/07 7.3).
 type Collector struct {
+	mu     sync.Mutex
 	cp     *wire.Checkpoint
 	pubOf  func(addr []byte) (*ecdsa.PublicKey, bool)
 	shares map[string]wire.SignatureShare
@@ -163,7 +165,15 @@ func NewCollector(cp *wire.Checkpoint, pubOf func(addr []byte) (*ecdsa.PublicKey
 }
 
 // Add — принять долю подписи: подписант из participants, подпись верна.
+//
+// Блокер 8.1 (прогон 1, 48 узлов): fatal error concurrent map writes —
+// net.onCpMessage вызывает Add вне n.mu из нескольких горутин
+// (checkpointLoop: входящие предложения и доли), на разреженном трафике
+// этапа 8 окно не вскрылось. Фикс — собственный мьютекс коллектора
+// (минимальная правка cons, причина: падение узла на масштабе).
 func (c *Collector) Add(share wire.SignatureShare) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	inSet := false
 	for _, p := range c.cp.Participants {
 		if string(p) == string(share.Signer) {
@@ -191,10 +201,16 @@ func (c *Collector) Add(share wire.SignatureShare) bool {
 }
 
 // Count — число валидных подписей.
-func (c *Collector) Count() int { return len(c.shares) }
+func (c *Collector) Count() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.shares)
+}
 
 // Ready — порог достигнут: возвращает полную ThresholdSignature.
 func (c *Collector) Ready() *wire.ThresholdSignature {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if uint64(len(c.shares)) < c.cp.Threshold {
 		return nil
 	}
