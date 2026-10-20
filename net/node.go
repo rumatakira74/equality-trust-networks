@@ -479,6 +479,12 @@ func (n *Node) indexTx(tx *wire.Transaction) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.journal = append(n.journal, tx)
+	// txid журнала — в дедуп gossip (блокер 8.1, авторизовано владельцем):
+	// после рестарта seen пуст, а журнал наполнен replay/sync — повторная
+	// доставка известной транзакции не должна проходить cheapCheck
+	// (Argon2id для register/mint) ради отказа E_DUP
+	id := tx.TxID()
+	n.seen[string(id[:])] = true
 	chain, ok := n.chainIndex[string(tx.Wallet)]
 	if !ok {
 		chain = make(map[uint64]*wire.Transaction)

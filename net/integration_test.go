@@ -335,3 +335,34 @@ func TestLightNode(t *testing.T) {
 		t.Fatalf("seq в листе: %d, ожидается 1", leaf.Seq)
 	}
 }
+
+// TestJournalTxGossipDedup — txid журнала отмечается в дедупе gossip
+// (блокер 8.1, авторизовано владельцем): после рестарта seen пуст, а
+// журнал наполнен replay/синхронизацией — повторная доставка известной
+// транзакции должна отсеиваться ДО cheapCheck (иначе каждая копия
+// register/mint проходит Argon2id-верификацию ради отказа E_DUP).
+func TestJournalTxGossipDedup(t *testing.T) {
+	e := newTestEnv(t)
+	n1 := e.newNode(nodeOpts{level: LevelFull})
+	e.start(n1)
+
+	// применение без публикации (как replay при старте из БД)
+	tx := e.mintTx(n1, "V1")
+	n1.applyLive(tx)
+
+	// контракт фикса: txid журнала отмечен в дедупе gossip
+	id := tx.TxID()
+	n1.mu.RLock()
+	marked := n1.seen[string(id[:])]
+	n1.mu.RUnlock()
+	if !marked {
+		t.Fatal("txid журнала не отмечен в дедупе gossip")
+	}
+
+	// повторная доставка (эхо/рестарт): тихий пропуск до cheapCheck,
+	// журнал не растёт и повторного apply не происходит
+	n1.handleTxFromPeer(tx, n1.Host.ID())
+	if got := len(n1.journalSnapshot()); got != 1 {
+		t.Fatalf("журнал вырос при повторной доставке: %d", got)
+	}
+}
