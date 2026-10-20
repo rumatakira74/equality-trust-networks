@@ -57,6 +57,34 @@ object FlutterBridge {
     // живом телефоне); параметры сети приложение читает из манифеста
     private var genesis: tnp.Genesis? = null
 
+    // доставка ответов в главный поток из фонового (ANR-блокер 8.1)
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /** Ошибка моста с кодом result.error (бросается из фонового work). */
+    private class Err(val code: String, message: String) : Exception(message)
+
+    /**
+     * Тяжёлая работа — на фоновом executor NodeController, ответ — в
+     * главный поток (ANR-блокер 8.1, авторизовано владельцем; латентный
+     * баг, вскрыт симуляцией 8.1): ни один cgo-вызов узла (сверки,
+     * PoW Argon2id, запросы состояния, submit) и PBKDF2 PIN — не на
+     * главном потоке. Ошибки с кодом — throw Err(code, ...).
+     */
+    private fun bg(result: MethodChannel.Result, work: () -> Any?) {
+        NodeController.executor.execute {
+            try {
+                val res = work()
+                mainHandler.post { result.success(res) }
+            } catch (e: Err) {
+                val msg = e.message
+                mainHandler.post { result.error(e.code, msg, null) }
+            } catch (e: Exception) {
+                val msg = e.message ?: e.javaClass.simpleName
+                mainHandler.post { result.error("ERR", msg, null) }
+            }
+        }
+    }
+
     fun register(activity: FragmentActivity, engine: FlutterEngine) {
         this.activity = activity
         appContext = activity.applicationContext
@@ -245,23 +273,29 @@ object FlutterBridge {
                         (num as? Number)?.toLong() ?: num.toString().toLong()
                     } ?: 0L
                     val decoyHistory = call.argument<List<String>>("decoyHistory") ?: emptyList()
-                    pin.setup(normal, duressPin)
-                    duress.setLegend(decoyBalance, decoyHistory)
-                    result.success(true)
+                    // PBKDF2 120k итераций — в фон (ANR-блокер 8.1)
+                    bg(result) {
+                        pin.setup(normal, duressPin)
+                        duress.setLegend(decoyBalance, decoyHistory)
+                        true
+                    }
                 }
                 "verifyPin" -> {
                     val entered = call.argument<String>("pin")!!
-                    // один и тот же код и ритм для обоих PIN (8.2)
-                    when (pin.verify(entered)) {
-                        PinCheck.NORMAL -> {
-                            duress.exit()
-                            result.success("normal")
+                    // PBKDF2 — в фон; один и тот же код и ритм для обоих
+                    // PIN (8.2)
+                    bg(result) {
+                        when (pin.verify(entered)) {
+                            PinCheck.NORMAL -> {
+                                duress.exit()
+                                "normal"
+                            }
+                            PinCheck.DURESS -> {
+                                duress.enter()
+                                "normal" // вход неотличим
+                            }
+                            PinCheck.NONE -> "none"
                         }
-                        PinCheck.DURESS -> {
-                            duress.enter()
-                            result.success("normal") // вход неотличим
-                        }
-                        PinCheck.NONE -> result.success("none")
                     }
                 }
                 "duressActive" -> result.success(duress.active)
@@ -275,104 +309,86 @@ object FlutterBridge {
                 "walletAddress" -> result.success(hex(address()))
                 "walletRegistered" -> result.success(wallet.isRegistered())
 
-                // -- сборка транзакций --
+                // -- сборка транзакций (PoW — в фон: Argon2id, tip по сети) --
                 "buildRegister" -> {
                     val guardians = call.argument<List<String>>("guardians") ?: emptyList()
-                    val res = buildRegister(guardians)
-                    if (res == null) result.error("BUILD", "register не собрался", null)
-                    else result.success(mapOf("id" to res))
+                    bg(result) {
+                        val res = buildRegister(guardians)
+                            ?: throw Err("BUILD", "register не собрался")
+                        mapOf("id" to res)
+                    }
                 }
                 "buildTransfer" -> {
                     val recipient = unhex(call.argument<String>("recipient")!!)
                     val amount = (call.argument<Any>("amount") as Number).toLong()
-                    val res = buildTransfer(recipient, amount)
-                    if (res == null) result.error("BUILD", "перевод не собрался", null)
-                    else result.success(res)
+                    bg(result) {
+                        val res = buildTransfer(recipient, amount)
+                            ?: throw Err("BUILD", "перевод не собрался")
+                        res
+                    }
                 }
                 "buildMint" -> {
                     val period = (call.argument<Any>("period") as Number).toLong()
                     val amount = (call.argument<Any>("amount") as Number).toLong()
-                    val res = buildMint(period, amount)
-                    if (res == null) result.error("BUILD", "выпуск не собрался", null)
-                    else result.success(mapOf("id" to res))
+                    bg(result) {
+                        val res = buildMint(period, amount)
+                            ?: throw Err("BUILD", "выпуск не собрался")
+                        mapOf("id" to res)
+                    }
                 }
                 "buildVouch" -> {
                     val candidate = unhex(call.argument<String>("candidate")!!)
-                    val addr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(addr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newVouch(
-                        genesis!!.networkID(), addr, tp.first + 1, tp.second,
-                        candidate, epochNow(), genesis!!.protocolVersion(),
-                        System.currentTimeMillis() / 1000,
-                    )
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newVouch(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            candidate, epochNow(), genesis!!.protocolVersion(),
+                            System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
                 }
                 "buildCancel" -> {
                     val pendingSeq = (call.argument<Any>("pendingSeq") as Number).toLong()
-                    val addr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(addr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newTransferCancel(
-                        genesis!!.networkID(), addr, tp.first + 1, tp.second,
-                        pendingSeq, genesis!!.protocolVersion(),
-                        System.currentTimeMillis() / 1000,
-                    )
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newTransferCancel(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            pendingSeq, genesis!!.protocolVersion(),
+                            System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
                 }
                 "buildSetThreshold" -> {
                     val newP = (call.argument<Any>("newP") as Number).toLong()
-                    val addr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(addr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newSetThreshold(
-                        genesis!!.networkID(), addr, tp.first + 1, tp.second,
-                        newP, genesis!!.protocolVersion(),
-                        System.currentTimeMillis() / 1000,
-                    )
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newSetThreshold(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            newP, genesis!!.protocolVersion(),
+                            System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
                 }
                 "buildGuardianOffer" -> {
-                    val addr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(addr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newGuardianOffer(
-                        genesis!!.networkID(), addr, tp.first + 1, tp.second,
-                        genesis!!.protocolVersion(), System.currentTimeMillis() / 1000,
-                    )
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newGuardianOffer(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            genesis!!.protocolVersion(), System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
                 }
                 "buildMigratePropose" -> {
                     // предложение публикуется в цепочке НОВОГО кошелька (11),
@@ -387,61 +403,48 @@ object FlutterBridge {
                             put(JSONObject().put("guardian", a["guardian"]).put("sig", a["sig"]))
                         }
                     }.toString()
-                    val newAddr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(newAddr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newMigratePropose(
-                        genesis!!.networkID(), newAddr, tp.first + 1, tp.second,
-                        unhex(oldHex), approvalsJson, nonce,
-                        genesis!!.protocolVersion(), System.currentTimeMillis() / 1000,
-                    ) ?: run {
-                        result.error("BUILD", "миграция не собралась", null)
-                        return
+                    bg(result) {
+                        val newAddr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(newAddr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newMigratePropose(
+                            genesis!!.networkID(), newAddr, tp.first + 1, tp.second,
+                            unhex(oldHex), approvalsJson, nonce,
+                            genesis!!.protocolVersion(), System.currentTimeMillis() / 1000,
+                        ) ?: throw Err("BUILD", "миграция не собралась")
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
                     }
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
                 }
                 "buildMigrateCancel" -> {
                     // отмена подписывается СТАРЫМ ключом в цепочке старого
                     // кошелька (11, вопрос №34) — вызывается на СТАРОМ устройстве
                     val newHex = call.argument<String>("new")!!
                     val proposeSeq = (call.argument<Any>("proposeSeq") as Number).toLong()
-                    val addr = address()
-                        ?: run {
-                            result.error("NOWALLET", "кошелёк не создан", null)
-                            return
-                        }
-                    val tp = tip(addr)
-                        ?: run {
-                            result.error("NOTIP", "нет пиров или seq", null)
-                            return
-                        }
-                    val tx = tnp.Tnp.newMigrateCancel(
-                        genesis!!.networkID(), addr, tp.first + 1, tp.second,
-                        unhex(newHex), proposeSeq, genesis!!.protocolVersion(),
-                        System.currentTimeMillis() / 1000,
-                    )
-                    tx.solveLight(genesis!!.powTargetLight())
-                    result.success(mapOf("id" to store(tx)))
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newMigrateCancel(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            unhex(newHex), proposeSeq, genesis!!.protocolVersion(),
+                            System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
                 }
                 "migrateStatementHash" -> {
                     val oldHex = call.argument<String>("old")!!
                     val newHex = call.argument<String>("new")!!
                     val nonce = (call.argument<Any>("nonce") as Number).toLong()
                     // эпоха — текущая (подпись связана с эпохой, 11)
-                    result.success(hex(
-                        tnp.Tnp.migrateStatementHash(
-                            genesis!!.networkID(), unhex(oldHex), unhex(newHex),
-                            nonce, epochNow(),
-                        ),
-                    ))
+                    bg(result) {
+                        hex(
+                            tnp.Tnp.migrateStatementHash(
+                                genesis!!.networkID(), unhex(oldHex), unhex(newHex),
+                                nonce, epochNow(),
+                            ),
+                        )
+                    }
                 }
                 "signMigrateStatement" -> {
                     // сторона гардиана: подпись утверждения миграции своим
@@ -455,13 +458,18 @@ object FlutterBridge {
                         result.success(mapOf("sig" to "", "fake" to true))
                         return
                     }
-                    val hash = tnp.Tnp.migrateStatementHash(
-                        genesis!!.networkID(), unhex(oldHex), unhex(newHex),
-                        nonce, epochNow(),
-                    )
-                    BiometricGate.signWithBiometric(activity, wallet, title, hash) { sig ->
-                        if (sig == null) result.success(mapOf("sig" to ""))
-                        else result.success(mapOf("sig" to hex(sig)))
+                    // хеш (эпоха — из узла) — в фон; биометрия — в главном
+                    NodeController.executor.execute {
+                        val hash = tnp.Tnp.migrateStatementHash(
+                            genesis!!.networkID(), unhex(oldHex), unhex(newHex),
+                            nonce, epochNow(),
+                        )
+                        mainHandler.post {
+                            BiometricGate.signWithBiometric(activity, wallet, title, hash) { sig ->
+                                if (sig == null) result.success(mapOf("sig" to ""))
+                                else result.success(mapOf("sig" to hex(sig)))
+                            }
+                        }
                     }
                 }
 
@@ -505,15 +513,16 @@ object FlutterBridge {
                         result.success(mapOf("outcome" to "accepted", "code" to "OK", "fake" to true))
                         return
                     }
-                    val n = node()
-                        ?: run {
+                    // apply + публикация — в фон (ANR-блокер 8.1)
+                    bg(result) {
+                        val n = node() ?: run {
                             pendingTx.remove(id)
-                            result.error("NONODE", "узел не запущен", null)
-                            return
+                            throw Err("NONODE", "узел не запущен")
                         }
-                    val res = n.submit(tx)
-                    pendingTx.remove(id)
-                    result.success(mapOf("outcome" to res.outcome(), "code" to res.code()))
+                        val res = n.submit(tx)
+                        pendingTx.remove(id)
+                        mapOf("outcome" to res.outcome(), "code" to res.code())
+                    }
                 }
                 "discardTx" -> {
                     pendingTx.remove(call.argument<String>("id")!!)
@@ -593,120 +602,115 @@ object FlutterBridge {
                     result.success(true)
                 }
                 "nodeStats" -> {
-                    val n = node()
-                    if (n != null) {
-                        // диагностика этапа 7: принудительная сверка + состояние
-                        android.util.Log.d("TnpNode", "sync: " + n.syncDiag())
+                    // диагностика этапа 7: принудительная сверка + состояние —
+                    // в фон (сверка со всеми пирами на главном потоке —
+                    // ANR-блокер 8.1, латентный баг, вскрыт симуляцией 8.1)
+                    bg(result) {
+                        val n = node()
+                        if (n != null) {
+                            android.util.Log.d("TnpNode", "sync: " + n.syncDiag())
+                        }
+                        val st = n?.statsText()
+                        android.util.Log.d("TnpNode", "stats: " + st)
+                        st
                     }
-                    val st = n?.statsText()
-                    android.util.Log.d("TnpNode", "stats: " + st)
-                    result.success(st)
                 }
                 "publishAwaiting" -> {
-                    node()?.publishAwaiting()
-                    result.success(null)
+                    bg(result) {
+                        node()?.publishAwaiting()
+                        null
+                    }
                 }
                 "offlineStatus" -> {
                     val txid = unhex(call.argument<String>("txid")!!)
-                    result.success(node()?.offlineStatus(txid) ?: "unknown")
+                    bg(result) { node()?.offlineStatus(txid) ?: "unknown" }
                 }
-                "awaiting" -> result.success(node()?.awaitingJSON() ?: "[]")
+                "awaiting" -> bg(result) { node()?.awaitingJSON() ?: "[]" }
 
-                // -- запросы состояния (net/query.go через мост) --
+                // -- запросы состояния (net/query.go через мост) — в фон --
                 "balanceWithProof" -> {
                     if (duress.active) {
                         result.success(duress.decoyBalance())
                         return
                     }
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        n.balanceWithProof(addr)
                     }
-                    val addr = address() ?: run {
-                        result.error("NOWALLET", "кошелёк не создан", null)
-                        return
-                    }
-                    result.success(n.balanceWithProof(addr))
                 }
                 "walletInfo" -> {
                     if (duress.active) {
                         result.success(decoyWalletJson())
                         return
                     }
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                            ?: throw Err("NOWALLET", "кошелёк не создан")
+                        n.walletInfoJSON(addr)
                     }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
-                    if (addr == null) {
-                        result.error("NOWALLET", "кошелёк не создан", null)
-                        return
-                    }
-                    result.success(n.walletInfoJSON(addr))
                 }
                 "vouchProgress" -> {
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.vouchProgressJSON(addr ?: ByteArray(0))
                     }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
-                    result.success(n.vouchProgressJSON(addr ?: ByteArray(0)))
                 }
                 "slots" -> {
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.slotsJSON(addr ?: ByteArray(0))
                     }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
-                    result.success(n.slotsJSON(addr ?: ByteArray(0)))
                 }
                 "history" -> {
                     if (duress.active) {
                         result.success(decoyHistoryJson())
                         return
                     }
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
-                    }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
+                    val argAddr = call.argument<String?>("addr")
                     val limit = (call.argument<Any>("limit") as? Number)?.toLong() ?: 0L
-                    result.success(n.historyJSON(addr ?: ByteArray(0), limit))
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.historyJSON(addr ?: ByteArray(0), limit)
+                    }
                 }
                 "pendingTransfers" -> {
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.pendingTransfersJSON(addr ?: ByteArray(0))
                     }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
-                    result.success(n.pendingTransfersJSON(addr ?: ByteArray(0)))
                 }
                 "pendingMigrations" -> {
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.pendingMigrationsJSON(addr ?: ByteArray(0))
                     }
-                    val addr = call.argument<String?>("addr")?.let { unhex(it) } ?: address()
-                    result.success(n.pendingMigrationsJSON(addr ?: ByteArray(0)))
                 }
                 "mintWindow" -> {
-                    val n = node() ?: run {
-                        result.error("NONODE", "узел не запущен", null)
-                        return
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        n.mintWindowJSON(addr)
                     }
-                    val addr = address() ?: run {
-                        result.error("NOWALLET", "кошелёк не создан", null)
-                        return
-                    }
-                    result.success(n.mintWindowJSON(addr))
                 }
                 "feeQuote" -> {
                     val amount = (call.argument<Any>("amount") as Number).toLong()
-                    result.success(node()?.feeQuote(amount) ?: 0L)
+                    bg(result) { node()?.feeQuote(amount) ?: 0L }
                 }
-                "guardianOffers" -> result.success(node()?.guardianOffersJSON() ?: "[]")
-                "registry" -> result.success(node()?.registryJSON() ?: "[]")
-                "clock" -> result.success(node()?.clockJSON() ?: "{}")
+                "guardianOffers" -> bg(result) { node()?.guardianOffersJSON() ?: "[]" }
+                "registry" -> bg(result) { node()?.registryJSON() ?: "[]" }
+                "clock" -> bg(result) { node()?.clockJSON() ?: "{}" }
 
                 else -> result.notImplemented()
             }
