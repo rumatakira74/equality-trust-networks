@@ -80,6 +80,7 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 	st := NewState(net)
 	st.Epoch = gp.Genesis.EpochZero
 	st.CurrentPeriod = 0
+	st.GenesisTime = gp.Genesis.GenesisTime
 	// Посевной круг: active из genesis-чекпоинта эпохи 0 (решение D8)
 	st.SeedMembers(m.SeedCircle, gp.Genesis.EpochZero, gp.Genesis.GenesisTime)
 
