@@ -106,7 +106,7 @@ class PinManager(context: Context) {
         return try {
             cipher.init(Cipher.DECRYPT_MODE, masterKey(), GCMParameterSpec(128, iv))
             Record.decode(cipher.doFinal(enc))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -153,7 +153,15 @@ class PinManager(context: Context) {
                     ((b[off + 2].toInt() and 0xff) shl 8) or
                     (b[off + 3].toInt() and 0xff)
                 off += 4
-                val duress = if (duressLen > 0) take() else null
+                // длина уже прочитана выше: байты берутся напрямую
+                // (take() читает длину повторно — первые байты хеша как
+                // длина; с тревожным PIN запись не декодировалась —
+                // баг вскрыт эмуляторным прогоном этапа 8)
+                val duress = if (duressLen > 0) {
+                    val d = b.copyOfRange(off, off + duressLen)
+                    off += duressLen
+                    d
+                } else null
                 return Record(salt, normal, duress)
             }
         }

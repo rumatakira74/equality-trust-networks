@@ -257,7 +257,9 @@ func (n *Node) rebuildToFinality() {
 	n.mu.RUnlock()
 	n.applyMu.RUnlock()
 	view := n.finalityView()
-	l, err := ledger.New(n.Cfg.Genesis, n.Clock, ledger.Options{SkipMintChallengeWindow: true})
+	// окно челленджа проверяется и при перестройке (этап 8): replay
+	// пинирует часы на timestamp_claim каждой транзакции
+	l, err := ledger.New(n.Cfg.Genesis, n.Clock, ledger.Options{})
 	if err != nil {
 		n.logf("перестройка: genesis: %v", err)
 		return

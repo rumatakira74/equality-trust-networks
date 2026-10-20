@@ -112,8 +112,11 @@ type State struct {
 	Epoch              uint64
 	NetTime            uint64
 	CurrentPeriod      uint64
-	SeedRightsActive   bool // посевной круг: особые права (до seed_sunset)
-	AndroidIDSeen      map[string]int
+	// GenesisTime — время genesis-записи: сетевые периоды и слот челленджа
+	// выпуска (7.6) отсчитываются от него (9.2), не от 1970 г.
+	GenesisTime      uint64
+	SeedRightsActive bool // посевной круг: особые права (до seed_sunset)
+	AndroidIDSeen    map[string]int
 }
 
 func key(b []byte) string { return string(b) }

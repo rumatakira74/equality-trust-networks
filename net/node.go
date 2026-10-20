@@ -16,6 +16,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/event"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multihash"
@@ -192,7 +193,11 @@ func (n *Node) initLedger() error {
 	gp := n.Cfg.Genesis
 	clock := NewClock(gp.Genesis.GenesisTime, gp.Manifest.Profile.EpochSeconds)
 	n.Clock = clock
-	l, err := ledger.New(gp, clock, ledger.Options{SkipMintChallengeWindow: true})
+	// Окно челленджа выпуска (M7, 7.6) проверяется при apply: долг этапа 7
+	// закрыт (раньше SkipMintChallengeWindow=true — сетевой узёл не проверял
+	// окно). Replay пинирует часы на timestamp_claim (cons.Replay), поэтому
+	// пересчёт исторических выпусков проходит по моменту публикации.
+	l, err := ledger.New(gp, clock, ledger.Options{})
 	if err != nil {
 		return fmt.Errorf("net: genesis: %w", err)
 	}
@@ -308,7 +313,34 @@ func (n *Node) Start(ctx context.Context) error {
 
 // syncLoop — первичная синхронизация после bootstrap, затем периодическая
 // сверка (узел офлайн -> подключается и догоняет, 4.11).
+//
+// Правка этапа 8 (долг этапа 7): первый проход по таймеру (500 мс) мог
+// прийти до завершения identify пира — NewStream по протоколу sync падал,
+// SyncAllPeers глотал ошибку (continue), и журнал не применялся до
+// следующего тика (30 с) или принудительной сверки из приложения. Теперь
+// сверка выполняется и по событию завершения identify каждого пира.
 func (n *Node) syncLoop() {
+	if sub, err := n.Host.EventBus().Subscribe(
+		[]interface{}{new(event.EvtPeerIdentificationCompleted)}); err == nil {
+		go func() {
+			defer sub.Close()
+			for {
+				select {
+				case <-n.ctx.Done():
+					return
+				case ev, ok := <-sub.Out():
+					if !ok {
+						return
+					}
+					if e, ok := ev.(event.EvtPeerIdentificationCompleted); ok {
+						// чужие сети (agent != наш) отключаются
+						// watchNetworkFilter — сверка с ними упадёт и просто попадёт в журнал
+						go n.syncPeerLog(e.Peer)
+					}
+				}
+			}
+		}()
+	}
 	// дать bootstrap-подключениям устояться
 	select {
 	case <-n.ctx.Done():
@@ -325,6 +357,19 @@ func (n *Node) syncLoop() {
 		case <-t.C:
 			n.SyncAllPeers()
 		}
+	}
+}
+
+// syncPeerLog — сверка с одним пиром с журналированием результата
+// (молчаливое проглатывание ошибок — корень долга этапа 7).
+func (n *Node) syncPeerLog(p peer.ID) {
+	k, err := n.SyncFromPeer(n.ctx, p)
+	if err != nil {
+		n.logf("sync %s: %v", p.ShortString(), err)
+		return
+	}
+	if k > 0 {
+		n.logf("sync %s: применено транзакций: %d", p.ShortString(), k)
 	}
 }
 
