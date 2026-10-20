@@ -1,6 +1,6 @@
 # Собранные бинарники (headless-раннер этапов 4-5)
-tnp-node
-tnp-node.exe
+/tnp-node
+/tnp-node.exe
 
 # Go
 *.test
