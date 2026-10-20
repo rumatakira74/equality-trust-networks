@@ -95,6 +95,11 @@ type Node struct {
 	lastProposalEpoch uint64
 	lastProposalHash  []byte
 
+	// epochDueFor/At — момент, когда эпоха впервые стала due (фолбэк
+	// детерминированного строителя, блокер 8.1)
+	epochDueFor uint64
+	epochDueAt  time.Time
+
 	relayReserved int
 
 	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).

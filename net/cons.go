@@ -390,6 +390,21 @@ func (n *Node) cpTick(ctx context.Context) {
 		n.applyMu.RUnlock()
 		return
 	}
+	// Блокер 8.1 (48 узлов, порог 14): детерминированный строитель
+	// предложения — первый участник состава эпохи. Пока предлагал любой
+	// узел, варианты (разные NetworkTime/состояния) подписывались всеми
+	// подписантами и РАЗНЫЕ узлы финализировали разные цепочки — набор
+	// подписантов раскалывался ниже порога, цепочка умирала. Фолбэк
+	// (живость при оффлайне строителя): через 2×epoch_seconds после
+	// наступления эпохи предлагает любой узел. Протокольное решение
+	// (правило одного предложения) — на утверждение владельца, см. отчёт.
+	if len(part) > 0 && !n.isCpProposer(part[0]) && !n.cpEpochOverdue(epoch) {
+		n.applyMu.RUnlock()
+		// не строитель: входящие предложения подписываются в onCpMessage,
+		// здесь — сбор долей уже полученных предложений
+		n.collectCpPending(ctx)
+		return
+	}
 	// finalized_txid_list: принятые с прошлого чекпоинта
 	n.mu.RLock()
 	journal := append([]*wire.Transaction(nil), n.journal...)
@@ -450,6 +465,25 @@ func (n *Node) signAndPublishShare(ctx context.Context, cp *wire.Checkpoint, par
 		}
 		return
 	}
+}
+
+// isCpProposer — этот узел — строитель предложения эпохи (кошелёк узла
+// равен первому участнику состава).
+func (n *Node) isCpProposer(first []byte) bool {
+	return string(first) == string(n.Cfg.WalletAddr)
+}
+
+// cpEpochOverdue — эпоха давно due и не закрыта (строитель оффлайн):
+// фолбэк — предложение строит любой узел.
+func (n *Node) cpEpochOverdue(epoch uint64) bool {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.epochDueFor != epoch {
+		n.epochDueFor = epoch
+		n.epochDueAt = time.Now()
+		return false
+	}
+	return time.Since(n.epochDueAt) > 2*time.Duration(n.ConsParams.EpochSeconds)*time.Second
 }
 
 // publishCp — чекпоинт + доля подписи в тему checkpoint/<network_id>.
