@@ -370,9 +370,10 @@ func TestJournalTxGossipDedup(t *testing.T) {
 
 // TestImportJournalPinnedVouch — восстановление журнала пинированным
 // путём (блокер 8.1-2, №40): vouch, чья эпоха уже прошла, отклоняется
-// при живом apply (V8: эпоха транзакции != текущая — рестарт из БД через
-// cons.Replay невозможен), но применяется ImportJournal-ом с пинированием
-// часов на timestamp_claim (семантика сетевой сверки).
+// при живом apply (V8: эпоха транзакции != текущая), но применяется
+// ImportJournal-ом с пинированием часов на timestamp_claim (семантика
+// сетевой сверки). Рестарт из БД (cons.Replay) покрыт отдельно —
+// net/replay_restart_test.go (№40 закрыт в этапе 9).
 func TestImportJournalPinnedVouch(t *testing.T) {
 	// короткие эпохи (2 с): эпоха vouch-а «протухает» за секунды;
 	// возраст/периоды поручителя в тесте сняты (посевной 65 дн. < 90)
@@ -392,8 +393,9 @@ func TestImportJournalPinnedVouch(t *testing.T) {
 		Candidate: e.addr("CAND"), Epoch: n1.Clock.Epoch(),
 	}, false)
 
-	// эпоха уходит: живой apply отклоняет vouch (V8) — как при replay
-	// из БД (cons.Replay делегирует эпоху живым часам, №40)
+	// эпоха уходит: живой apply отклоняет vouch (V8) — replay из БД
+	// (cons.Replay, №40 закрыт в этапе 9) больше так не делает: эпоха
+	// пинируется на timestamp_claim
 	time.Sleep(3 * time.Second)
 	n1.applyMu.Lock()
 	res := n1.applyWithClock(vouch, n1.Clock)
