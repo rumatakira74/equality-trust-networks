@@ -1,0 +1,18 @@
+tnp-node: handleTx: tx 76e907a0d0bb type=TRANSFER seq=3 от <peer.ID Qm*4sxjHQ>
+tnp-node: handleTx: tx b76d07a19e2f type=TRANSFER seq=3 от <peer.ID Qm*WFqkrD>
+2026/10/20 06:59:47 failed to sufficiently increase receive buffer size (was: 208 kiB, wanted: 7168 kiB, got: 416 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+tnp-node: запущен: <peer.ID Qm*TQ5Ldr> (уровень full)
+tnp-node: адрес: /ip4/127.0.0.1/udp/14145/quic-v1/p2p/QmPmMxAvKAeKyiHSpmgbzWeYomxX3gHrmp9vfDyqTQ5Ldr
+fatal error: concurrent map writes
+
+goroutine 258 [running]:
+internal/runtime/maps.fatal({0x1245f8c?, 0x2dab23330900?})
+	/usr/local/go/src/runtime/panic.go:1195 +0x18
+github.com/rumatakira74/equality-trust-networks/cons.(*Collector).Add(0x2dab23045bf0, {{0x2dab23332b20, 0x20, 0xe0}, {0x2dab23332b41, 0x46, 0xbf}})
+	/home/kira/projects/equality-trust-networks/cons/checkpoint.go:188 +0x1d2
+github.com/rumatakira74/equality-trust-networks/net.(*Node).onCpMessage(0x2dab2191a488, 0x2dab225ae580, {{0x2dab23332b20, 0x20, 0xe0}, {0x2dab23332b41, 0x46, 0xbf}}, 0x0)
+	/home/kira/projects/equality-trust-networks/net/cons.go:462 +0x4f2
+github.com/rumatakira74/equality-trust-networks/net.(*Node).checkpointLoop(0x2dab2191a488, {0x2371b98, 0x2dab21678000}, 0x2dab21c76ba0)
+	/home/kira/projects/equality-trust-networks/net/gossip.go:159 +0x225
+created by github.com/rumatakira74/equality-trust-networks/net.(*Node).startGossip in goroutine 1
+	/home/kira/projects/equality-trust-networks/net/gossip.go:103 +0x66a
