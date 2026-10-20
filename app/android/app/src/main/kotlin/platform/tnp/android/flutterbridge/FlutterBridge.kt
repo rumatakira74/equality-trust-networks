@@ -69,9 +69,14 @@ object FlutterBridge {
     }
 
     /**
-     * Genesis песочницы + адрес своего кошелька для узла.
+     * Genesis закрытой тестовой сети или песочницы + адрес своего кошелька.
      *
-     * Genesis-время ФИКСИРОВАНО: приложение и host-узел песочницы
+     * Закрытая тестная сеть (этап 8): genesis-пакет утилиты cmd/tnp-testnet
+     * кладётся в <external files>/networks/genesis.bin (adb push до первого
+     * запуска), multiaddr первых узлов — в networks/peers.txt (по одному в
+     * строке; приглашение invite.txt). Нет файлов — песочница эмулятора.
+     *
+     * Песочница: genesis-время ФИКСИРОВАНО — приложение и host-узел песочницы
      * (cmd/tnp-sandbox-peer, эмулятор подключается через 10.0.2.2)
      * обязаны строить идентичный genesis (manifest_hash совпадает).
      * Пир host-узла — только для песочницы эмулятора; реальные сети —
@@ -79,6 +84,29 @@ object FlutterBridge {
      */
     private fun ensureGenesis() {
         if (genesis != null) return
+        NodeController.log = tnp.Logger { line ->
+            android.util.Log.d("TnpNode", line)
+        }
+        // SQLite узла на Android отключён (в памяти): modernc/sqlite
+        // вызывает raw SYS_LSTAT (libc.Xlstat), app-seccomp эмуляторов
+        // API 35/36 даёт SIGSYS (вопрос №38, отчёт этапа 7); проверка
+        // на живом телефоне — чек-лист
+        NodeController.inMemoryDb = true
+        val netDir = appContext.getExternalFilesDir("networks")
+        val genesisFile = netDir?.let { java.io.File(it, "genesis.bin") }
+        if (genesisFile != null && genesisFile.isFile) {
+            val gen = tnp.Tnp.loadGenesis(genesisFile.readBytes())
+            genesis = gen
+            NodeController.genesis = gen
+            NodeController.ownWallet = address()
+            val peersFile = java.io.File(netDir, "peers.txt")
+            NodeController.manualAddrs = if (peersFile.isFile) {
+                peersFile.readLines().filter { it.isNotBlank() }.joinToString(",")
+            } else {
+                null
+            }
+            return
+        }
         val gen = tnp.Tnp.sandboxGenesis(
             SANDBOX_NETWORK_ID, SANDBOX_GENESIS_TIME, 3600,
             0x0010_0000_0000_0000L, 0x0010_0000_0000_0000L, 8, 1, 1,
@@ -97,14 +125,6 @@ object FlutterBridge {
         NodeController.manualAddrs =
             "/ip4/127.0.0.1/udp/4001/quic-v1/p2p/QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP," +
                 "/ip4/127.0.0.1/udp/4002/quic-v1/p2p/QmNXG1JRSkhWPzc8QzkiDm2mBFniQni9vSwW9BCM8JBtJC"
-        NodeController.log = tnp.Logger { line ->
-            android.util.Log.d("TnpNode", line)
-        }
-        // SQLite узла на Android отключён (в памяти): modernc/sqlite
-        // вызывает raw SYS_LSTAT (libc.Xlstat), app-seccomp эмуляторов
-        // API 35/36 даёт SIGSYS (вопрос №38, отчёт этапа 7); проверка
-        // на живом телефоне — чек-лист
-        NodeController.inMemoryDb = true
     }
 
     // ------------------------------------------------------------------
