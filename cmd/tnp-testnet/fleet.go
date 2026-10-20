@@ -26,6 +26,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -228,6 +229,7 @@ func fleetCmd(args []string) error {
 	duration := fs.Int64("duration", 0, "секунд работы (0 — до SIGTERM/SIGINT)")
 	poll := fs.Int("poll", 5, "период мониторинга, сек")
 	stagger := fs.Int("stagger", 300, "задержка между запусками узлов, мс")
+	signersLast := fs.Bool("signers-last", false, "узлы с кошельками стартуют последними: первый чекпоинт финализируется после формирования меша у всех (гонка принятия цепочки — см. отчёт 8.1)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -277,6 +279,15 @@ func fleetCmd(args []string) error {
 			plans[i].wallet = walletLabels[j]
 			plans[i].domain = "wallet"
 		}
+	}
+	if *signersLast {
+		// подписанты стартуют последними: чекпоинт эпохи 1 обязан
+		// финализироваться ПОСЛЕ формирования pubsub-меша у всех узлов —
+		// предложение и доли подписей доставляются один раз (догоняющего
+		// механизма нет), опоздавший узел выпадает из цепочки навсегда
+		sort.SliceStable(plans, func(i, j int) bool {
+			return planSignRank(plans[i]) < planSignRank(plans[j])
+		})
 	} // multiaddr узла 1 (peer ID детерминирован от node-key) — bootstrap
 	ma1, err := nodeMultiaddr(plans[0].key, *basePort+1)
 	if err != nil {
@@ -433,6 +444,20 @@ func spread(domain string) string {
 		return " (наблюдатель)"
 	}
 	return " (" + domain + ")"
+}
+
+// planSignRank — порядок запуска при -signers-last: наблюдатели (0),
+// участники (1), посевной круг (2) — подписанты переходного режима
+// стартуют последними.
+func planSignRank(p struct{ key, wallet, domain string }) int {
+	switch p.domain {
+	case "":
+		return 0
+	case "wallet":
+		return 1
+	default:
+		return 2
+	}
 }
 
 func btoa(b bool) string {

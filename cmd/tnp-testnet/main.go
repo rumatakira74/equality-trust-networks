@@ -329,6 +329,7 @@ func generate(args []string) error {
 	inviteHex := fs.String("invite-key-hex", "", "ключ приглашения (hex; по умолчанию детерминирован от имени)")
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds профиля (0 — 86400, №16); симуляция: 90/300")
 	smallPow := fs.Bool("small-pow", false, "малые PoW-таргеты и Argon2 (тестовый оверрайд симуляции 8.1)")
+	freshWindow := fs.Int("fresh-window", -1, "окно переводимости свежих выпусков (периодов; -1 — из KNOWLEDGE 4/17 = 3, №11); 0 — учебный оверрайд песочницы: за один прогон когорта не созревает")
 	anchorEpochZero := fs.Bool("anchor-epoch-zero", false, "EpochZero = текущая эпоха от genesis; DeadlineEpoch seed_sunset = EpochZero+24 (закат через 24 эпохи от generate)")
 	var peers peerList
 	fs.Var(&peers, "peer", "multiaddr первого узла (повторяется)")
@@ -366,6 +367,12 @@ func generate(args []string) error {
 			TargetLight: 0x0010_0000_0000_0000, TargetHard: 0x0010_0000_0000_0000,
 			Argon2MemoryKiB: 8, Argon2Iterations: 1, Argon2Parallelism: 1,
 		}
+	}
+	// учебный оверрайд окна переводимости (как в песочнице этапа 7):
+	// когорта выпуска зреет 3 периода (№11) — в прогоне на живых часах
+	// это 90 суток; полный путь за один прогон требует window=0
+	if *freshWindow >= 0 {
+		prof.FreshTransferWindowPeriods = uint64(*freshWindow)
 	}
 	// симуляция 8.1: якорь абсолютной эпохи. DeadlineEpoch seed_sunset (№15)
 	// сравнивается с абсолютным номером эпохи (now-genesis)/epoch_seconds;
