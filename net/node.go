@@ -84,6 +84,10 @@ type Node struct {
 	awaiting   map[string]*wire.Transaction // офлайн-канал: ожидает публикации
 	published  map[string]bool              // опубликованные из awaiting
 	spamCount  int64
+	// syncAnchors — позиционные якоря сверки по пирам (№41): позиция в
+	// нумерации журнала ПИРА + txid на границе; инкрементальное
+	// продолжение без квадратичного трафика при росте журнала
+	syncAnchors map[peer.ID]*syncAnchor
 
 	// lastCpRepublish — момент последней перепубликации финализированного
 	// чекпоинта (догоняющий механизм цепочки, блокер 8.1)
@@ -162,6 +166,7 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		seen:          make(map[string]bool),
 		awaiting:      make(map[string]*wire.Transaction),
 		published:     make(map[string]bool),
+		syncAnchors:   make(map[peer.ID]*syncAnchor),
 		Corroboration: NewCorroboration(cfg.CorroborationN),
 		Snapshots:     NoSnapshots{},
 		Snowball:      cons.NewSnowball(cons.DefaultParams()),

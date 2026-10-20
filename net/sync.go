@@ -54,7 +54,11 @@ func (n *Node) serveSync(s network.Stream) {
 		if err != nil {
 			return
 		}
-		n.sendJournal(s, after)
+		// позиционный якорь (№41): txid на границе after−1 по нумерации
+		// запрашивающего; старые клиенты поле не присылают — nil
+		// (доверие позиции, прежняя семантика)
+		anchor, _ := d.blob()
+		n.sendJournal(s, after, anchor)
 	case msgGetWalletRange:
 		wallet, err := d.blob()
 		if err != nil {
@@ -131,14 +135,26 @@ func decodeTxsMsg(d *dec) ([]*wire.Transaction, error) {
 	return out, d.done()
 }
 
-// n.sendJournal — журнал с позиции after (1-based; 0 — с начала).
-func (n *Node) sendJournal(s network.Stream, after uint64) {
+// n.sendJournal — журнал с позиции after (нумерация журнала ЭТОГО узла;
+// 0 — с начала). anchor — txid транзакции на позиции after−1 по нумерации
+// ЗАПРАШИВАЮЩЕГО (граница его предыдущей сверки с нами, №41): не совпал с
+// нашей журнальной позицией — истории разошлись (перестройка/другой
+// порядок вставки), отдаём журнал с начала (выравнивание); пустой anchor —
+// доверие позиции (прежняя семантика).
+func (n *Node) sendJournal(s network.Stream, after uint64, anchor []byte) {
 	n.mu.RLock()
 	journal := n.journal
 	n.mu.RUnlock()
 	start := after
 	if start > uint64(len(journal)) {
+		// мы отстаём (в т.ч. перезапустились): на этой позиции подавать
+		// нечего — отвечаем своей длиной, запрашивающий продолжит от неё
 		start = uint64(len(journal))
+	} else if after > 0 && len(anchor) == 32 {
+		id := journal[after-1].TxID()
+		if string(anchor) != string(id[:]) {
+			start = 0 // якорь не сошёлся — выравнивание с начала (№41)
+		}
 	}
 	end := start + uint64(n.Cfg.SyncBatch)
 	if end > uint64(len(journal)) {
@@ -291,19 +307,52 @@ func (n *Node) requestOn(ctx context.Context, p peer.ID, proto protocol.ID, req 
 	return readFrameStream(s)
 }
 
-// SyncFromPeer — инкрементальная сверка журнала с подключённым пиром.
-func (n *Node) SyncFromPeer(ctx context.Context, p peer.ID) (int, error) {
-	return n.SyncJournalFrom(ctx, p, uint64(len(n.journalSnapshot())))
+// syncAnchor — позиционный якорь сверки с одним пиром (№41): позиция в
+// нумерации журнала ПИРА и txid транзакции на позиции pos−1 (последняя
+// полученная от этого пира). Продолжение сверки строго инкрементально:
+// при совпадении якоря передаются только новые транзакции; расхождение
+// истории (перестройка журнала у пира, другой порядок вставки) детектится
+// несовпадением txid на границе — сверка выравнивается с начала.
+type syncAnchor struct {
+	pos  uint64
+	txid []byte // nil — позиция без подтверждения (первая сверка/пир отстал)
 }
 
-// SyncJournalFrom — сверка из genesis + журнала (INV-3) с позиции after
-// (0 — с начала; каждый ответ пира подтверждает доставленные транзакции —
-// corroboration, eclipse 12.3). Транзакции применяются с пинированием
-// часов на timestamp_claim (replay), статус «provisional» до
-// подтверждения N пирами.
-func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64) (int, error) {
+// SyncFromPeer — инкрементальная сверка журнала с подключённым пиром:
+// продолжение с позиционного якоря этого пира (№41). Первая сверка —
+// с начала (заодно полный corroboration всего журнала этим пиром),
+// далее — только новые транзакции.
+func (n *Node) SyncFromPeer(ctx context.Context, p peer.ID) (int, error) {
+	n.mu.Lock()
+	a := n.syncAnchors[p]
+	if a == nil {
+		a = &syncAnchor{}
+		n.syncAnchors[p] = a
+	}
+	pos, txid := a.pos, a.txid
+	n.mu.Unlock()
+	k, pos, txid, err := n.SyncJournalFrom(ctx, p, pos, txid)
+	n.mu.Lock()
+	a.pos, a.txid = pos, txid
+	n.mu.Unlock()
+	return k, err
+}
+
+// SyncJournalFrom — сверка из genesis + журнала (INV-3) с позиции after —
+// позиционный якорь (№41): after — позиция в журнале ПИРА, anchor — txid
+// транзакции на позиции after−1 (граница предыдущей сверки; nil — доверие
+// позиции, 0 — с начала). Якорь не сошёлся (пир перестроил журнал или
+// порядок вставки разошёлся) — пир отвечает с начала, сверка
+// выравнивается (дубликаты отсеиваются дедупом дёшево, вне cheapCheck);
+// сошёлся — продолжение строго инкрементально, трафик пропорционален
+// только новым транзакциям. Каждый ответ пира подтверждает доставленные
+// транзакции (corroboration, eclipse 12.3). Транзакции применяются с
+// пинированием часов на timestamp_claim (replay), статус «provisional»
+// до подтверждения N пирами.
+// Возвращает число обработанных транзакций и обновлённый якорь.
+func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anchor []byte) (int, uint64, []byte, error) {
 	if n.Ledger == nil {
-		return 0, errors.New("net: синхронизация журнала — только для полного узла")
+		return 0, after, anchor, errors.New("net: синхронизация журнала — только для полного узла")
 	}
 	applied := 0
 	// Replay (INV-3): часы пинируются на timestamp_claim каждой транзакции —
@@ -312,21 +361,22 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64) (in
 	for {
 		var e enc
 		e.u64(after)
+		e.blob(anchor)
 		raw, err := n.request(ctx, p, writeFrame(&e, msgGetJournal))
 		if err != nil {
-			return applied, err
+			return applied, after, anchor, err
 		}
 		msgType, d, err := readFrame(raw)
 		if err != nil || msgType != msgJournal {
-			return applied, errors.New("net: некорректный ответ журнала")
+			return applied, after, anchor, errors.New("net: некорректный ответ журнала")
 		}
 		next, err := d.u64()
 		if err != nil {
-			return applied, err
+			return applied, after, anchor, err
 		}
 		txs, err := decodeTxsMsg(d)
 		if err != nil {
-			return applied, err
+			return applied, after, anchor, err
 		}
 		if len(txs) > 0 {
 			touched := make([][]byte, 0, len(txs))
@@ -347,13 +397,21 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64) (in
 			for _, w := range touched {
 				n.retryPending(w)
 			}
+			// якорь продолжения — последняя полученная от пира транзакция
+			// (его нумерация): следующая сверка пойдёт строго дальше
+			id := txs[len(txs)-1].TxID()
+			anchor = append([]byte(nil), id[:]...)
+			after = next
+			continue
 		}
-		if next == after || len(txs) == 0 {
-			break
+		// пустой ответ: пир исчерпан (next == after — мы в его конце) либо
+		// отстал/перезапустился (next < after) — продолжим от его границы,
+		// якорь восстановится первым непустым ответом
+		if next < after {
+			after, anchor = next, nil
 		}
-		after = next
+		return applied, after, anchor, nil
 	}
-	return applied, nil
 }
 
 // GetWalletRange — цепочка кошелька по диапазону seq (клиент).
