@@ -550,6 +550,33 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 	n.retryPending(tx.Wallet)
 }
 
+// ImportJournal — восстановление журнала из внешнего источника (БД):
+// применяет транзакции с пинированием часов на timestamp_claim каждой —
+// та же семантика, что сетевая сверка (SyncJournalFrom, net.ReplayClock).
+// Блокер 8.1-2, авторизовано владельцем: replay из БД (cons.Replay)
+// делегирует эпоху живым часам узла (№40) и отклоняет vouch-ы прошлых
+// эпох (E_VOUCH_EPOCH) — узел с vouch-ами разных эпох в журнале не может
+// стартовать из БД, пока №40 не решён; протокол не меняется, cons не
+// трогается. Вызывать до Start (без гонки с gossip/сверками).
+// Возвращает число применённых (accepted) транзакций.
+func (n *Node) ImportJournal(txs []*wire.Transaction) int {
+	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime,
+		n.Cfg.Genesis.Manifest.Profile.EpochSeconds)
+	applied := 0
+	for _, tx := range txs {
+		n.applyMu.Lock()
+		rc.Pin(tx.TimestampClaim)
+		res := n.applyWithClock(tx, rc)
+		n.postApply(tx, res)
+		n.applyMu.Unlock()
+		n.retryPending(tx.Wallet)
+		if res.Outcome == ledger.Accepted {
+			applied++
+		}
+	}
+	return applied
+}
+
 // applyWithClock — Apply с подменой часов (вызывающий держит applyMu).
 // Используется при replay журнала: C9 проверяется на момент публикации.
 func (n *Node) applyWithClock(tx *wire.Transaction, clock ledger.EpochSource) ledger.Result {

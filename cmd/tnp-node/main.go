@@ -40,6 +40,7 @@ import (
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/store"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 	tnp "github.com/rumatakira74/equality-trust-networks/mobile"
 	"github.com/rumatakira74/equality-trust-networks/net"
@@ -61,6 +62,7 @@ func main() {
 	walletDomain := flag.String("wallet-domain", "seed", "деривация ключа кошелька: seed (tnp-node-seed:) | wallet (tnp-testnet-wallet:; участники утилиты tnp-testnet)")
 	linkGroups := flag.Bool("link-groups", true, "несвязанность eclipse-пиров по подсетям (№35); false для localhost/флота — все пиры в одной /24")
 	quiet := flag.Bool("quiet", false, "тихий режим")
+	importDB := flag.String("import-db", "", "восстановить журнал из SQLite (БД с vouch-ами, недоступная для replay из-за №40); применять до старта сети")
 	var peers, relays multiaddrList
 	flag.Var(&peers, "peer", "multiaddr пира (повторяется)")
 	flag.Var(&relays, "relay", "multiaddr relay-узла (повторяется)")
@@ -159,6 +161,25 @@ func main() {
 	node, err := net.NewNode(cfg)
 	if err != nil {
 		fatal("узел: %v", err)
+	}
+	// восстановление журнала из БД (блокер 8.1-2, авторизовано
+	// владельцем): replay при старте (cons.Replay) делегирует эпоху
+	// живым часам (№40) и падает на vouch-ах прошлых эпох
+	// (E_VOUCH_EPOCH) — журнал применяется пинированным путём
+	// (семантика сетевой сверки). Узел стартует с чистой/новой БД,
+	// -import-db указывает на старую
+	if *importDB != "" {
+		st, err := store.Open(*importDB)
+		if err != nil {
+			fatal("import-db: %v", err)
+		}
+		txs, err := st.LoadTxs()
+		_ = st.Close()
+		if err != nil {
+			fatal("import-db: %v", err)
+		}
+		applied := node.ImportJournal(txs)
+		log("импорт журнала из %s: применено %d из %d", *importDB, applied, len(txs))
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
