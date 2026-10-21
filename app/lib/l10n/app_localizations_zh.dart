@@ -655,6 +655,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sigToCopy => '签名（交给被监护人）：';
 
   @override
+  String get nonceToCopy => '迁移 nonce（交给守护人）：';
+
+  @override
   String get settingsTitle => '设置';
 
   @override

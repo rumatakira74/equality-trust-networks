@@ -1202,6 +1202,12 @@ abstract class AppLocalizations {
   /// **'Signature (hand it to the ward):'**
   String get sigToCopy;
 
+  /// No description provided for @nonceToCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Migration nonce (hand it to the guardians):'**
+  String get nonceToCopy;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

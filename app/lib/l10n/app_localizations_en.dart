@@ -675,6 +675,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sigToCopy => 'Signature (hand it to the ward):';
 
   @override
+  String get nonceToCopy => 'Migration nonce (hand it to the guardians):';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

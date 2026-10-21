@@ -182,6 +182,7 @@
   "nonceLabel": "Nonce (do tutelado)",
   "wardSignTitle": "Confirme a migração do tutelado (você é o guardião)",
   "sigToCopy": "Assinatura (entregue ao tutelado):",
+  "nonceToCopy": "Nonce de migração (entregue aos guardiões):",
   "settingsTitle": "Ajustes",
   "networkLine": "Rede: {name}",
   "paramUnit": "Unidade",

@@ -182,6 +182,7 @@
   "nonceLabel": "Nonce（来自被监护人）",
   "wardSignTitle": "确认被监护人的迁移（您是守护人）",
   "sigToCopy": "签名（交给被监护人）：",
+  "nonceToCopy": "迁移 nonce（交给守护人）：",
   "settingsTitle": "设置",
   "networkLine": "网络：{name}",
   "paramUnit": "单位",

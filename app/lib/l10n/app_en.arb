@@ -543,6 +543,7 @@
   "nonceLabel": "Nonce (from the ward)",
   "wardSignTitle": "Confirm the ward's migration (you are the guardian)",
   "sigToCopy": "Signature (hand it to the ward):",
+  "nonceToCopy": "Migration nonce (hand it to the guardians):",
   "settingsTitle": "Settings",
   "networkLine": "Network: {name}",
   "@networkLine": {
