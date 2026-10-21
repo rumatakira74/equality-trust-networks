@@ -689,5 +689,49 @@
   "recoverySavedDone": "Saved — continue",
   "settingsRecovery": "Recovery card",
   "recoveryApkNote": "Save the installable file (APK) of the same network in advance: without it, recovery on a new device may be impossible.",
-  "recoveryShareBtn": "Share card (image)"
+  "recoveryShareBtn": "Share card (image)",
+  "guardiansTitle": "Guardians",
+  "guardiansIntro": "Personal guardians confirm migration (2 of 3). You can re-elect them: the change takes effect after 48 h; until then the old list applies.",
+  "guardiansEntrySub": "Personal guardians: re-election, 48 h window",
+  "guardiansCurrent": "Current guardians",
+  "guardiansNone": "No guardians assigned",
+  "guardiansReelect": "Re-elect",
+  "guardiansLimitUsed": "Guardian changes used: {used} of {limit}",
+  "@guardiansLimitUsed": {
+    "placeholders": {
+      "used": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "guardiansPendingSub": "The new list takes effect in {hours} h",
+  "@guardiansPendingSub": {
+    "placeholders": {
+      "hours": {"type": "int"}
+    }
+  },
+  "guardiansCancelBtn": "Cancel change",
+  "guardiansStatusCanceled": "Canceled",
+  "guardiansStatusEffective": "Took effect",
+  "guardiansStatusExpired": "Expired: the guardian's ward limit is exceeded",
+  "reelectTitle": "Re-elect guardians",
+  "reelectIntro": "Enter the new guardians (up to 3, hex, one per line). Pass the change hash to each new guardian: they sign it in their app (\"Guardian consent\") and give you the signature hex.",
+  "newGuardiansLabel": "New guardians (hex, one per line)",
+  "changeHashToCopy": "Change hash (pass it to the new guardians):",
+  "guardiansApprovals": "Consents collected: {count} of {need}",
+  "@guardiansApprovals": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "need": {"type": "int"}
+    }
+  },
+  "btnPublishChange": "Publish change",
+  "changePublished": "Change published: takes effect in 48 h",
+  "changeConfirmTitle": "Confirm the guardian change (PIN)",
+  "cancelChangeConfirmTitle": "Confirm cancelling the change (PIN)",
+  "changeCanceled": "Change canceled",
+  "consentTitle": "Guardian consent",
+  "consentIntro": "You are confirming becoming a guardian of the ward. Enter the ward's address and the change hash, and sign the hash. Give the signature hex back to the ward.",
+  "wardAddressLabel": "Ward's address (hex)",
+  "changeHashLabel": "Change hash (hex)",
+  "consentSignTitle": "Confirm the ward's guardian change (you are the guardian)"
 }

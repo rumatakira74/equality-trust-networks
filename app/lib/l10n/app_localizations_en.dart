@@ -866,4 +866,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recoveryShareBtn => 'Share card (image)';
+
+  @override
+  String get guardiansTitle => 'Guardians';
+
+  @override
+  String get guardiansIntro =>
+      'Personal guardians confirm migration (2 of 3). You can re-elect them: the change takes effect after 48 h; until then the old list applies.';
+
+  @override
+  String get guardiansEntrySub =>
+      'Personal guardians: re-election, 48 h window';
+
+  @override
+  String get guardiansCurrent => 'Current guardians';
+
+  @override
+  String get guardiansNone => 'No guardians assigned';
+
+  @override
+  String get guardiansReelect => 'Re-elect';
+
+  @override
+  String guardiansLimitUsed(int used, int limit) {
+    return 'Guardian changes used: $used of $limit';
+  }
+
+  @override
+  String guardiansPendingSub(int hours) {
+    return 'The new list takes effect in $hours h';
+  }
+
+  @override
+  String get guardiansCancelBtn => 'Cancel change';
+
+  @override
+  String get guardiansStatusCanceled => 'Canceled';
+
+  @override
+  String get guardiansStatusEffective => 'Took effect';
+
+  @override
+  String get guardiansStatusExpired =>
+      'Expired: the guardian\'s ward limit is exceeded';
+
+  @override
+  String get reelectTitle => 'Re-elect guardians';
+
+  @override
+  String get reelectIntro =>
+      'Enter the new guardians (up to 3, hex, one per line). Pass the change hash to each new guardian: they sign it in their app (\"Guardian consent\") and give you the signature hex.';
+
+  @override
+  String get newGuardiansLabel => 'New guardians (hex, one per line)';
+
+  @override
+  String get changeHashToCopy => 'Change hash (pass it to the new guardians):';
+
+  @override
+  String guardiansApprovals(int count, int need) {
+    return 'Consents collected: $count of $need';
+  }
+
+  @override
+  String get btnPublishChange => 'Publish change';
+
+  @override
+  String get changePublished => 'Change published: takes effect in 48 h';
+
+  @override
+  String get changeConfirmTitle => 'Confirm the guardian change (PIN)';
+
+  @override
+  String get cancelChangeConfirmTitle => 'Confirm cancelling the change (PIN)';
+
+  @override
+  String get changeCanceled => 'Change canceled';
+
+  @override
+  String get consentTitle => 'Guardian consent';
+
+  @override
+  String get consentIntro =>
+      'You are confirming becoming a guardian of the ward. Enter the ward\'s address and the change hash, and sign the hash. Give the signature hex back to the ward.';
+
+  @override
+  String get wardAddressLabel => 'Ward\'s address (hex)';
+
+  @override
+  String get changeHashLabel => 'Change hash (hex)';
+
+  @override
+  String get consentSignTitle =>
+      'Confirm the ward\'s guardian change (you are the guardian)';
 }

@@ -53,6 +53,15 @@ abstract class PlatformService {
   Future<Map<String, dynamic>> signMigrateStatement(
       String oldHex, String newHex, int nonce, String title);
 
+  // -- смена личных гардианов (11, решение владельца 21.10.2026) --
+  Future<String> buildUpdateGuardiansPropose(
+      List<String> guardians, List<Map<String, String>> approvals, int nonce);
+  Future<String> buildUpdateGuardiansCancel(int proposeSeq);
+  Future<String> guardianChangeHash(List<String> guardians, int nonce);
+  Future<Map<String, dynamic>> signGuardianChange(
+      String hashHex, String title);
+  Future<List<PendingGuardianUpdate>> pendingGuardianUpdates({String? addrHex});
+
   // -- подпись (биометрия) и публикация --
   Future<bool> signTx(String id, String title);
   Future<SubmitResult> submitTx(String id);
@@ -245,6 +254,51 @@ class MethodChannelPlatformService implements PlatformService {
     });
     return (r as Map).cast<String, dynamic>();
   }
+
+  @override
+  Future<String> buildUpdateGuardiansPropose(
+      List<String> guardians, List<Map<String, String>> approvals,
+      int nonce) async {
+    final r = await _call('buildUpdateGuardiansPropose', {
+      'guardians': guardians,
+      'approvals': approvals,
+      'nonce': nonce,
+    });
+    return (r as Map)['id'] as String;
+  }
+
+  @override
+  Future<String> buildUpdateGuardiansCancel(int proposeSeq) async =>
+      (await _call('buildUpdateGuardiansCancel', {
+        'proposeSeq': proposeSeq,
+      }) as Map)['id'] as String;
+
+  @override
+  Future<String> guardianChangeHash(
+      List<String> guardians, int nonce) async {
+    final r = await _call('guardianChangeHash', {
+      'guardians': guardians,
+      'nonce': nonce,
+    });
+    return r as String;
+  }
+
+  @override
+  Future<Map<String, dynamic>> signGuardianChange(
+      String hashHex, String title) async {
+    final r = await _call('signGuardianChange', {
+      'hash': hashHex,
+      'title': title,
+    });
+    return (r as Map).cast<String, dynamic>();
+  }
+
+  @override
+  Future<List<PendingGuardianUpdate>> pendingGuardianUpdates(
+          {String? addrHex}) async =>
+      _jsonList(await _call('pendingGuardianUpdates', {'addr': addrHex}))
+          .map((e) => PendingGuardianUpdate.fromJson(e))
+          .toList();
 
   @override
   Future<bool> signTx(String id, String title) async {

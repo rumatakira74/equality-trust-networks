@@ -15,6 +15,7 @@ import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
 import '../recovery/recovery_card_screen.dart';
+import '../settings/guardians_screen.dart';
 
 class MigrationScreen extends StatefulWidget {
   const MigrationScreen({super.key});
@@ -91,6 +92,14 @@ class _MigrationScreenState extends State<MigrationScreen> {
             ),
             icon: const Icon(Icons.add),
             label: Text(l.btnStartMigration),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const GuardiansScreen()),
+            ),
+            icon: const Icon(Icons.published_with_changes),
+            label: Text(l.guardiansTitle),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

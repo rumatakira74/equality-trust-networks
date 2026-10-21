@@ -84,6 +84,9 @@ class FakePlatformService implements PlatformService {
     }),
   ];
   List<PendingMigration> migrations = [];
+  List<PendingGuardianUpdate> guardianUpdates = [];
+  String changeHash = 'ab' * 32;
+  String guardianChangeSig = 'cd' * 32;
   MintWindow mintWin = MintWindow.fromJson({
     'open': true,
     'window_hours': 48,
@@ -241,6 +244,43 @@ class FakePlatformService implements PlatformService {
     calls.add('signStatement');
     return {'sig': 'bb' * 32};
   }
+
+  @override
+  Future<String> buildUpdateGuardiansPropose(
+      List<String> guardians, List<Map<String, String>> approvals,
+      int nonce) async {
+    builtTxs.add('updateGuardians(${guardians.length},${approvals.length})');
+    return 'tx10';
+  }
+
+  @override
+  Future<String> buildUpdateGuardiansCancel(int proposeSeq) async {
+    builtTxs.add('updateGuardiansCancel($proposeSeq)');
+    return 'tx11';
+  }
+
+  @override
+  Future<String> guardianChangeHash(
+      List<String> guardians, int nonce) async {
+    calls.add('changeHash(${guardians.length})');
+    return changeHash;
+  }
+
+  @override
+  Future<Map<String, dynamic>> signGuardianChange(
+      String hashHex, String title) async {
+    calls.add('signGuardianChange');
+    if (duress) {
+      // приманка: ключ не используется, ответ неотличим (8.2)
+      return {'sig': '', 'fake': true};
+    }
+    return {'sig': guardianChangeSig};
+  }
+
+  @override
+  Future<List<PendingGuardianUpdate>> pendingGuardianUpdates(
+          {String? addrHex}) async =>
+      duress ? <PendingGuardianUpdate>[] : guardianUpdates;
 
   @override
   Future<bool> signTx(String id, String title) async {

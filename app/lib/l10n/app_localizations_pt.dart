@@ -867,4 +867,98 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get recoveryShareBtn => 'Compartilhar cartão (imagem)';
+
+  @override
+  String get guardiansTitle => 'Guardiões';
+
+  @override
+  String get guardiansIntro =>
+      'Os guardiões pessoais confirmam a migração (2 de 3). Podem ser reeleitos: a mudança entra em vigor em 48 h; até lá vale a lista anterior.';
+
+  @override
+  String get guardiansEntrySub =>
+      'Guardiões pessoais: reeleição, janela de 48 h';
+
+  @override
+  String get guardiansCurrent => 'Guardiões atuais';
+
+  @override
+  String get guardiansNone => 'Nenhum guardião designado';
+
+  @override
+  String get guardiansReelect => 'Reeleger';
+
+  @override
+  String guardiansLimitUsed(int used, int limit) {
+    return 'Mudanças de guardiões usadas: $used de $limit';
+  }
+
+  @override
+  String guardiansPendingSub(int hours) {
+    return 'A nova lista entrará em vigor em $hours h';
+  }
+
+  @override
+  String get guardiansCancelBtn => 'Cancelar a mudança';
+
+  @override
+  String get guardiansStatusCanceled => 'Cancelada';
+
+  @override
+  String get guardiansStatusEffective => 'Em vigor';
+
+  @override
+  String get guardiansStatusExpired =>
+      'Expirada: limite de tutelados do guardião excedido';
+
+  @override
+  String get reelectTitle => 'Reeleger guardiões';
+
+  @override
+  String get reelectIntro =>
+      'Introduza os novos guardiões (até 3, hex, um por linha). Passe o hash da mudança a cada novo guardião: ele o assina no seu aplicativo («Consentimento do guardião») e devolve o hex da assinatura.';
+
+  @override
+  String get newGuardiansLabel => 'Novos guardiões (hex, um por linha)';
+
+  @override
+  String get changeHashToCopy => 'Hash da mudança (passe aos novos guardiões):';
+
+  @override
+  String guardiansApprovals(int count, int need) {
+    return 'Consentimentos recolhidos: $count de $need';
+  }
+
+  @override
+  String get btnPublishChange => 'Publicar a mudança';
+
+  @override
+  String get changePublished => 'Mudança publicada: entra em vigor em 48 h';
+
+  @override
+  String get changeConfirmTitle => 'Confirme a mudança de guardiões (PIN)';
+
+  @override
+  String get cancelChangeConfirmTitle =>
+      'Confirme o cancelamento da mudança (PIN)';
+
+  @override
+  String get changeCanceled => 'Mudança cancelada';
+
+  @override
+  String get consentTitle => 'Consentimento do guardião';
+
+  @override
+  String get consentIntro =>
+      'Você confirma aceitar ser guardião do tutelado. Introduza o endereço do tutelado e o hash da mudança e assine o hash. Devolva o hex da assinatura ao tutelado.';
+
+  @override
+  String get wardAddressLabel => 'Endereço do tutelado (hex)';
+
+  @override
+  String get changeHashLabel => 'Hash da mudança (hex)';
+
+  @override
+  String get consentSignTitle =>
+      'Confirme a mudança de guardiões do tutelado (você é o guardião)';
 }

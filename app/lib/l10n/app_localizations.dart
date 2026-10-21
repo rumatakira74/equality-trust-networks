@@ -1531,6 +1531,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share card (image)'**
   String get recoveryShareBtn;
+
+  /// No description provided for @guardiansTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guardians'**
+  String get guardiansTitle;
+
+  /// No description provided for @guardiansIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal guardians confirm migration (2 of 3). You can re-elect them: the change takes effect after 48 h; until then the old list applies.'**
+  String get guardiansIntro;
+
+  /// No description provided for @guardiansEntrySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal guardians: re-election, 48 h window'**
+  String get guardiansEntrySub;
+
+  /// No description provided for @guardiansCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current guardians'**
+  String get guardiansCurrent;
+
+  /// No description provided for @guardiansNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No guardians assigned'**
+  String get guardiansNone;
+
+  /// No description provided for @guardiansReelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-elect'**
+  String get guardiansReelect;
+
+  /// No description provided for @guardiansLimitUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Guardian changes used: {used} of {limit}'**
+  String guardiansLimitUsed(int used, int limit);
+
+  /// No description provided for @guardiansPendingSub.
+  ///
+  /// In en, this message translates to:
+  /// **'The new list takes effect in {hours} h'**
+  String guardiansPendingSub(int hours);
+
+  /// No description provided for @guardiansCancelBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel change'**
+  String get guardiansCancelBtn;
+
+  /// No description provided for @guardiansStatusCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Canceled'**
+  String get guardiansStatusCanceled;
+
+  /// No description provided for @guardiansStatusEffective.
+  ///
+  /// In en, this message translates to:
+  /// **'Took effect'**
+  String get guardiansStatusEffective;
+
+  /// No description provided for @guardiansStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired: the guardian\'s ward limit is exceeded'**
+  String get guardiansStatusExpired;
+
+  /// No description provided for @reelectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-elect guardians'**
+  String get reelectTitle;
+
+  /// No description provided for @reelectIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the new guardians (up to 3, hex, one per line). Pass the change hash to each new guardian: they sign it in their app (\"Guardian consent\") and give you the signature hex.'**
+  String get reelectIntro;
+
+  /// No description provided for @newGuardiansLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New guardians (hex, one per line)'**
+  String get newGuardiansLabel;
+
+  /// No description provided for @changeHashToCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Change hash (pass it to the new guardians):'**
+  String get changeHashToCopy;
+
+  /// No description provided for @guardiansApprovals.
+  ///
+  /// In en, this message translates to:
+  /// **'Consents collected: {count} of {need}'**
+  String guardiansApprovals(int count, int need);
+
+  /// No description provided for @btnPublishChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish change'**
+  String get btnPublishChange;
+
+  /// No description provided for @changePublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Change published: takes effect in 48 h'**
+  String get changePublished;
+
+  /// No description provided for @changeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the guardian change (PIN)'**
+  String get changeConfirmTitle;
+
+  /// No description provided for @cancelChangeConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm cancelling the change (PIN)'**
+  String get cancelChangeConfirmTitle;
+
+  /// No description provided for @changeCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Change canceled'**
+  String get changeCanceled;
+
+  /// No description provided for @consentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guardian consent'**
+  String get consentTitle;
+
+  /// No description provided for @consentIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'You are confirming becoming a guardian of the ward. Enter the ward\'s address and the change hash, and sign the hash. Give the signature hex back to the ward.'**
+  String get consentIntro;
+
+  /// No description provided for @wardAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ward\'s address (hex)'**
+  String get wardAddressLabel;
+
+  /// No description provided for @changeHashLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Change hash (hex)'**
+  String get changeHashLabel;
+
+  /// No description provided for @consentSignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the ward\'s guardian change (you are the guardian)'**
+  String get consentSignTitle;
 }
 
 class _AppLocalizationsDelegate

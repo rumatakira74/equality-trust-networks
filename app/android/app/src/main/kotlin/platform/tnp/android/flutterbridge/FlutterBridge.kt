@@ -484,6 +484,91 @@ object FlutterBridge {
                     }
                 }
 
+                // -- смена личных гардианов (11, решение владельца 21.10.2026) --
+                "buildUpdateGuardiansPropose" -> {
+                    // публикуется в цепочке владельца, подпись — текущим
+                    // ключом; подтверждение — только явный ввод PIN (этап 9)
+                    val guardians = call.argument<List<String>>("guardians") ?: emptyList()
+                    val approvals = call.argument<List<Map<String, Any>>>("approvals")
+                        ?: emptyList()
+                    val nonce = (call.argument<Any>("nonce") as Number).toLong()
+                    val approvalsJson = JSONArray().apply {
+                        approvals.forEach { a ->
+                            put(JSONObject().put("guardian", a["guardian"]).put("sig", a["sig"]))
+                        }
+                    }.toString()
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newUpdateGuardiansPropose(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            JSONArray(guardians).toString(), approvalsJson, nonce,
+                            genesis!!.protocolVersion(), System.currentTimeMillis() / 1000,
+                        ) ?: throw Err("BUILD", "смена гардианов не собралась")
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
+                }
+                "buildUpdateGuardiansCancel" -> {
+                    val proposeSeq = (call.argument<Any>("proposeSeq") as Number).toLong()
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val tp = tip(addr) ?: throw Err("NOTIP", "нет пиров или seq")
+                        val tx = tnp.Tnp.newUpdateGuardiansCancel(
+                            genesis!!.networkID(), addr, tp.first + 1, tp.second,
+                            proposeSeq, genesis!!.protocolVersion(),
+                            System.currentTimeMillis() / 1000,
+                        )
+                        tx.solveLight(genesis!!.powTargetLight())
+                        mapOf("id" to store(tx))
+                    }
+                }
+                "guardianChangeHash" -> {
+                    // хеш смены для экрана владельца: передаётся новым
+                    // гардианам вручную (как nonce миграции)
+                    val guardians = call.argument<List<String>>("guardians") ?: emptyList()
+                    val nonce = (call.argument<Any>("nonce") as Number).toLong()
+                    bg(result) {
+                        val addr = address() ?: throw Err("NOWALLET", "кошелёк не создан")
+                        val h = tnp.Tnp.guardianChangeStatementHash(
+                            genesis!!.networkID(), addr,
+                            JSONArray(guardians).toString(), nonce,
+                        ) ?: throw Err("BUILD", "хеш смены не вычислен")
+                        hex(h)
+                    }
+                }
+                "signGuardianChange" -> {
+                    // сторона гардиана: согласие на смену — подпись хеша
+                    // смены своим ключом (биометрия, как approve миграции)
+                    val hashHex = call.argument<String>("hash")!!
+                    val title = call.argument<String>("title")
+                        ?: "Подтвердите смену гардианов подопечного"
+                    if (duress.active) {
+                        // приманка: ключ не используется (8.2)
+                        result.success(mapOf("sig" to "", "fake" to true))
+                        return
+                    }
+                    BiometricGate.signWithBiometric(
+                        activity, wallet, title, unhex(hashHex),
+                    ) { sig ->
+                        if (sig == null) result.success(mapOf("sig" to ""))
+                        else result.success(mapOf("sig" to hex(sig)))
+                    }
+                }
+                "pendingGuardianUpdates" -> {
+                    if (duress.active) {
+                        // приманка: данные легенды, реальных смен нет
+                        result.success("[]")
+                        return
+                    }
+                    val argAddr = call.argument<String?>("addr")
+                    bg(result) {
+                        val n = node() ?: throw Err("NONODE", "узел не запущен")
+                        val addr = argAddr?.let { unhex(it) } ?: address()
+                        n.pendingGuardianUpdatesJSON(addr ?: ByteArray(0))
+                    }
+                }
+
                 // -- подпись и публикация --
                 "signTx" -> {
                     val id = call.argument<String>("id")!!
