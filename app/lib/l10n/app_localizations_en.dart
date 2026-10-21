@@ -845,15 +845,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recoveryHowToSave =>
-      'How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.';
+      'How to save: write it on paper or keep it in a safe place outside the phone; do not store it in the cloud. The card image can be printed via \"Share\".';
 
   @override
   String get recoveryNeverShare =>
-      'Never share migration data: the nonce and guardian signatures. Only the address and this card\'s QR may be shown to others.';
+      'Never share migration data (the nonce and guardian signatures) — only directly to your guardian and only for the duration of the migration; delete it from your messages afterwards. Only the address and this card\'s QR may be shown to others.';
 
   @override
   String get recoverySavedDone => 'Saved — continue';
 
   @override
   String get settingsRecovery => 'Recovery card';
+
+  @override
+  String get recoveryApkNote =>
+      'Save the installable file (APK) of the same network in advance: without it, recovery on a new device may be impossible.';
+
+  @override
+  String get recoveryShareBtn => 'Share card (image)';
 }

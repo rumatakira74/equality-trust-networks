@@ -27,6 +27,9 @@ dependencies:
   intl: any
   # выбор языка в настройках (этап 10): сохранение предпочтения
   shared_preferences: ^2.5.0
+  # экспорт карточки восстановления (этап 10.1, п.3 мандата):
+  # системный share изображения карточки
+  share_plus: ^11.0.0
 
 dev_dependencies:
   flutter_test:

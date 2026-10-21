@@ -683,8 +683,10 @@
   "recoveryNetwork": "Network",
   "recoveryGuardians": "Your guardians",
   "recoveryNoGuardians": "No guardians assigned: recovery is impossible, only a restart is available (regular registration with new vouches).",
-  "recoveryHowToSave": "How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.",
-  "recoveryNeverShare": "Never share migration data: the nonce and guardian signatures. Only the address and this card's QR may be shown to others.",
+  "recoveryHowToSave": "How to save: write it on paper or keep it in a safe place outside the phone; do not store it in the cloud. The card image can be printed via \"Share\".",
+  "recoveryNeverShare": "Never share migration data (the nonce and guardian signatures) — only directly to your guardian and only for the duration of the migration; delete it from your messages afterwards. Only the address and this card's QR may be shown to others.",
   "recoverySavedDone": "Saved — continue",
-  "settingsRecovery": "Recovery card"
+  "settingsRecovery": "Recovery card",
+  "recoveryApkNote": "Save the installable file (APK) of the same network in advance: without it, recovery on a new device may be impossible.",
+  "recoveryShareBtn": "Share card (image)"
 }

@@ -1493,13 +1493,13 @@ abstract class AppLocalizations {
   /// No description provided for @recoveryHowToSave.
   ///
   /// In en, this message translates to:
-  /// **'How to save: write it on paper or put it into a password manager — outside the phone. The QR code can be printed from this screen.'**
+  /// **'How to save: write it on paper or keep it in a safe place outside the phone; do not store it in the cloud. The card image can be printed via \"Share\".'**
   String get recoveryHowToSave;
 
   /// No description provided for @recoveryNeverShare.
   ///
   /// In en, this message translates to:
-  /// **'Never share migration data: the nonce and guardian signatures. Only the address and this card\'s QR may be shown to others.'**
+  /// **'Never share migration data (the nonce and guardian signatures) — only directly to your guardian and only for the duration of the migration; delete it from your messages afterwards. Only the address and this card\'s QR may be shown to others.'**
   String get recoveryNeverShare;
 
   /// No description provided for @recoverySavedDone.
@@ -1513,6 +1513,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recovery card'**
   String get settingsRecovery;
+
+  /// No description provided for @recoveryApkNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the installable file (APK) of the same network in advance: without it, recovery on a new device may be impossible.'**
+  String get recoveryApkNote;
+
+  /// No description provided for @recoveryShareBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Share card (image)'**
+  String get recoveryShareBtn;
 }
 
 class _AppLocalizationsDelegate
