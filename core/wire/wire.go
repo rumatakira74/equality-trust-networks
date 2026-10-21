@@ -38,6 +38,7 @@ const (
 	Receipt             TxType = 13
 	ContributionClaim   TxType = 14
 	ContributionConfirm TxType = 15
+	UpdateGuardians     TxType = 16
 )
 
 func (t TxType) String() string {
@@ -72,6 +73,8 @@ func (t TxType) String() string {
 		return "CONTRIBUTION_CLAIM"
 	case ContributionConfirm:
 		return "CONTRIBUTION_CONFIRM"
+	case UpdateGuardians:
+		return "UPDATE_GUARDIANS"
 	default:
 		return "TX_UNSPECIFIED"
 	}
@@ -204,6 +207,27 @@ type EvidencePayload struct {
 
 type GuardianOfferPayload struct{}
 
+// UpdateGuardiansPropose — перевыбор личных гардианов (11, решение
+// владельца 21.10.2026): новый список (≤ 3, как при register) + пары
+// «адрес нового гардиана + подпись гардианом хеша смены» (согласие
+// передаётся вручную — как approve миграции).
+type UpdateGuardiansPropose struct {
+	NewGuardians [][]byte
+	Approvals    []GuardianApproval
+	Nonce        uint64
+}
+
+// UpdateGuardiansCancel — отмена смены подписью владельца в окне 48 ч.
+type UpdateGuardiansCancel struct {
+	ProposeSeq uint64
+}
+
+type UpdateGuardiansPayload struct {
+	// ровно один не nil (как MigratePayload)
+	Propose *UpdateGuardiansPropose
+	Cancel  *UpdateGuardiansCancel
+}
+
 // ---------------------------------------------------------------------------
 // Модульные payload (раздел 6, этап 10; теги 17–24)
 // ---------------------------------------------------------------------------
@@ -310,6 +334,7 @@ func (*RedeemPayload) payloadTag() uint32        { return 21 }
 func (*ReceiptPayload) payloadTag() uint32       { return 22 }
 func (*ContributionClaimPayload) payloadTag() uint32   { return 23 }
 func (*ContributionConfirmPayload) payloadTag() uint32 { return 24 }
+func (*UpdateGuardiansPayload) payloadTag() uint32      { return 25 }
 
 // ---------------------------------------------------------------------------
 // Transaction (конверт, proto/transactions.proto)
@@ -531,6 +556,35 @@ func (p *MigratePayload) Encode() []byte {
 
 func (p *GuardianOfferPayload) Encode() []byte { return nil }
 
+func (p *UpdateGuardiansPropose) Encode() []byte {
+	var b []byte
+	for _, g := range p.NewGuardians {
+		b = appendBytesField(b, 1, g)
+	}
+	for i := range p.Approvals {
+		b = appendMessageField(b, 2, p.Approvals[i].Encode())
+	}
+	b = appendU64Field(b, 3, p.Nonce)
+	return b
+}
+
+func (p *UpdateGuardiansCancel) Encode() []byte {
+	var b []byte
+	b = appendU64Field(b, 1, p.ProposeSeq)
+	return b
+}
+
+func (p *UpdateGuardiansPayload) Encode() []byte {
+	var b []byte
+	switch {
+	case p.Propose != nil:
+		b = appendMessageField(b, 1, p.Propose.Encode())
+	case p.Cancel != nil:
+		b = appendMessageField(b, 2, p.Cancel.Encode())
+	}
+	return b
+}
+
 func (p *PoolCreatePayload) Encode() []byte {
 	var b []byte
 	b = appendBytesField(b, 1, p.Recipient)
@@ -660,6 +714,8 @@ func (t *Transaction) Encode() []byte {
 		b = appendMessageField(b, 23, pl.Encode())
 	case *ContributionConfirmPayload:
 		b = appendMessageField(b, 24, pl.Encode())
+	case *UpdateGuardiansPayload:
+		b = appendMessageField(b, 25, pl.Encode())
 	case nil:
 	default:
 		panic(fmt.Sprintf("wire: неизвестный payload %T", t.Payload))
@@ -1104,6 +1160,109 @@ func DecodeMigratePayload(b []byte) (*MigratePayload, error) {
 	return p, nil
 }
 
+// DecodeUpdateGuardiansPropose разбирает propose update_guardians.
+func DecodeUpdateGuardiansPropose(b []byte) (*UpdateGuardiansPropose, error) {
+	d := &decoder{b: b}
+	p := &UpdateGuardiansPropose{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			p.NewGuardians = append(p.NewGuardians, v)
+		case f == 2 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			ap, err := DecodeGuardianApproval(v)
+			if err != nil {
+				return nil, err
+			}
+			p.Approvals = append(p.Approvals, *ap)
+		case f == 3 && wt == 0:
+			if p.Nonce, err = d.varint(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+// DecodeUpdateGuardiansCancel разбирает cancel update_guardians.
+func DecodeUpdateGuardiansCancel(b []byte) (*UpdateGuardiansCancel, error) {
+	d := &decoder{b: b}
+	p := &UpdateGuardiansCancel{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 0:
+			if p.ProposeSeq, err = d.varint(); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+// DecodeUpdateGuardiansPayload разбирает payload update_guardians:
+// ровно один action (propose или cancel).
+func DecodeUpdateGuardiansPayload(b []byte) (*UpdateGuardiansPayload, error) {
+	d := &decoder{b: b}
+	p := &UpdateGuardiansPayload{}
+	for d.pos < len(d.b) {
+		f, wt, err := d.tag()
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case f == 1 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			sub, err := DecodeUpdateGuardiansPropose(v)
+			if err != nil {
+				return nil, err
+			}
+			if p.Propose != nil || p.Cancel != nil {
+				return nil, errors.New("wire: несколько action в UpdateGuardiansPayload")
+			}
+			p.Propose = sub
+		case f == 2 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			sub, err := DecodeUpdateGuardiansCancel(v)
+			if err != nil {
+				return nil, err
+			}
+			if p.Propose != nil || p.Cancel != nil {
+				return nil, errors.New("wire: несколько action в UpdateGuardiansPayload")
+			}
+			p.Cancel = sub
+		default:
+			return nil, errUnknownField
+		}
+	}
+	return p, nil
+}
+
+// DecodeEvidencePayload разбирает evidence.
 func DecodeEvidencePayload(b []byte) (*EvidencePayload, error) {
 	d := &decoder{b: b}
 	p := &EvidencePayload{}
@@ -1458,7 +1617,7 @@ func DecodeTransaction(b []byte) (*Transaction, error) {
 			if t.Signature, err = d.bytes(); err != nil {
 				return nil, err
 			}
-		case f >= 10 && f <= 24 && wt == 2:
+		case f >= 10 && f <= 25 && wt == 2:
 			if payloadRaw != nil {
 				return nil, errors.New("wire: несколько payload-полей")
 			}
@@ -1519,6 +1678,8 @@ func decodePayload(field uint32, b []byte) (Payload, error) {
 		return DecodeContributionClaimPayload(b)
 	case 24:
 		return DecodeContributionConfirmPayload(b)
+	case 25:
+		return DecodeUpdateGuardiansPayload(b)
 	default:
 		return nil, fmt.Errorf("wire: payload %d вне перечня", field)
 	}
@@ -1557,6 +1718,8 @@ func PayloadMatchesType(t TxType, p Payload) bool {
 		return t == ContributionClaim
 	case *ContributionConfirmPayload:
 		return t == ContributionConfirm
+	case *UpdateGuardiansPayload:
+		return t == UpdateGuardians
 	default:
 		return false
 	}
@@ -1595,6 +1758,8 @@ func PayloadTxType(p Payload) TxType {
 		return ContributionClaim
 	case *ContributionConfirmPayload:
 		return ContributionConfirm
+	case *UpdateGuardiansPayload:
+		return UpdateGuardians
 	default:
 		return TxUnspecified
 	}
