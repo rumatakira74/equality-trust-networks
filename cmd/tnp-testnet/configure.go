@@ -31,6 +31,7 @@ func configureCmd(args []string) error {
 	issuance := fs.Uint64("issuance-amount", 0, "issuance_amount (0 — из шаблона)")
 	vouchK := fs.Uint64("vouch-k", 0, "vouch_k (0 — из шаблона)")
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds (0 — из шаблона)")
+	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
 	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4)")
 	displayName := fs.String("display-name", "", "отображаемое имя сети")
 	if err := fs.Parse(args); err != nil {
@@ -57,6 +58,12 @@ func configureCmd(args []string) error {
 	}
 	if *epochSeconds > 0 {
 		prof.EpochSeconds = *epochSeconds
+	}
+	// migrate_delay_days (поле 49): окно отмены живым старым ключом до
+	// исполнения миграции (11); оверрайд шаблона (находка №6 — в прогоне
+	// stage11-prep поле выставлялось пост-обработкой хелпером)
+	if *migrateDelayDays > 0 {
+		prof.MigrateDelayDays = *migrateDelayDays
 	}
 	if *resourceID != "" {
 		prof.ResourceID = *resourceID
