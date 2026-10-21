@@ -849,15 +849,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recoveryHowToSave =>
-      'Cómo guardar: cópielo en papel o en un gestor de contraseñas — fuera del teléfono. El código QR puede imprimirse desde esta pantalla.';
+      'Cómo guardar: cópielo en papel o guárdelo en un lugar seguro fuera del teléfono; no lo guarde en la nube. La imagen de la tarjeta puede imprimirse con «Compartir».';
 
   @override
   String get recoveryNeverShare =>
-      'Nun comparta los datos de migración: el nonce y las firmas de los guardianes. A terceros puede mostrar solo la dirección y el QR de esta tarjeta.';
+      'Nunca comparta los datos de migración (el nonce y las firmas de los guardianes) — solo directamente a su guardián y solo durante la migración; bórrelos de los mensajes al terminar. A terceros puede mostrar solo la dirección y el QR de esta tarjeta.';
 
   @override
   String get recoverySavedDone => 'Guardado — continuar';
 
   @override
   String get settingsRecovery => 'Tarjeta de recuperación';
+
+  @override
+  String get recoveryApkNote =>
+      'Guarde por adelantado el archivo de instalación (APK) de la misma red: sin él, la recuperación en un dispositivo nuevo puede ser imposible.';
+
+  @override
+  String get recoveryShareBtn => 'Compartir tarjeta (imagen)';
 }

@@ -821,15 +821,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recoveryNoGuardians => '未指定守护人：无法恢复，只能重置（普通注册并获得新的担保）。';
 
   @override
-  String get recoveryHowToSave => '保存方法：抄写在纸上或存入密码管理器——在手机之外。可从此界面打印二维码。';
+  String get recoveryHowToSave =>
+      '保存方法：抄写在纸上或保存在手机之外的安全地点；不要存放在云端。可通过「分享」打印卡片图片。';
 
   @override
   String get recoveryNeverShare =>
-      '切勿向任何人透露迁移数据：nonce 和守护人签名。只能向他人展示地址和本卡的二维码。';
+      '切勿向任何人透露迁移数据（nonce 和守护人签名）——只能直接发给您的守护人，且仅在迁移期间使用；迁移完成后请从聊天记录中删除。只能向他人展示地址和本卡的二维码。';
 
   @override
   String get recoverySavedDone => '已保存 — 继续';
 
   @override
   String get settingsRecovery => '恢复卡';
+
+  @override
+  String get recoveryApkNote => '请提前保存同一网络的安装包（APK）：没有它，在新设备上恢复可能无法进行。';
+
+  @override
+  String get recoveryShareBtn => '分享卡片（图片）';
 }

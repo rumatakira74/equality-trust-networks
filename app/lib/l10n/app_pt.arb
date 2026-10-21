@@ -230,8 +230,10 @@
   "recoveryNetwork": "Rede",
   "recoveryGuardians": "Seus guardiões",
   "recoveryNoGuardians": "Nenhum guardião designado: a recuperação é impossível, resta apenas o reinício (registro comum com avais novos).",
-  "recoveryHowToSave": "Como guardar: copie no papel ou num gerenciador de senhas — fora do telefone. O QR pode ser impresso a partir desta tela.",
-  "recoveryNeverShare": "Nunca compartilhe os dados de migração: o nonce e as assinaturas dos guardiões. A terceiros mostre apenas o endereço e o QR deste cartão.",
+  "recoveryHowToSave": "Como guardar: copie no papel ou guarde num lugar seguro fora do telefone; não guarde na nuvem. A imagem do cartão pode ser impressa com «Compartilhar».",
+  "recoveryNeverShare": "Nunca compartilhe os dados de migração (o nonce e as assinaturas dos guardiões) — apenas diretamente ao seu guardião e apenas durante a migração; apague-os das mensagens ao terminar. A terceiros mostre apenas o endereço e o QR deste cartão.",
   "recoverySavedDone": "Salvo — continuar",
-  "settingsRecovery": "Cartão de recuperação"
+  "settingsRecovery": "Cartão de recuperação",
+  "recoveryApkNote": "Guarde com antecedência o arquivo de instalação (APK) da mesma rede: sem ele, a recuperação num dispositivo novo pode ser impossível.",
+  "recoveryShareBtn": "Compartilhar cartão (imagem)"
 }
