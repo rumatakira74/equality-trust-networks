@@ -1,0 +1,8 @@
+=== migrate propose W9 -> W10 (гардианы S122,S01; nonce 515151) Ср 21 окт 2026 10:36:27 UTC ===
+migrate propose: 5d12f29eedb0dcd9 → 181ad7759111187a, гардианов 2
+=== повторный migrate propose W9 -> W10 (nonce 616161) Ср 21 окт 2026 10:41:13 UTC ===
+migrate propose: 5d12f29eedb0dcd9 → 181ad7759111187a, гардианов 2
+tx b951da1ffe754a11: accept/OK seq=3
+=== контроль: тот же nonce снова -> ожидание E_MIGRATE_NONCE или E_MIGRATE_GUARDIANS (эпоха) ===
+migrate propose: 5d12f29eedb0dcd9 → 181ad7759111187a, гардианов 2
+tx 83979ae4c2b04f82: reject/E_MIGRATE_GUARDIANS seq=4

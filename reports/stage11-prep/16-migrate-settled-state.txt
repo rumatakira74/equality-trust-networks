@@ -1,0 +1,62 @@
+=== состояние после settle (W9/W10) Ср 21 окт 2026 10:50:52 UTC ===
+{
+  "active_wallets": 6,
+  "checkpoints": 0,
+  "epoch": 26318,
+  "journal_len": 20,
+  "period": 3,
+  "seed_rights_active": false,
+  "state_root": "baaf474cf73aa4843d8ab5a8d6c2b2b208eb7f2732177a11e8ed7e82f31d038f",
+  "wallets": {
+    "W10": {
+      "address": "181ad7759111187aa5cba5b9bb5341b81bbae7b4d40613c5c13b56f4ca741bdd",
+      "balance": 0,
+      "cohorts": null,
+      "flagged": false,
+      "last_period": 0,
+      "liquid": 0,
+      "seq": 3,
+      "status": "REGISTERED"
+    },
+    "W9": {
+      "address": "5d12f29eedb0dcd9ad3fd51debe375636c40f9c47c315d7ee94b8df809d11877",
+      "balance": 500,
+      "cohorts": null,
+      "flagged": false,
+      "last_period": 0,
+      "liquid": 500,
+      "seq": 2,
+      "status": "ACTIVE"
+    }
+  }
+}
+
+=== export после settle: W9 (старый) и W10 (новый) ===
+{
+ "address": "181ad7759111187aa5cba5b9bb5341b81bbae7b4d40613c5c13b56f4ca741bdd",
+ "status": "ACTIVE",
+ "synthetic": false,
+ "seed": false,
+ "flagged": false,
+ "balance": 500,
+ "liquid": 500,
+ "cohorts": 0,
+ "registered_at": 1792578701,
+ "activated_at": 1792578955,
+ "last_claimed_period": 0,
+ "seq": 3
+}
+{
+ "address": "5d12f29eedb0dcd9ad3fd51debe375636c40f9c47c315d7ee94b8df809d11877",
+ "status": "EXPIRED",
+ "synthetic": false,
+ "seed": false,
+ "flagged": false,
+ "balance": 0,
+ "liquid": 0,
+ "cohorts": 0,
+ "registered_at": 1792578606,
+ "activated_at": 1792578955,
+ "last_claimed_period": 0,
+ "seq": 2
+}

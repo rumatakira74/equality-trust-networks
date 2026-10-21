@@ -1,0 +1,6 @@
+=== register W9 (гардианы S122, S01) ===
+register: кошелёк 5d12f29eedb0dcd9ad3fd51debe375636c40f9c47c315d7ee94b8df809d11877
+tx 5880f7e4b63ee0e7: accept/OK seq=1
+=== register W10 ===
+register: кошелёк 181ad7759111187aa5cba5b9bb5341b81bbae7b4d40613c5c13b56f4ca741bdd
+tx 18dded094ec5b554: accept/OK seq=1

@@ -1,0 +1,2 @@
+=== повторный REGISTER фингерпринта W9 (seq 1, prev=0 — как новый register) — ожидание E_FINGERPRINT Ср 21 окт 2026 11:00:07 UTC ===
+tx 579b79164a9c7085: reject/E_FINGERPRINT seq=1
