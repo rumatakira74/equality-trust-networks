@@ -676,6 +676,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sigToCopy => 'Assinatura (entregue ao tutelado):';
 
   @override
+  String get nonceToCopy => 'Nonce de migração (entregue aos guardiões):';
+
+  @override
   String get settingsTitle => 'Ajustes';
 
   @override

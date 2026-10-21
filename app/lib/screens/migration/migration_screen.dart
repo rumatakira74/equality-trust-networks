@@ -6,6 +6,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -290,6 +291,27 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
           TextField(
             controller: _oldAddress,
             decoration: InputDecoration(labelText: l.oldAddressLabel),
+          ),
+          const SizedBox(height: 8),
+          // nonce виден сразу: гардиан подписывает MigrateStatement с
+          // этим nonce (находка №5 — раньше он был скрыт, публикация
+          // миграции из приложения была невозможна)
+          Text(l.nonceToCopy),
+          Row(
+            children: [
+              SelectableText('$_nonce',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: const Icon(Icons.copy, size: 18),
+                tooltip: l.nonceToCopy,
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: '$_nonce'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l.nonceToCopy)));
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(l.sigsCollected(

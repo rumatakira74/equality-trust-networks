@@ -674,6 +674,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sigToCopy => 'Подпись (передайте подопечному):';
 
   @override
+  String get nonceToCopy => 'Nonce миграции (передайте гардианам):';
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override

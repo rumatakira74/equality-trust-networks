@@ -182,6 +182,7 @@
   "nonceLabel": "Nonce (от подопечного)",
   "wardSignTitle": "Подтвердите миграцию подопечного (вы — гардиан)",
   "sigToCopy": "Подпись (передайте подопечному):",
+  "nonceToCopy": "Nonce миграции (передайте гардианам):",
   "settingsTitle": "Настройки",
   "networkLine": "Сеть: {name}",
   "paramUnit": "Единица",
