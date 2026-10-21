@@ -1,0 +1,54 @@
+# Vibe CLI — конфигурация уровня проекта (equality-trust-networks).
+# Загружается, когда папка репозитория доверена (Trust folder / vibe --trust).
+# Ссылка на документацию: https://docs.mistral.ai/vibe/code/cli/configuration
+
+# Этапы идут под присмотром владельца: allowlist покрывает рутину,
+# всё остальное (push, merge, sudo и пр.) спрашивает подтверждение.
+default_agent = "smart-approve"
+
+[tools.bash]
+permission = "ask"
+max_output_bytes = 64000
+default_timeout = 600
+
+allowlist = [
+  # git — рутина ветки и чекпоинтов.
+  # НАМЕРЕННО НЕТ: git push, git merge, git rebase, git reset, git filter-*, git clean —
+  # они требуют подтверждения владельца (правило проекта).
+  "git status",
+  "git log",
+  "git diff",
+  "git show",
+  "git fetch",
+  "git branch",
+  "git switch -c",
+  "git checkout -b",
+  "git checkout stage",
+  "git add",
+  "git commit",
+  "git stash",
+  "git restore",
+  "git worktree",
+  "git ls-files",
+  "git rev-parse",
+  # Go
+  "go test",
+  "go build",
+  "go vet",
+  "gofmt",
+  # Flutter / Dart
+  "flutter analyze",
+  "flutter test",
+  "flutter build",
+  "flutter pub",
+  "dart",
+  # Android-эмулятор и adb (прогоны этапов)
+  "adb",
+  "emulator",
+  "avdmanager",
+  "sdkmanager",
+  # Уборка процессов (правило: CLI не закрывает демоны сам)
+  "gradle --stop",
+  "./gradlew --stop",
+  "pgrep",
+]
