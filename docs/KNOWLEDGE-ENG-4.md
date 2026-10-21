@@ -84,12 +84,17 @@ The parameters of the base economy (the bounds and the step of the adaptive fee,
 ## 11. Wallet recovery
 
 - **Personal guardians: 2 of 3.** The guardians are appointed in advance (at wallet creation), not at the moment of loss. Transaction type `migrate`.
-- **Migration:** a 14-day delay, during which the old key (if alive) can cancel it; the new wallet passes the same attestation as at `register`; age, issuance history, `period`, and vouches **are transferred** (otherwise migration bypasses the moratorium and the limits); the old fingerprint is blacklisted forever (otherwise the "migrate → register again" cycle yields unlimited units); a guardian cannot be a guardian for more than K wallets.
+- **Migration:** a 14-day delay, during which the old key (if alive) can cancel it; the new wallet passes the same attestation as at `register`; age, issuance history, `period`, vouches, **and the balance are transferred** (otherwise migration bypasses the moratorium and the limits); the old fingerprint is blacklisted forever (otherwise the "migrate → register again" cycle yields unlimited units); a guardian cannot be a guardian for more than K wallets.
 - **If there are no guardians — two paths ✅:**
   - **Public guardians:** an `active` wallet aged ≥ 12 months declares itself a guardian (`guardian_offer`). The user chooses them in advance; with public guardians participating, the threshold is 3 of 5 (any mix of personal and public ones). The reward is a fixed sum from new emission for each successful `migrate` of a ward (the size ❓, a guideline of no more than 10% of monthly issuance; no more often than once per 12 months per ward; a limit of G_max = 20 wards per guardian; paid only to the signers and only after the delay without a cancellation). Applicable in networks with emission.
     - Risk: a reward from emission is a subsidy to farms "migrating" their own wallets; the frequency limit, the delay, and the migration PoW must make this unprofitable; verify the size by simulation.
     - Risk: collusion of public guardians against an owner who has lost the device. Protection: the 3-of-5 threshold, the 14-day delay, public signatures. ❓ Whether to require at least one personal guardian.
   - **A restart by the user's decision:** an ordinary `register` with a new key and new K vouches. The old wallet remains in the registry untouched and inaccessible; the funds on it are lost. A restart gives nothing beyond registering a new wallet.
+
+### Known limitations of v1
+
+- **Changing the personal guardian list is not supported** (decision D4): the guardians are appointed at `register` (wallet creation) and remain unchanged for the wallet's entire lifetime; a way to update the list afterwards is absent from the Document and does not fit into the closed list of transaction types (№6).
+- **Migration cancellation is the old key's right within the 14-day window** — a deliberate owner's decision, kept as is. Known risk: a thief who knows the victim's PIN can cancel recovery attempts within the window, retaining access to the stolen wallet. Mitigations (without changing the rule): public guardians (public signatures, a 3-of-5 threshold) and a restart by the user's decision.
 
 ---
 

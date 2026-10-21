@@ -8,8 +8,8 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 > **Unofficial English translation.** In case of any discrepancy, the Russian
 > original (`KNOWLEDGE.md`) prevails.
 
-Document version: 9.3. Working title — Equality Project.  
-Document date: October 18, 2026.  
+Document version: 9.8. Working title — Equality Project.  
+Document date: October 21, 2026.  
 Author: Kirill Lapchinsky  
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Kirill Lapchinsky. Terms of use are defined by the license (Section 16).
@@ -21,6 +21,8 @@ The document has been reworked: rejected decisions were moved to a short appendi
 Version 9.2: added Section 7.7 — results of the farming-economy simulation ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, slots 3/5/10, R = 10%, and a seed circle ≥ 300 confirmed quantitatively.
 
 Version 9.3: working title — Equality Project; v1.0.0 published on Zenodo (DOI [10.5281/zenodo.23474358](https://zenodo.org/records/23474358)).
+
+Version 9.8 (stage11-prep mini-branch, owner's decisions of October 21, 2026): (a) the balance added to the list of what is transferred on migration (Section 11); (b) a "Known limitations of v1" subsection added in Section 11 — changing the personal guardian list after `register` is not supported (D4); migration cancellation is the old key's right within the 14-day window (a deliberate owner's decision; the mitigations are public guardians and a restart).
 
 ## Table of contents
 
