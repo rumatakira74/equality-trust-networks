@@ -269,11 +269,12 @@ class FakePlatformService implements PlatformService {
   @override
   Future<Map<String, dynamic>> signGuardianChange(
       String hashHex, String title) async {
-    calls.add('signGuardianChange');
     if (duress) {
       // приманка: ключ не используется, ответ неотличим (8.2)
+      calls.add('signGuardianChangeFake');
       return {'sig': '', 'fake': true};
     }
+    calls.add('signGuardianChange');
     return {'sig': guardianChangeSig};
   }
 
