@@ -4,6 +4,8 @@ package tnp
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"strings"
@@ -332,4 +334,110 @@ func submitRegister(t *testing.T, node *Node, gen *Genesis, addr, pub, priv []by
 		return res.Outcome() + "/" + res.Code()
 	}
 	return ""
+}
+
+// TestMintWindowClaimedPeriod — окно челленджа в MintWindowJSON
+// считается для ЗАЯВЛЯЕМОГО периода (находка №2 прогона stage11-prep):
+// ядро (M7, №39) проверяет слот периода из Mint-транзакции, а мост
+// передавал текущий — кнопка Mint была отключена при фактически
+// открытом окне заявляемого периода.
+func TestMintWindowClaimedPeriod(t *testing.T) {
+	gen := testGenesis7(t)
+	// реальное окно ±48 ч (7.6): SandboxGenesis в песочнице открывает
+	// весь период (учебный оверрайд) — здесь проверяем именно слот №39
+	gen.gp.Manifest.Profile.MintChallengeWindowHours = 48
+	mh := gen.gp.Manifest.ManifestHash()
+	gen.gp.Genesis.ManifestHash = mh[:]
+	// genesis 60 суток назад: текущий период 2, заявляемый 1
+	gen.gp.Genesis.GenesisTime = uint64(time.Now().Add(-60 * 24 * time.Hour).Unix())
+
+	// слот челленджа (та же деривация, что core/ledger.hashThree):
+	// slot(p) = genesis + p×30 сут + H(addr‖p) mod 30 сут; при genesis
+	// = now − 60 сут: slot(1) − now = H1 mod 30сут − 30 сут,
+	// slot(2) − now = H2 mod 30 сут
+	const day = 24 * 3600
+	slotOff := func(addr []byte, period uint64) uint64 {
+		var pb [8]byte
+		binary.BigEndian.PutUint64(pb[:], period)
+		h := sha256.Sum256(append(append([]byte{}, addr...), pb[:]...))
+		var out uint64
+		for i := 0; i < 8; i++ {
+			out = out<<8 | uint64(h[i])
+		}
+		return out % (30 * day)
+	}
+	// addrOpen: слот периода 1 в последних 24 ч периода (окно ±48 ч
+	// открыто с запасом), слот периода 2 ≥ 96 ч от now (окно текущего
+	// периода закрыто с запасом — старый код давал open=false)
+	var addrOpen, pubOpen, privOpen []byte
+	for i := 0; i < 10000 && addrOpen == nil; i++ {
+		a, p, v := softRegister(t, gen)
+		if slotOff(a, 1) >= uint64(30*day-24*3600) && slotOff(a, 2) >= uint64(96*3600) {
+			addrOpen, pubOpen, privOpen = a, p, v
+		}
+	}
+	if addrOpen == nil {
+		t.Fatal("не подобран адрес с открытым окном заявляемого периода")
+	}
+	// addrClosed: слот периода 1 ≥ 96 ч от now — окно заявляемого
+	// периода закрыто с запасом
+	var addrClosed, pubClosed, privClosed []byte
+	for i := 0; i < 10000 && addrClosed == nil; i++ {
+		a, p, v := softRegister(t, gen)
+		if slotOff(a, 1) <= uint64(30*day-96*3600) {
+			addrClosed, pubClosed, privClosed = a, p, v
+		}
+	}
+	if addrClosed == nil {
+		t.Fatal("не подобран адрес с закрытым окном заявляемого периода")
+	}
+
+	node, err := StartNode(gen, "full", "", nil, "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer node.Close()
+
+	// register подтягивает сеттлемент-время к живым часам (syncTime при
+	// Apply): QueryClock возвращает s.NetTime, без транзакций окно
+	// считалось бы от несеттлевого времени
+	if res := submitRegister(t, node, gen, addrOpen, pubOpen, privOpen,
+		"android-mint-open", "[]"); res != "" {
+		t.Fatalf("register (open): %s", res)
+	}
+	if res := submitRegister(t, node, gen, addrClosed, pubClosed, privClosed,
+		"android-mint-closed", "[]"); res != "" {
+		t.Fatalf("register (closed): %s", res)
+	}
+
+	// открытый случай: заявляемый период 1, окно открыто — несмотря на
+	// закрытое окно текущего периода 2 (регрессия находки №2)
+	var mwOpen map[string]any
+	if err := json.Unmarshal([]byte(node.MintWindowJSON(addrOpen)), &mwOpen); err != nil {
+		t.Fatal(err)
+	}
+	if mwOpen["claim_period"] != float64(1) {
+		t.Fatalf("claim_period = %v, хочу 1", mwOpen["claim_period"])
+	}
+	if mwOpen["open"] != true {
+		t.Errorf("окно заявляемого периода 1 закрыто (слот в ±24 ч), " +
+			"хотя окно текущего периода 2 закрыто — регресс находки №2")
+	}
+	// сверка с ядром: open == CheckMintChallengeWindow(claim_period)
+	now := uint64(mwOpen["now"].(float64))
+	if want := node.n.QueryMintWindowOpen(addrOpen, 1, now); mwOpen["open"] != want {
+		t.Errorf("open = %v, ядро для периода 1 говорит %v", mwOpen["open"], want)
+	}
+
+	// закрытый случай: слот заявляемого периода далеко от now
+	var mwClosed map[string]any
+	if err := json.Unmarshal([]byte(node.MintWindowJSON(addrClosed)), &mwClosed); err != nil {
+		t.Fatal(err)
+	}
+	if mwClosed["claim_period"] != float64(1) {
+		t.Fatalf("claim_period = %v, хочу 1", mwClosed["claim_period"])
+	}
+	if mwClosed["open"] != false {
+		t.Errorf("окно заявляемого периода 1 открыто вне ±48 ч от слота")
+	}
 }

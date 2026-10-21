@@ -751,6 +751,10 @@ func (nd *Node) PendingMigrationsJSON(addr []byte) string {
 // и сумма по M6 (amount = эмиссия × diff; diff от base: для первого
 // выпуска base = activated_period − 1, вопрос №24) — UI не дублирует
 // формулу ядра. claim_period = 0 — заявлять нечего.
+// open — окно заявляемого периода (M7, №39: ядро проверяет слот
+// периода из Mint-транзакции, т.е. claim_period; находка №2 прогона
+// stage11-prep — ранее передавался текущий период, и кнопка Mint была
+// отключена при фактически открытом окне).
 func (nd *Node) MintWindowJSON(addr []byte) string {
 	w := nd.n.QueryWallet(addr)
 	_, now, _ := nd.n.QueryClock()
@@ -761,7 +765,6 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 	if prof == nil {
 		prof = &wire.ProfileParams{}
 	}
-	open := nd.n.QueryMintWindowOpen(addr, period, now)
 	var last, activated uint64
 	if w != nil {
 		last = w.LastClaimedPeriod
@@ -774,6 +777,9 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 	if claim <= last {
 		claim = 0
 	}
+	// окно заявляемого периода: слот челленджа привязан к периоду из
+	// Mint-транзакции (claim), не к текущему (находка №2)
+	open := claim > 0 && nd.n.QueryMintWindowOpen(addr, claim, now)
 	var amount uint64
 	if claim > 0 {
 		base := last
