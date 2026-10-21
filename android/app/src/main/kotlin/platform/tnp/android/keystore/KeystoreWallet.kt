@@ -119,9 +119,13 @@ class KeystoreWallet(
     @Volatile var sigInitialized: Boolean = false
         private set
 
-    /** Подпись хеша (после успешной биометрии). Выход — DER. */
+    /**
+     * Подпись хеша (после успешной биометрии). Выход — каноничный DER
+     * с low-s (находка №1: Keystore не нормализует s, ядро с этапа 9
+     * отвергает высокие s с E_SIG).
+     */
     fun sign(signature: Signature, hash: ByteArray): ByteArray =
-        signature.apply { update(hash) }.sign()
+        SignatureNormalizer.normalizeLowS(signature.apply { update(hash) }.sign())
 
     private fun deleteIfPresent() {
         if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)
