@@ -64,6 +64,9 @@ type Wallet struct {
 	PersonalGuardians         [][]byte
 	PublicGuardian            bool
 	Wards                     uint64
+	// GuardianChanges — число вступивших в силу смен гардианов за всё
+	// время (счётчик из истории цепочки; лимит 150, 11).
+	GuardianChanges           uint64
 	MintSuspendedUntilPeriod  uint64
 	FlaggedEpoch              uint64
 	Terminal                  bool // старый адрес после исполнения миграции
@@ -95,6 +98,22 @@ type PendingMigration struct {
 	Executed         bool
 }
 
+// PendingGuardianUpdate — опубликованная смена личных гардианов
+// (11, решение владельца 21.10.2026): вступает в силу через 48 ч,
+// до истечения действует старый список.
+type PendingGuardianUpdate struct {
+	Wallet        []byte
+	ProposeSeq    uint64
+	NewGuardians  [][]byte
+	Approvals     []wire.GuardianApproval
+	Nonce         uint64
+	CreatedAt     uint64
+	EffectiveAt   uint64
+	Canceled      bool
+	Effective     bool // вступила в силу (список заменён)
+	Expired       bool // не вступила: лимит №7 у гардиана превышен
+}
+
 // State — полное состояние реестра (пересчитывается каждым узлом, INV-3).
 type State struct {
 	Net                  *params.Network
@@ -103,6 +122,7 @@ type State struct {
 	FingerprintBlacklist map[string]bool
 	PendingTransfers     map[string]*PendingTransfer // key: addr|seq
 	PendingMigrations    []*PendingMigration
+	PendingGuardianUpdates []*PendingGuardianUpdate
 	EvidenceFacts        map[string]bool // key: addr|seq
 	// GuardianLastReward — время последней награды гардиану от подопечного
 	// (ключ guardian|ward; кулдаун №29: не чаще раза в 12 мес. на подопечного).

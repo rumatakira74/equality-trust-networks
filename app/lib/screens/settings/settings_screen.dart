@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../state/app_state.dart';
 import '../recovery/recovery_card_screen.dart';
+import 'guardians_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -96,6 +97,16 @@ class SettingsScreen extends StatelessWidget {
               value: app.nodeRunning,
               onChanged: (v) => v ? app.startNode() : app.nodeStop(),
             ),
+          ),
+          // смена личных гардианов (11, решение владельца 21.10.2026):
+          // экран также доступен с экрана миграции
+          ListTile(
+            leading: const Icon(Icons.published_with_changes),
+            title: Text(l.guardiansTitle),
+            subtitle: Text(l.guardiansEntrySub),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const GuardiansScreen(),
+                )),
           ),
           ListTile(
             leading: const Icon(Icons.lock),

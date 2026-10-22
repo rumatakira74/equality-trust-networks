@@ -233,6 +233,34 @@ func (m *MigrateStatement) Hash() [32]byte {
 	return sha256.Sum256(m.Encode())
 }
 
+// GuardianChangeStatement — каноническое утверждение смены гардианов
+// (11, решение владельца 21.10.2026; не транзакция): хеш смены, который
+// подписывает каждый новый гардиан (согласие передаётся вручную —
+// как approve миграции). Эпоха не входит: окно смены 48 ч может
+// пересекать границу эпохи, подпись не должна протухать на ней.
+type GuardianChangeStatement struct {
+	NetworkID     []byte
+	Ward          []byte // адрес кошелька, чьи гардианы меняются
+	NewGuardians  [][]byte
+	Nonce         uint64
+}
+
+func (g *GuardianChangeStatement) Encode() []byte {
+	var b []byte
+	b = appendBytesField(b, 1, g.NetworkID)
+	b = appendBytesField(b, 2, g.Ward)
+	for _, a := range g.NewGuardians {
+		b = appendBytesField(b, 3, a)
+	}
+	b = appendU64Field(b, 4, g.Nonce)
+	return b
+}
+
+// Hash — хеш смены, подписываемый новым гардианом.
+func (g *GuardianChangeStatement) Hash() [32]byte {
+	return sha256.Sum256(g.Encode())
+}
+
 // AttestStatement — каноническое утверждение предъявления, подписываемое
 // кошельком (6.1, модуль attest; не транзакция): network_id, адрес, статус,
 // возраст, глубина графа поручительств, метка flagged, хеш манифеста,

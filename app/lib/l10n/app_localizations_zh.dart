@@ -842,4 +842,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recoveryShareBtn => '分享卡片（图片）';
+
+  @override
+  String get guardiansTitle => '守护人';
+
+  @override
+  String get guardiansIntro => '个人守护人确认迁移（2/3）。可以改选：变更在 48 小时后生效，此前旧名单仍然有效。';
+
+  @override
+  String get guardiansEntrySub => '个人守护人：改选，48 小时窗口';
+
+  @override
+  String get guardiansCurrent => '当前守护人';
+
+  @override
+  String get guardiansNone => '未指定守护人';
+
+  @override
+  String get guardiansReelect => '改选';
+
+  @override
+  String guardiansLimitUsed(int used, int limit) {
+    return '已用守护人变更：$used / $limit';
+  }
+
+  @override
+  String guardiansPendingSub(int hours) {
+    return '新名单将在 $hours 小时后生效';
+  }
+
+  @override
+  String get guardiansCancelBtn => '取消变更';
+
+  @override
+  String get guardiansStatusCanceled => '已取消';
+
+  @override
+  String get guardiansStatusEffective => '已生效';
+
+  @override
+  String get guardiansStatusExpired => '已失效：守护人的被监护人名额已满';
+
+  @override
+  String get reelectTitle => '改选守护人';
+
+  @override
+  String get reelectIntro =>
+      '输入新的守护人（最多 3 个，hex，每行一个）。将变更哈希转交给每位新守护人：对方在其应用中签名（“守护人同意”），并把签名的 hex 交还给您。';
+
+  @override
+  String get newGuardiansLabel => '新守护人（hex，每行一个）';
+
+  @override
+  String get changeHashToCopy => '变更哈希（转交给新守护人）：';
+
+  @override
+  String guardiansApprovals(int count, int need) {
+    return '已收集同意：$count / $need';
+  }
+
+  @override
+  String get btnPublishChange => '发布变更';
+
+  @override
+  String get changePublished => '变更已发布：48 小时后生效';
+
+  @override
+  String get changeConfirmTitle => '确认守护人变更（PIN）';
+
+  @override
+  String get cancelChangeConfirmTitle => '确认取消变更（PIN）';
+
+  @override
+  String get changeCanceled => '变更已取消';
+
+  @override
+  String get consentTitle => '守护人同意';
+
+  @override
+  String get consentIntro =>
+      '您确认同意成为该被监护人的守护人。输入被监护人地址和变更哈希并签名。将签名的 hex 交还给被监护人。';
+
+  @override
+  String get wardAddressLabel => '被监护人地址（hex）';
+
+  @override
+  String get changeHashLabel => '变更哈希（hex）';
+
+  @override
+  String get consentSignTitle => '确认被监护人的守护人变更（您是守护人）';
 }

@@ -870,4 +870,99 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get recoveryShareBtn => 'Compartir tarjeta (imagen)';
+
+  @override
+  String get guardiansTitle => 'Tutores';
+
+  @override
+  String get guardiansIntro =>
+      'Los tutores personales confirman la migración (2 de 3). Pueden reelegirse: el cambio surte efecto en 48 h; hasta entonces se aplica la lista anterior.';
+
+  @override
+  String get guardiansEntrySub =>
+      'Tutores personales: reelección, ventana de 48 h';
+
+  @override
+  String get guardiansCurrent => 'Tutores actuales';
+
+  @override
+  String get guardiansNone => 'No hay tutores asignados';
+
+  @override
+  String get guardiansReelect => 'Reelegir';
+
+  @override
+  String guardiansLimitUsed(int used, int limit) {
+    return 'Cambios de tutores usados: $used de $limit';
+  }
+
+  @override
+  String guardiansPendingSub(int hours) {
+    return 'La nueva lista surtirá efecto en $hours h';
+  }
+
+  @override
+  String get guardiansCancelBtn => 'Cancelar el cambio';
+
+  @override
+  String get guardiansStatusCanceled => 'Cancelado';
+
+  @override
+  String get guardiansStatusEffective => 'En vigor';
+
+  @override
+  String get guardiansStatusExpired =>
+      'Caducado: se superó el límite de tutelados del tutor';
+
+  @override
+  String get reelectTitle => 'Reelegir tutores';
+
+  @override
+  String get reelectIntro =>
+      'Introduzca los nuevos tutores (hasta 3, hex, uno por línea). Pase el hash del cambio a cada nuevo tutor: lo firma en su aplicación («Consentimiento del tutor») y le devuelve el hex de la firma.';
+
+  @override
+  String get newGuardiansLabel => 'Nuevos tutores (hex, uno por línea)';
+
+  @override
+  String get changeHashToCopy =>
+      'Hash del cambio (páselo a los nuevos tutores):';
+
+  @override
+  String guardiansApprovals(int count, int need) {
+    return 'Consentimientos recogidos: $count de $need';
+  }
+
+  @override
+  String get btnPublishChange => 'Publicar el cambio';
+
+  @override
+  String get changePublished => 'Cambio publicado: surtirá efecto en 48 h';
+
+  @override
+  String get changeConfirmTitle => 'Confirme el cambio de tutores (PIN)';
+
+  @override
+  String get cancelChangeConfirmTitle =>
+      'Confirme la cancelación del cambio (PIN)';
+
+  @override
+  String get changeCanceled => 'Cambio cancelado';
+
+  @override
+  String get consentTitle => 'Consentimiento del tutor';
+
+  @override
+  String get consentIntro =>
+      'Usted confirma aceptar ser tutor del tutelado. Introduzca la dirección del tutelado y el hash del cambio, y firme el hash. Devuelva el hex de la firma al tutelado.';
+
+  @override
+  String get wardAddressLabel => 'Dirección del tutelado (hex)';
+
+  @override
+  String get changeHashLabel => 'Hash del cambio (hex)';
+
+  @override
+  String get consentSignTitle =>
+      'Confirme el cambio de tutores del tutelado (usted es el tutor)';
 }

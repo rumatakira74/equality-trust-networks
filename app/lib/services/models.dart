@@ -96,6 +96,7 @@ class WalletInfo {
   final List<String> activators;
   final bool publicGuardian;
   final int wards;
+  final int guardianChanges; // вступивших в силу смен (лимит 150, 11)
   final int mintSuspendedUntilPeriod;
   final bool seed;
   final bool terminal;
@@ -123,6 +124,7 @@ class WalletInfo {
         activators = (j['activators'] as List? ?? []).map((e) => '$e').toList(),
         publicGuardian = j['public_guardian'] as bool? ?? false,
         wards = _i(j['wards']),
+        guardianChanges = _i(j['guardian_changes']),
         mintSuspendedUntilPeriod = _i(j['mint_suspended_until_period']),
         seed = j['seed'] as bool? ?? false,
         terminal = j['terminal'] as bool? ?? false;
@@ -185,8 +187,7 @@ class PendingTransfer {
 }
 
 /// Незавершённая миграция (11).
-class PendingMigration {
-  final String newAddress;
+class PendingMigration {  final String newAddress;
   final String oldAddress;
   final int proposeSeq;
   final int notBefore;
@@ -208,6 +209,35 @@ class PendingMigration {
         approvals = (j['approvals'] as List? ?? [])
             .map((a) => ((a as Map)['guardian'] ?? '') as String)
             .toList();
+
+  static int _i(dynamic v) => v is num ? v.toInt() : 0;
+}
+
+/// Смена гардианов (11, решение владельца 21.10.2026): окно 48 ч,
+/// отмена в окне, вступление или истечение по лимиту №7.
+class PendingGuardianUpdate {
+  final int proposeSeq;
+  final List<String> newGuardians;
+  final int effectiveAt;
+  final int remainingSec;
+  final int nonce;
+  final bool canceled;
+  final bool effective;
+  final bool expired;
+
+  PendingGuardianUpdate.fromJson(Map<String, dynamic> j)
+      : proposeSeq = _i(j['propose_seq']),
+        newGuardians = (j['new_guardians'] as List? ?? [])
+            .map((e) => '$e')
+            .toList(),
+        effectiveAt = _i(j['effective_at']),
+        remainingSec = _i(j['remaining_sec']),
+        nonce = _i(j['nonce']),
+        canceled = j['canceled'] as bool? ?? false,
+        effective = j['effective'] as bool? ?? false,
+        expired = j['expired'] as bool? ?? false;
+
+  bool get active => !canceled && !effective && !expired;
 
   static int _i(dynamic v) => v is num ? v.toInt() : 0;
 }

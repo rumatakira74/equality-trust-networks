@@ -179,6 +179,34 @@ func (n *Node) QueryPendingMigrations(addr []byte) []ledger.PendingMigration {
 	return out
 }
 
+// QueryPendingGuardianUpdates — смены гардианов кошелька addr (11,
+// решение владельца 21.10.2026): активные, отменённые, вступившие
+// и истёкшие. Отсчёт окна: EffectiveAt − NetTime.
+func (n *Node) QueryPendingGuardianUpdates(addr []byte) []ledger.PendingGuardianUpdate {
+	if n.Ledger == nil {
+		return nil
+	}
+	n.applyMu.RLock()
+	defer n.applyMu.RUnlock()
+	var out []ledger.PendingGuardianUpdate
+	for _, u := range n.Ledger.State.PendingGuardianUpdates {
+		if !bytes.Equal(u.Wallet, addr) {
+			continue
+		}
+		snap := *u
+		snap.Wallet = append([]byte(nil), u.Wallet...)
+		snap.NewGuardians = append([][]byte(nil), u.NewGuardians...)
+		snap.Approvals = make([]wire.GuardianApproval, len(u.Approvals))
+		for i, a := range u.Approvals {
+			a.Guardian = append([]byte(nil), a.Guardian...)
+			a.StatementSig = append([]byte(nil), a.StatementSig...)
+			snap.Approvals[i] = a
+		}
+		out = append(out, snap)
+	}
+	return out
+}
+
 // QueryMintWindowOpen — открыто ли окно челленджа выпуска для периода
 // (7.6: слот внутри месяца, окно ±48 ч). Точный момент слота не
 // раскрывается (см. шапку файла).

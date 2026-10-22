@@ -163,6 +163,99 @@ func MigrateStatementHash(networkID, oldAddress, newAddress []byte,
 	return h[:]
 }
 
+// NewUpdateGuardiansPropose — перевыбор личных гардианов (11, решение
+// владельца 21.10.2026): публикуется в цепочке владельца, подпись —
+// текущим ключом. guardiansJSON: ["hex", ...] (≤ 3); approvalsJSON:
+// [{"guardian":"hex","sig":"hex"}, ...] — подписи новых гардианов над
+// хешем смены (GuardianChangeStatementHash), собранные вручную.
+func NewUpdateGuardiansPropose(networkID, wallet []byte, seq int64, prev []byte,
+	guardiansJSON, approvalsJSON string, nonce, protocolVersion,
+	ts int64) (*Tx, error) {
+	var guardians [][]byte
+	if guardiansJSON != "" {
+		var hexes []string
+		if err := json.Unmarshal([]byte(guardiansJSON), &hexes); err != nil {
+			return nil, fmt.Errorf("гардианы: %w", err)
+		}
+		for _, h := range hexes {
+			g, err := hex.DecodeString(h)
+			if err != nil {
+				return nil, fmt.Errorf("гардиан %s: %w", h, err)
+			}
+			guardians = append(guardians, g)
+		}
+	}
+	var approvals []wire.GuardianApproval
+	if approvalsJSON != "" {
+		var raw []struct {
+			Guardian string `json:"guardian"`
+			Sig      string `json:"sig"`
+		}
+		if err := json.Unmarshal([]byte(approvalsJSON), &raw); err != nil {
+			return nil, fmt.Errorf("approvals: %w", err)
+		}
+		for _, a := range raw {
+			g, err := hex.DecodeString(a.Guardian)
+			if err != nil {
+				return nil, fmt.Errorf("гардиан: %w", err)
+			}
+			s, err := hex.DecodeString(a.Sig)
+			if err != nil {
+				return nil, fmt.Errorf("подпись: %w", err)
+			}
+			approvals = append(approvals, wire.GuardianApproval{
+				Guardian: g, StatementSig: s,
+			})
+		}
+	}
+	tx := newTx(networkID, wallet, seq, prev, wire.UpdateGuardians,
+		&wire.UpdateGuardiansPayload{Propose: &wire.UpdateGuardiansPropose{
+			NewGuardians: guardians,
+			Approvals:    approvals,
+			Nonce:        uint64(nonce),
+		}}, protocolVersion, ts)
+	return tx, nil
+}
+
+// NewUpdateGuardiansCancel — отмена смены гардианов подписью владельца
+// в окне 48 ч (11): публикуется в цепочке того же кошелька.
+func NewUpdateGuardiansCancel(networkID, wallet []byte, seq int64, prev []byte,
+	proposeSeq, protocolVersion, ts int64) *Tx {
+	return newTx(networkID, wallet, seq, prev, wire.UpdateGuardians,
+		&wire.UpdateGuardiansPayload{Cancel: &wire.UpdateGuardiansCancel{
+			ProposeSeq: uint64(proposeSeq),
+		}}, protocolVersion, ts)
+}
+
+// GuardianChangeStatementHash — хеш смены гардианов, который подписывает
+// каждый новый гардиан (своим приложением, биометрией). Совпадает с ядром:
+// wire.GuardianChangeStatement.Hash() над {network_id, ward, список, nonce}.
+func GuardianChangeStatementHash(networkID, ward []byte, guardiansJSON string,
+	nonce int64) ([]byte, error) {
+	var guardians [][]byte
+	if guardiansJSON != "" {
+		var hexes []string
+		if err := json.Unmarshal([]byte(guardiansJSON), &hexes); err != nil {
+			return nil, fmt.Errorf("гардианы: %w", err)
+		}
+		for _, h := range hexes {
+			g, err := hex.DecodeString(h)
+			if err != nil {
+				return nil, fmt.Errorf("гардиан %s: %w", h, err)
+			}
+			guardians = append(guardians, g)
+		}
+	}
+	stmt := &wire.GuardianChangeStatement{
+		NetworkID:    append([]byte(nil), networkID...),
+		Ward:         append([]byte(nil), ward...),
+		NewGuardians: guardians,
+		Nonce:        uint64(nonce),
+	}
+	h := stmt.Hash()
+	return h[:], nil
+}
+
 // ---------------------------------------------------------------------------
 // Песочница: синтетическая аттестация для эмулятора (6.5)
 // ---------------------------------------------------------------------------
@@ -555,6 +648,7 @@ func (nd *Node) WalletInfoJSON(addr []byte) string {
 		"vouch_depth":                  depth,
 		"public_guardian":              w.PublicGuardian,
 		"wards":                        int64(w.Wards),
+		"guardian_changes":             int64(w.GuardianChanges),
 		"mint_suspended_until_period":  int64(w.MintSuspendedUntilPeriod),
 	}
 	guardians := make([]string, 0, len(w.PersonalGuardians))
@@ -658,6 +752,13 @@ func (nd *Node) HistoryJSON(addr []byte, limit int64) string {
 			}
 		case *wire.GuardianOfferPayload:
 			e["note"] = "объявление публичным гардианом"
+		case *wire.UpdateGuardiansPayload:
+			if p.Propose != nil {
+				e["note"] = "смена гардианов: предложение"
+				e["period"] = int64(len(p.Propose.NewGuardians))
+			} else if p.Cancel != nil {
+				e["note"] = "смена гардианов: отмена"
+			}
 		}
 		out = append(out, e)
 	}
@@ -741,6 +842,48 @@ func (nd *Node) PendingMigrationsJSON(addr []byte) string {
 		})
 	}
 	b, _ := json.Marshal(out)
+	return string(b)
+}
+
+// PendingGuardianUpdatesJSON — смены гардианов кошелька (11, решение
+// владельца 21.10.2026): активная смена с отсчётом окна 48 ч, а также
+// отменённые/вступившие/истёкшие для истории экрана.
+func (nd *Node) PendingGuardianUpdatesJSON(addr []byte) string {
+	pus := nd.n.QueryPendingGuardianUpdates(addr)
+	_, now, _ := nd.n.QueryClock()
+	type pu struct {
+		ProposeSeq   int64    `json:"propose_seq"`
+		NewGuardians []string `json:"new_guardians"`
+		CreatedAt    uint64   `json:"created_at"`
+		EffectiveAt  uint64   `json:"effective_at"`
+		Remaining    int64    `json:"remaining_sec"`
+		Nonce        uint64   `json:"nonce"`
+		Canceled     bool     `json:"canceled"`
+		Effective    bool     `json:"effective"`
+		Expired      bool     `json:"expired"`
+	}
+	out := make([]pu, 0, len(pus))
+	for _, u := range pus {
+		gs := make([]string, 0, len(u.NewGuardians))
+		for _, g := range u.NewGuardians {
+			gs = append(gs, hexOr(g))
+		}
+		out = append(out, pu{
+			ProposeSeq:   int64(u.ProposeSeq),
+			NewGuardians: gs,
+			CreatedAt:    u.CreatedAt,
+			EffectiveAt:  u.EffectiveAt,
+			Remaining:    int64(u.EffectiveAt) - int64(now),
+			Nonce:        u.Nonce,
+			Canceled:     u.Canceled,
+			Effective:    u.Effective,
+			Expired:      u.Expired,
+		})
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		return "[]"
+	}
 	return string(b)
 }
 

@@ -44,6 +44,16 @@ func reject(code string) Result   { return Result{Rejected, code, [32]byte{}} }
 
 var zero32 = make([]byte, 32)
 
+// Окно вступления смены гардианов в силу — 48 ч (11, решение владельца
+// 21.10.2026): константа, не параметр сети (прецедент — отложенный
+// перевод и повышение P, D = 48 ч).
+const GuardianChangeWindowSeconds uint64 = 48 * 3600
+
+// GuardianChangeLimit — лимит вступивших в силу смен гардианов на
+// кошелёк за всё время существования (решение владельца 21.10.2026;
+// отменённые и истёкшие лимит не потребляют).
+const GuardianChangeLimit uint64 = 150
+
 // applyCommon выполняет C1–C4 (и C5–C7 вне register).
 func (l *Ledger) applyCommon(tx *wire.Transaction, txid [32]byte) Result {
 	// C1: сеть
@@ -249,6 +259,8 @@ func (l *Ledger) Apply(tx *wire.Transaction) Result {
 		res = l.applyContributionClaim(tx)
 	case wire.ContributionConfirm:
 		res = l.applyContributionConfirm(tx)
+	case wire.UpdateGuardians:
+		res = l.applyUpdateGuardians(tx)
 	default:
 		return reject("E_TYPE")
 	}
@@ -814,5 +826,113 @@ func (l *Ledger) applyGuardianOffer(tx *wire.Transaction) Result {
 		return reject("E_GUARDIAN_AGE")
 	}
 	w.PublicGuardian = true
+	return accept(tx.TxID())
+}
+
+// ---------------------------------------------------------------------------
+// UPDATE_GUARDIANS (11, решение владельца 21.10.2026)
+// ---------------------------------------------------------------------------
+
+func (l *Ledger) applyUpdateGuardians(tx *wire.Transaction) Result {
+	up := tx.Payload.(*wire.UpdateGuardiansPayload)
+	now := l.Clock.NetTime()
+
+	switch {
+	case up.Propose != nil:
+		return l.applyUpdateGuardiansPropose(tx, up.Propose, now)
+	case up.Cancel != nil:
+		// отмена подписью владельца в окне 48 ч (сама подпись tx —
+		// текущим ключом, C8); только явный ввод PIN — правило
+		// приложения (этап 9)
+		for _, pu := range l.State.PendingGuardianUpdates {
+			if !pu.Canceled && !pu.Effective && !pu.Expired &&
+				bytes.Equal(pu.Wallet, tx.Wallet) &&
+				pu.ProposeSeq == up.Cancel.ProposeSeq {
+				if now >= pu.EffectiveAt {
+					return reject("E_GUARDIAN_UPDATE_EXPIRED")
+				}
+				pu.Canceled = true
+				return accept(tx.TxID())
+			}
+		}
+		return reject("E_GUARDIAN_UPDATE_NOTFOUND")
+	}
+	return reject("E_TYPE")
+}
+
+func (l *Ledger) applyUpdateGuardiansPropose(tx *wire.Transaction,
+	p *wire.UpdateGuardiansPropose, now uint64) Result {
+	w := l.State.Wallet(tx.Wallet)
+	prof := l.State.Net.Profile
+
+	// новый список: ≤ guardian_personal_count (как при register),
+	// без дубликатов
+	if uint64(len(p.NewGuardians)) > prof.GuardianPersonalCount {
+		return reject("E_GUARDIAN_UPDATE")
+	}
+	seen := make(map[string]bool)
+	for _, g := range p.NewGuardians {
+		if seen[string(g)] {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+		seen[string(g)] = true
+	}
+	// новые гардианы: active, не flagged (№14), лимит подопечных №7
+	for _, g := range p.NewGuardians {
+		gw := l.State.Wallet(g)
+		if gw == nil || gw.Status != wire.StatusActive || gw.Flagged {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+		if gw.Wards >= prof.GuardianPersonalMaxWards {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+	}
+	// согласие: подпись каждым новым гардианом хеша смены
+	stmt := &wire.GuardianChangeStatement{
+		NetworkID:    l.State.Net.NetworkID,
+		Ward:         tx.Wallet,
+		NewGuardians: p.NewGuardians,
+		Nonce:        p.Nonce,
+	}
+	sh := stmt.Hash()
+	approved := make(map[string]bool)
+	for i := range p.Approvals {
+		ap := &p.Approvals[i]
+		if !seen[string(ap.Guardian)] || approved[string(ap.Guardian)] {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+		gw := l.State.Wallet(ap.Guardian)
+		if gw == nil || gw.PublicKey == nil ||
+			!crypto.VerifyDER(gw.PublicKey, sh[:], ap.StatementSig) {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+		approved[string(ap.Guardian)] = true
+	}
+	for _, g := range p.NewGuardians {
+		if !approved[string(g)] {
+			return reject("E_GUARDIAN_UPDATE")
+		}
+	}
+	// активная смена только одна
+	for _, pu := range l.State.PendingGuardianUpdates {
+		if bytes.Equal(pu.Wallet, tx.Wallet) &&
+			!pu.Canceled && !pu.Effective && !pu.Expired {
+			return reject("E_GUARDIAN_UPDATE_ACTIVE")
+		}
+	}
+	// лимит смен: не более 150 вступивших в силу за всё время;
+	// счётчик — из истории цепочки кошелька
+	if w.GuardianChanges >= GuardianChangeLimit {
+		return reject("E_GUARDIAN_CHANGE_LIMIT")
+	}
+	l.State.PendingGuardianUpdates = append(l.State.PendingGuardianUpdates, &PendingGuardianUpdate{
+		Wallet:       append([]byte(nil), tx.Wallet...),
+		ProposeSeq:   tx.Seq,
+		NewGuardians: append([][]byte(nil), p.NewGuardians...),
+		Approvals:    append([]wire.GuardianApproval(nil), p.Approvals...),
+		Nonce:        p.Nonce,
+		CreatedAt:    now,
+		EffectiveAt:  now + GuardianChangeWindowSeconds,
+	})
 	return accept(tx.TxID())
 }

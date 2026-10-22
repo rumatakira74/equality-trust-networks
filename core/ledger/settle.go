@@ -180,6 +180,59 @@ func (l *Ledger) flushPending(now uint64) {
 		l.executeMigration(pm)
 		pm.Executed = true
 	}
+	// смены гардианов: вступление в силу через 48 ч (11, решение
+	// владельца 21.10.2026); если к моменту вступления лимит №7 у
+	// нового гардиана превышен — смена не вступает, помечается
+	// истёкшей (лимит 150 не потребляется)
+	for _, pu := range l.State.PendingGuardianUpdates {
+		if pu.Canceled || pu.Effective || pu.Expired || now < pu.EffectiveAt {
+			continue
+		}
+		prof := l.State.Net.Profile
+		expired := false
+		for _, g := range pu.NewGuardians {
+			gw := l.State.Wallet(g)
+			if gw == nil || gw.Wards >= prof.GuardianPersonalMaxWards {
+				expired = true
+				break
+			}
+		}
+		w := l.State.Wallet(pu.Wallet)
+		if expired || w == nil {
+			pu.Expired = true
+			continue
+		}
+		// вступление: новый список заменяет старый; подопечные
+		// считаются по-разному: новые гардианы занимают слот
+		// (wards++), ушедшие освобождают (wards--), остающиеся
+		// не пересчитываются (интерпретация №7: счётчик wards —
+		// число подопечных, не число смен)
+		inNew := make(map[string]bool)
+		for _, g := range pu.NewGuardians {
+			inNew[string(g)] = true
+		}
+		inOld := make(map[string]bool)
+		for _, g := range w.PersonalGuardians {
+			inOld[string(g)] = true
+		}
+		for _, g := range w.PersonalGuardians {
+			if !inNew[string(g)] {
+				if gw := l.State.Wallet(g); gw != nil && gw.Wards > 0 {
+					gw.Wards--
+				}
+			}
+		}
+		for _, g := range pu.NewGuardians {
+			if !inOld[string(g)] {
+				if gw := l.State.Wallet(g); gw != nil {
+					gw.Wards++
+				}
+			}
+		}
+		w.PersonalGuardians = append([][]byte(nil), pu.NewGuardians...)
+		w.GuardianChanges++
+		pu.Effective = true
+	}
 	// повышения порога P: через 48 ч (8.3)
 	for _, w := range l.State.Wallets {
 		if w.PendingThreshold != 0 && now >= w.PendingThresholdNotBefore {

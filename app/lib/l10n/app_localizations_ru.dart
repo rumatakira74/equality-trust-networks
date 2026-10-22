@@ -866,4 +866,96 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get recoveryShareBtn => 'Поделиться карточкой (изображение)';
+
+  @override
+  String get guardiansTitle => 'Гардианы';
+
+  @override
+  String get guardiansIntro =>
+      'Личные гардианы подтверждают миграцию (2 из 3). Их можно перевыбрать: смена вступает в силу через 48 ч, до этого действует старый список.';
+
+  @override
+  String get guardiansEntrySub => 'Личные гардианы: перевыбор, окно 48 ч';
+
+  @override
+  String get guardiansCurrent => 'Текущие гардианы';
+
+  @override
+  String get guardiansNone => 'Гардианы не назначены';
+
+  @override
+  String get guardiansReelect => 'Перевыбрать';
+
+  @override
+  String guardiansLimitUsed(int used, int limit) {
+    return 'Использовано смен гардианов: $used из $limit';
+  }
+
+  @override
+  String guardiansPendingSub(int hours) {
+    return 'Новый список вступит в силу через $hours ч';
+  }
+
+  @override
+  String get guardiansCancelBtn => 'Отменить смену';
+
+  @override
+  String get guardiansStatusCanceled => 'Отменена';
+
+  @override
+  String get guardiansStatusEffective => 'Вступила в силу';
+
+  @override
+  String get guardiansStatusExpired =>
+      'Истекла: у гардиана превышен лимит подопечных';
+
+  @override
+  String get reelectTitle => 'Перевыбор гардианов';
+
+  @override
+  String get reelectIntro =>
+      'Введите новых гардианов (до 3, hex, по одному в строке). Передайте каждому новому гардиану хеш смены: он подписывает его в своём приложении («Согласие гардиана») и передаёт вам hex подписи.';
+
+  @override
+  String get newGuardiansLabel => 'Новые гардианы (hex, по одному в строке)';
+
+  @override
+  String get changeHashToCopy => 'Хеш смены (передайте новым гардианам):';
+
+  @override
+  String guardiansApprovals(int count, int need) {
+    return 'Согласий собрано: $count из $need';
+  }
+
+  @override
+  String get btnPublishChange => 'Опубликовать смену';
+
+  @override
+  String get changePublished => 'Смена опубликована: вступит в силу через 48 ч';
+
+  @override
+  String get changeConfirmTitle => 'Подтвердите смену гардианов (PIN)';
+
+  @override
+  String get cancelChangeConfirmTitle => 'Подтвердите отмену смены (PIN)';
+
+  @override
+  String get changeCanceled => 'Смена отменена';
+
+  @override
+  String get consentTitle => 'Согласие гардиана';
+
+  @override
+  String get consentIntro =>
+      'Вы подтверждаете согласие стать гардианом подопечного. Введите адрес подопечного и хеш смены, подпишите хеш. Передайте hex подписи подопечному.';
+
+  @override
+  String get wardAddressLabel => 'Адрес подопечного (hex)';
+
+  @override
+  String get changeHashLabel => 'Хеш смены (hex)';
+
+  @override
+  String get consentSignTitle =>
+      'Подтвердите смену гардианов подопечного (вы — гардиан)';
 }
