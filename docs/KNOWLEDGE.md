@@ -13,6 +13,8 @@ description: "Платформа сетей доверия — конструк�
 
 **DOI:** [10.5281/zenodo.23474316](https://doi.org/10.5281/zenodo.23474316)
 
+Документация: [equality-user-docs](https://github.com/rumatakira74/equality-user-docs) — для участников; [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs) — для разработчиков.
+
 Документ переработан: отклонённые решения вынесены в короткое приложение в конце.
 
 Версия 9.2: добавлен раздел 7.7 — результаты симуляции фермерской экономики ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, слоты 3/5/10, R = 10% и посевной круг ≥ 300 подтверждены количественно.

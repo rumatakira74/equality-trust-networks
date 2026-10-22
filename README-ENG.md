@@ -7,6 +7,8 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 
 Russian original: [README.md](README.md).
 
+Documentation: for participants — [equality-user-docs](https://github.com/rumatakira74/equality-user-docs), for developers — [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs).
+
 > **Unofficial English translation.** In case of any discrepancy, the Russian
 > original ([README.md](README.md)) prevails.
 

@@ -16,6 +16,8 @@ Contacts: rumatakira74@gmail.com, Telegram @rumatakira
 
 **DOI:** [10.5281/zenodo.23474357](https://doi.org/10.5281/zenodo.23474357)
 
+Documentation: [equality-user-docs](https://github.com/rumatakira74/equality-user-docs) — for participants; [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs) — for developers.
+
 The document has been reworked: rejected decisions were moved to a short appendix at the end.
 
 Version 9.2: added Section 7.7 — results of the farming-economy simulation ([equality-anti-farm-simulation](https://github.com/rumatakira74/equality-anti-farm-simulation)); K = 3, slots 3/5/10, R = 10%, and a seed circle ≥ 300 confirmed quantitatively.
