@@ -162,10 +162,10 @@ func TestGenesis() *wire.GenesisPackage {
 		TimestampToleranceSeconds:  1800, // ±30 мин (9.2)
 		MintChallengeWindowHours:   48,   // ±48 ч (7.6)
 		// Адаптивная комиссия (10.2, этап 10): окно K = 6 эпох, целевой
-		// рост предложения за окно 6%, шаг 0,05 п.п. Числа в Документе
-		// не заданы — предположение этапа 10, вопрос №44 в QUESTIONS.md.
+		// рост предложения за окно 15%, шаг 0,05 п.п. Цель 15% — решение
+		// владельца 22.10.2026 (№44, по итогам симуляции блока 3).
 		FeeAdjustEpochs:       6,
-		FeeTargetGrowthMicros: 60000,
+		FeeTargetGrowthMicros: 150000,
 		FeeStepMicros:         500,
 		Pow: &wire.PowParams{
 			// Решение №9 (утверждено 19.10.2026, замеры —

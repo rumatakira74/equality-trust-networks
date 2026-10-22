@@ -28,7 +28,7 @@ func newFeeLedger(t *testing.T) *Ledger {
 // «все узлы получают одно и то же значение»). Узлы «видят» чекпоинты
 // в разное время (разный порядок локальных операций) — без разницы.
 func TestAdaptiveFeeEquivalence(t *testing.T) {
-	// рост предложения за окно K = 6 эпох: 1000 -> 1200 (20% > цели 6%)
+	// рост предложения за окно K = 6 эпох: 1000 -> 1200 (20% > цели 15%)
 	chain := []SupplySnapshot{}
 	supply := uint64(1_000_000)
 	for e := uint64(1); e <= 20; e++ {
@@ -62,7 +62,7 @@ func TestAdaptiveFeeEquivalence(t *testing.T) {
 // границы и не выходит за неё.
 func TestAdaptiveFeeDecrease(t *testing.T) {
 	l := newFeeLedger(t)
-	// предложение стабильно (+0,1% за эпоху < цели 6%)
+	// предложение стабильно (+0,1% за эпоху < цели 15%)
 	supply := uint64(1_000_000)
 	for e := uint64(1); e <= 40; e++ {
 		l.OnCheckpointSupply(e, supply)
@@ -168,7 +168,7 @@ func TestAdaptiveFeeRestart(t *testing.T) {
 func TestAdaptiveFeeGenesisRoundtrip(t *testing.T) {
 	gp := params.TestGenesis()
 	p := gp.Manifest.Profile
-	if p.FeeAdjustEpochs != 6 || p.FeeTargetGrowthMicros != 60_000 || p.FeeStepMicros != 500 {
+	if p.FeeAdjustEpochs != 6 || p.FeeTargetGrowthMicros != 150_000 || p.FeeStepMicros != 500 {
 		t.Fatalf("дефолты TestGenesis: %+v", p)
 	}
 	enc := p.Encode()

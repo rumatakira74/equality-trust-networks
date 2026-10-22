@@ -99,3 +99,27 @@ func TestTemplateRoundtrip(t *testing.T) {
 		}
 	}
 }
+
+// TestDemurrageFloorProfiles — floor демереджа шаблонов (v9.9, решение
+// владельца 22.10.2026 по итогам симуляции блока 3): профиль 5 (hours,
+// выпуск 10/мес) — 30 = 3 месячных выпуска (наследованные 3000 были
+// мёртвым механизмом — 300 выпусков), профиль 7 (currency, 1000/мес) —
+// 3000 без изменений.
+func TestDemurrageFloorProfiles(t *testing.T) {
+	if got := ByID(5).Profile.DemurrageFloor; got != 30 {
+		t.Fatalf("floor профиля 5 = %d, хочу 30", got)
+	}
+	if got := ByID(7).Profile.DemurrageFloor; got != 3000 {
+		t.Fatalf("floor профиля 7 = %d, хочу 3000", got)
+	}
+}
+
+// TestFeeTargetGrowthTemplates — цель адаптивной комиссии во всех шаблонах
+// конфигуратора — 15% за окно (v9.9, №44; ранее 6%).
+func TestFeeTargetGrowthTemplates(t *testing.T) {
+	for _, tpl := range All() {
+		if got := tpl.Profile.FeeTargetGrowthMicros; got != 150000 {
+			t.Errorf("шаблон %d: fee_target_growth_micros = %d, хочу 150000", tpl.ID, got)
+		}
+	}
+}

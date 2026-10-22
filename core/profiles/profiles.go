@@ -84,7 +84,7 @@ func base() wire.ProfileParams {
 		TimestampToleranceSeconds:  1800,
 		MintChallengeWindowHours:   48,
 		FeeAdjustEpochs:            6,
-		FeeTargetGrowthMicros:      60000,
+		FeeTargetGrowthMicros:      150000,
 		FeeStepMicros:              500,
 		Pow: &wire.PowParams{
 			TargetLight:      0x0000_0100_0000_0000,
@@ -164,6 +164,7 @@ func All() []*Template {
 				p.Unit = wire.UnitHours
 				p.IssuanceAmount = 10 // малые суммы (банк времени)
 				p.DemurrageRateMicros = 10000 // 1%/мес — обязателен (10.3, 10.4)
+				p.DemurrageFloor = 30         // 3 месячных выпуска (v9.9: решение владельца 22.10.2026 по итогам блока 3)
 				p.RateMax = 10000             // комиссия минимальная
 				p.Modules = []uint32{wire.ModulePool}
 			}),
