@@ -1,0 +1,79 @@
+=== stage11-2: состояние узла после вступления смены (Oct 23 23:40 guest) ===
+{
+  "epoch": 26230,
+  "metrics": {
+    "common_fund": 0,
+    "gini_balance": 0,
+    "supply_burned": 0,
+    "supply_minted": 0,
+    "supply_net": 0,
+    "turnover": {},
+    "tx_count": {
+      "REGISTER": 1,
+      "UPDATE_GUARDIANS": 3
+    },
+    "wallets_active": 3,
+    "wallets_synthetic": 0,
+    "wallets_total": 4
+  },
+  "period": 3,
+  "pools": [],
+  "wallets": [
+    {
+      "address": "1a7689fd800f58e10c5d7cf99b0a4f1deaeb5c092bb08a36e034468e4518e58a",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1784744589,
+      "activated_at": 1784744589,
+      "last_claimed_period": 0,
+      "seq": 0
+    },
+    {
+      "address": "2cc263f8be80e454c08fa0b05d7e5f6e84335e8ff74404cda4a67e4e610db8ba",
+      "status": "REGISTERED",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1792608689,
+      "activated_at": 0,
+      "last_claimed_period": 0,
+      "seq": 4
+    },
+    {
+      "address": "456bab0022a027675c4ab177ef36f004d31c4e26799d496b43761b10ca74f89e",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1784744589,
+      "activated_at": 1784744589,
+      "last_claimed_period": 0,
+      "seq": 0
+    },
+    {
+      "address": "c8da47a35b0de0aa7ae4f3670c53b536bb7acd4c77a54677671adff956877257",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1784744589,
+      "activated_at": 1784744589,
+      "last_claimed_period": 0,
+      "seq": 0
+    }
+  ]
+}
