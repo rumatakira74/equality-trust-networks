@@ -345,7 +345,52 @@ void main() {
     );
     expect(btn.onPressed, isNotNull);
   });
+  testWidgets('перевыбор: битый адрес в списке блокирует публикацию (№6)',
+      (tester) async {
+    // находка прогона 11.3: IME терял символы в поле списка — хеш
+    // смены пересчитывался, публикация падала E_GUARDIAN_UPDATE
+    final fake = _withWallet(guardians: ['22' * 32]);
+    fake.setupPin('1234', null, 0, []);
+    await tester.pumpWidget(_wrap(const GuardiansScreen(), fake));
+    await tester.pumpAndSettle();
+    final l = AppLocalizations.of(
+        tester.element(find.byType(GuardiansScreen)))!;
+    await tester.tap(find.text(l.guardiansReelect));
+    await tester.pumpAndSettle();
+
+    // IME «съел» два символа: 62 вместо 64
+    await tester.enterText(
+      find.widgetWithText(TextField, l.newGuardiansLabel),
+      '33' * 31,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l.hexLenError(64)), findsOneWidget);
+
+    // публикация недоступна, пока список не исправлен
+    await tester.scrollUntilVisible(
+      find.text(l.btnPublishChange),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    final publish = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text(l.btnPublishChange),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    expect(publish.onPressed, isNull);
+
+    // исправленный список: ошибки нет
+    await tester.enterText(
+      find.widgetWithText(TextField, l.newGuardiansLabel),
+      '33' * 32,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l.hexLenError(64)), findsNothing);
+  });
 }
+
 
 /// Мок платформы: signGuardianChange не отвечает до completeSig
 /// (таймаут BiometricPrompt, PENDING №3).

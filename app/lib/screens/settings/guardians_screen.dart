@@ -263,9 +263,14 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final gs = _guardiansList;
+    // контроль длины/символов списка (PENDING №6, находка прогона
+    // 11.3: IME терял/дописывал символы в поле списка — битый адрес
+    // менял хеш смены, публикация падала E_GUARDIAN_UPDATE)
+    final badList = gs.any((g) => !HexChunkField.isValid(g, 64));
     final enough = gs.isNotEmpty &&
         gs.length <= 3 &&
-        _approvals.length >= gs.length;
+        _approvals.length >= gs.length &&
+        !badList;
     return Scaffold(
       appBar: AppBar(title: Text(l.reelectTitle)),
       body: ListView(
@@ -275,7 +280,10 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _newGuardians,
-            decoration: InputDecoration(labelText: l.newGuardiansLabel),
+            decoration: InputDecoration(
+              labelText: l.newGuardiansLabel,
+              errorText: badList ? l.hexLenError(64) : null,
+            ),
             maxLines: 3,
             onChanged: (_) => _updateHash(),
           ),
