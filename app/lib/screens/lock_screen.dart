@@ -82,37 +82,46 @@ class _LockScreenState extends State<LockScreen> {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(l.appTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l.enterPin, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              obscureText: true,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onSubmitted: (_) => _submit(),
-              decoration: InputDecoration(errorText: _error),
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _busy ? null : _submit,
-              child: Text(l.btnLogin),
-            ),
-            if (_biometricAllowed) ...[
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _busy ? null : _biometric,
-                icon: const Icon(Icons.fingerprint),
-                label: Text(l.btnFingerprint),
+      // PENDING №7 (прогон 11.2): открытая клавиатура перекрывала
+      // кнопки — прокрутка под инсеты клавиатуры, кнопка доступна
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l.enterPin, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onSubmitted: (_) => _submit(),
+                    decoration: InputDecoration(errorText: _error),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: _busy ? null : _submit,
+                    child: Text(l.btnLogin),
+                  ),
+                  if (_biometricAllowed) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _biometric,
+                      icon: const Icon(Icons.fingerprint),
+                      label: Text(l.btnFingerprint),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );

@@ -263,5 +263,11 @@
   "consentIntro": "Usted confirma aceptar ser tutor del tutelado. Introduzca la dirección del tutelado y el hash del cambio, y firme el hash. Devuelva el hex de la firma al tutelado.",
   "wardAddressLabel": "Dirección del tutelado (hex)",
   "changeHashLabel": "Hash del cambio (hex)",
-  "consentSignTitle": "Confirme el cambio de tutores del tutelado (usted es el tutor)"
+  "consentSignTitle": "Confirme el cambio de tutores del tutelado (usted es el tutor)",
+  "biometricTimeout": "La biometría no responde (tiempo de espera agotado) — inténtelo de nuevo",
+  "hexChunksCount": "Introducidos {n} de {total}",
+  "hexChunksSigCount": "Caracteres introducidos: {n}",
+  "hexLenError": "Se esperan exactamente {total} caracteres hex",
+  "hexSigEvenError": "La firma debe tener un número par de caracteres hex",
+  "hexCharsDropped": "Caracteres no válidos eliminados (solo 0-9, a-f)"
 }

@@ -263,5 +263,11 @@
   "consentIntro": "您确认同意成为该被监护人的守护人。输入被监护人地址和变更哈希并签名。将签名的 hex 交还给被监护人。",
   "wardAddressLabel": "被监护人地址（hex）",
   "changeHashLabel": "变更哈希（hex）",
-  "consentSignTitle": "确认被监护人的守护人变更（您是守护人）"
+  "consentSignTitle": "确认被监护人的守护人变更（您是守护人）",
+  "biometricTimeout": "生物识别无响应（超时）——请重试",
+  "hexChunksCount": "已输入 {n} / {total}",
+  "hexChunksSigCount": "已输入字符：{n}",
+  "hexLenError": "应恰好输入 {total} 个十六进制字符",
+  "hexSigEvenError": "签名应为偶数个十六进制字符",
+  "hexCharsDropped": "已移除无效字符（仅限 0-9、a-f）"
 }

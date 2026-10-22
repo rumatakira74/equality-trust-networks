@@ -961,4 +961,31 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get consentSignTitle =>
       'Confirme a mudança de guardiões do tutelado (você é o guardião)';
+
+  @override
+  String get biometricTimeout =>
+      'A biometria não responde (tempo esgotado) — tente novamente';
+
+  @override
+  String hexChunksCount(int n, int total) {
+    return 'Digitados $n de $total';
+  }
+
+  @override
+  String hexChunksSigCount(int n) {
+    return 'Caracteres digitados: $n';
+  }
+
+  @override
+  String hexLenError(int total) {
+    return 'Esperados exatamente $total caracteres hex';
+  }
+
+  @override
+  String get hexSigEvenError =>
+      'A assinatura deve ter um número par de caracteres hex';
+
+  @override
+  String get hexCharsDropped =>
+      'Caracteres inválidos removidos (apenas 0-9, a-f)';
 }

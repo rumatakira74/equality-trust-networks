@@ -73,7 +73,14 @@ void main() {
     final nonce = int.parse(nonceText.data!);
     expect(nonce, greaterThan(0));
     expect(nonce, lessThanOrEqualTo(1 << 30));
-    // подписей ещё нет — кнопка публикации отключена
+    // подписей ещё нет — кнопка публикации отключена (ниже вьюпорта
+    // из-за полей-чанков — доскролливаем)
+    await tester.scrollUntilVisible(
+      find.text(l.btnPublishProposal),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
     expect(find.text(l.btnPublishProposal), findsOneWidget);
     final button = tester.widget<FilledButton>(
       find.ancestor(

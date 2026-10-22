@@ -3,6 +3,8 @@
 // 150», отсчёт окна 48 ч, отмена), перевыбор — PIN-only (этап 9),
 // тревожный PIN не трогает реальный список (приманка 8.2), экран
 // согласия гардиана (подпись хеша смены биометрией).
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,8 +15,23 @@ import 'package:tnp_app/screens/settings/guardians_screen.dart';
 import 'package:tnp_app/services/models.dart';
 import 'package:tnp_app/services/platform_service.dart';
 import 'package:tnp_app/state/app_state.dart';
+import 'package:tnp_app/widgets/hex_chunk_field.dart';
 
 import 'fake_platform.dart';
+
+/// Ввод длинной hex-строки в поле-чанки: вставка полной строки в
+/// первый чанк — распределение по полям (PENDING №6).
+Future<void> enterHex(WidgetTester tester, String label, String value) async {
+  final field = find.ancestor(
+    of: find.text(label),
+    matching: find.byType(HexChunkField),
+  );
+  await tester.enterText(
+    find.descendant(of: field, matching: find.byType(TextField)).first,
+    value,
+  );
+  await tester.pump();
+}
 
 Widget _wrap(Widget child, FakePlatformService fake) {
   return MultiProvider(
@@ -148,15 +165,9 @@ void main() {
     expect(fake.calls, contains('changeHash(1)'));
     expect(find.text(l.changeHashToCopy), findsOneWidget);
 
-    // пара «гардиан + подпись»
-    await tester.enterText(
-      find.widgetWithText(TextField, l.guardianAddrLabel),
-      '33' * 32,
-    );
-    await tester.enterText(
-      find.widgetWithText(TextField, l.guardianSigLabel),
-      'cd' * 32,
-    );
+    // пара «гардиан + подпись» — чанки по 20 (PENDING №6)
+    await enterHex(tester, l.guardianAddrLabel, '33' * 32);
+    await enterHex(tester, l.guardianSigLabel, 'cd' * 32);
     await tester.tap(find.text(l.btnAddSig));
     await tester.pump();
 
@@ -210,14 +221,8 @@ void main() {
       '33' * 32,
     );
     await tester.pump();
-    await tester.enterText(
-      find.widgetWithText(TextField, l.guardianAddrLabel),
-      '33' * 32,
-    );
-    await tester.enterText(
-      find.widgetWithText(TextField, l.guardianSigLabel),
-      'cd' * 32,
-    );
+    await enterHex(tester, l.guardianAddrLabel, '33' * 32);
+    await enterHex(tester, l.guardianSigLabel, 'cd' * 32);
     await tester.tap(find.text(l.btnAddSig));
     await tester.pump();
     await tester.scrollUntilVisible(
@@ -252,14 +257,8 @@ void main() {
     final l = AppLocalizations.of(
         tester.element(find.byType(GuardianConsentScreen)))!;
 
-    await tester.enterText(
-      find.widgetWithText(TextField, l.wardAddressLabel),
-      '11' * 32,
-    );
-    await tester.enterText(
-      find.widgetWithText(TextField, l.changeHashLabel),
-      'ab' * 32,
-    );
+    await enterHex(tester, l.wardAddressLabel, '11' * 32);
+    await enterHex(tester, l.changeHashLabel, 'ab' * 32);
     await tester.tap(find.text(l.btnSignBiometric));
     await tester.pumpAndSettle();
     expect(fake.calls, contains('signGuardianChange'));
@@ -275,14 +274,87 @@ void main() {
     final l = AppLocalizations.of(
         tester.element(find.byType(GuardianConsentScreen)))!;
 
-    await tester.enterText(
-      find.widgetWithText(TextField, l.changeHashLabel),
-      'ab' * 32,
-    );
+    await enterHex(tester, l.wardAddressLabel, '11' * 32);
+    await enterHex(tester, l.changeHashLabel, 'ab' * 32);
     await tester.tap(find.text(l.btnSignBiometric));
     await tester.pumpAndSettle();
     // ответ приманки неотличим по структуре, подписи нет
     expect(fake.calls, isNot(contains('signGuardianChange')));
     expect(find.text(l.signNotConfirmed), findsOneWidget);
   });
+
+  testWidgets('согласие: таймаут биометрии не вешает UI (PENDING №3)',
+      (tester) async {
+    // платформенный слой не отвечает (таймаут BiometricPrompt на
+    // эмуляторах): ожидание ограничено, экран возвращается в рабочее
+    // состояние
+    final fake = _HangingSignFake();
+    await tester.pumpWidget(_wrap(
+      const GuardianConsentScreen(signTimeout: Duration(milliseconds: 100)),
+      fake,
+    ));
+    await tester.pumpAndSettle();
+    final l = AppLocalizations.of(
+        tester.element(find.byType(GuardianConsentScreen)))!;
+
+    await enterHex(tester, l.wardAddressLabel, '11' * 32);
+    await enterHex(tester, l.changeHashLabel, 'ab' * 32);
+    await tester.tap(find.text(l.btnSignBiometric));
+    await tester.pump();
+    // идёт ожидание: кнопка занята
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // таймаут: ошибка, экран снова рабочий
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(find.text(l.biometricTimeout), findsOneWidget);
+    final btn = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text(l.btnSignBiometric),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    expect(btn.onPressed, isNotNull);
+    // повторная попытка возможна (платформа ответила позже — не теряет UI)
+    fake.completeSig();
+    await tester.tap(find.text(l.btnSignBiometric));
+    await tester.pumpAndSettle();
+    expect(find.text(l.sigToCopy), findsOneWidget);
+  });
+
+  testWidgets('согласие: отмена биометрии возвращает экран в рабочее состояние',
+      (tester) async {
+    final fake = _withWallet();
+    fake.guardianChangeSig = ''; // отмена диалога: подписи нет
+    await tester.pumpWidget(_wrap(
+      const GuardianConsentScreen(signTimeout: Duration(seconds: 5)),
+      fake,
+    ));
+    await tester.pumpAndSettle();
+    final l = AppLocalizations.of(
+        tester.element(find.byType(GuardianConsentScreen)))!;
+
+    await enterHex(tester, l.wardAddressLabel, '11' * 32);
+    await enterHex(tester, l.changeHashLabel, 'ab' * 32);
+    await tester.tap(find.text(l.btnSignBiometric));
+    await tester.pumpAndSettle();
+    expect(find.text(l.signNotConfirmed), findsOneWidget);
+    final btn = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text(l.btnSignBiometric),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    expect(btn.onPressed, isNotNull);
+  });
+}
+
+/// Мок платформы: signGuardianChange не отвечает до completeSig
+/// (таймаут BiometricPrompt, PENDING №3).
+class _HangingSignFake extends FakePlatformService {
+  final _completer = Completer<Map<String, dynamic>>();
+  void completeSig() =>
+      _completer.complete({'sig': 'cd' * 32});
+  @override
+  Future<Map<String, dynamic>> signGuardianChange(
+          String hashHex, String title) =>
+      _completer.future;
 }

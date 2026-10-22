@@ -733,5 +733,14 @@
   "consentIntro": "You are confirming becoming a guardian of the ward. Enter the ward's address and the change hash, and sign the hash. Give the signature hex back to the ward.",
   "wardAddressLabel": "Ward's address (hex)",
   "changeHashLabel": "Change hash (hex)",
-  "consentSignTitle": "Confirm the ward's guardian change (you are the guardian)"
+  "consentSignTitle": "Confirm the ward's guardian change (you are the guardian)",
+  "biometricTimeout": "Biometrics not responding (timeout) — try again",
+  "hexChunksCount": "Entered {n} of {total}",
+  "@hexChunksCount": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "hexChunksSigCount": "Characters entered: {n}",
+  "@hexChunksSigCount": {"placeholders": {"n": {"type": "int"}}},
+  "hexLenError": "Expected exactly {total} hex characters",
+  "@hexLenError": {"placeholders": {"total": {"type": "int"}}},
+  "hexSigEvenError": "Signature must have an even number of hex characters",
+  "hexCharsDropped": "Invalid characters removed (only 0-9, a-f)"
 }
