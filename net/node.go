@@ -33,6 +33,11 @@ import (
 // maxPending — буфер внеочередных транзакций (спам: не переполнять очередь).
 const maxPending = 4096
 
+// settleInterval — период доведения сеттлемента до текущего времени
+// (PENDING №2 отчёта 11.2): зрелые отложенные операции применяются
+// без транзакции-триггера.
+const settleInterval = 30 * time.Second
+
 // Node — узел сети (полный или лёгкий, 12.2).
 type Node struct {
 	Cfg       *NodeConfig
@@ -335,6 +340,32 @@ func (n *Node) Start(ctx context.Context) error {
 	return nil
 }
 
+// settleNow — доведение сеттлемента реестра до текущего времени:
+// применение зрелых отложенных операций без транзакции-триггера.
+func (n *Node) settleNow() {
+	if n.Ledger == nil {
+		return
+	}
+	n.applyMu.Lock()
+	n.Ledger.SettleNow()
+	n.applyMu.Unlock()
+}
+
+// settleLoop — периодический flush отложенных операций (полный узел):
+// сверка со временем идёт и когда транзакций нет.
+func (n *Node) settleLoop() {
+	t := pollTicker(settleInterval)
+	defer t.Stop()
+	for {
+		select {
+		case <-n.ctx.Done():
+			return
+		case <-t.C:
+			n.settleNow()
+		}
+	}
+}
+
 // syncLoop — первичная синхронизация после bootstrap, затем периодическая
 // сверка (узел офлайн -> подключается и догоняет, 4.11).
 //
@@ -372,6 +403,16 @@ func (n *Node) syncLoop() {
 	case <-time.After(500 * time.Millisecond):
 	}
 	n.SyncAllPeers()
+	// PENDING №2 (отчёт 11.2): первичная сверка завершена — узел
+	// синхронизирован, дальше часы живые. Replay/сверка пинируют часы
+	// на timestamp_claim, поэтому зрелые отложенные операции (переводы
+	// D, миграции, смены гардианов) без транзакций «зависали»; узел
+	// доводит сеттлемент до текущего времени сам — после сверки и далее
+	// периодически, без внешнего триггера. До завершения первичной
+	// сверки settle не запускается: пинированное применение истории
+	// должно оседать по историческим границам (демередж, №40).
+	n.settleNow()
+	go n.settleLoop()
 	t := pollTicker(30 * time.Second)
 	defer t.Stop()
 	for {
