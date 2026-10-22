@@ -67,6 +67,7 @@ The values in this section are the default "Currency" profile; the other profile
 - Every `transfer` pays a fee that is **burned**: `fee = max(fee_min, rate × amount)`; the sender pays it on top of the amount, the recipient receives exactly `amount`.
 - `fee_min` is fixed and at the same time protects against spam.
 - `rate` is adaptive: at the epoch boundary it is recomputed deterministically from the checkpoint data. If the supply growth over the last K epochs is above the target, `rate` rises by a step, otherwise it falls; the bounds `[rate_min, rate_max]` are set by the protocol. All nodes obtain the same value.
+- **Data source (stage 10, v9.7):** the growth is computed from the `total_supply` of finalized checkpoints (threshold signature — the values are consensus-wide, convergence without coordination); the window of K epochs, the target growth, and the step are genesis parameters (`fee_adjust_epochs`, `fee_target_growth_micros`, `fee_step_micros`); the target supply growth is **15% per window** (v9.9: the owner's decision of October 22, 2026 following the block-3 simulation, №44; previously 6%).
 - **What the fee solves and what it does not.** It burns only *movement*, but not *holding*. A rough equilibrium estimate: the supply per wallet ≈ `1000 / (rate × turnover)`, where turnover is the share of the supply transferred per month (at `rate` = 1% and a turnover of 100% per month — about 100,000 per wallet; at 20% — about 500,000). If units are hoarded and not spent, the stock is weak.
 
 ### 10.3 Demurrage ✅
