@@ -13,6 +13,7 @@ import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
+import '../../widgets/hex_chunk_field.dart';
 import '../pin_gate.dart';
 import '../recovery/recovery_card_screen.dart';
 import '../settings/guardians_screen.dart';
@@ -230,10 +231,10 @@ class StartMigrationScreen extends StatefulWidget {
 }
 
 class _StartMigrationScreenState extends State<StartMigrationScreen> {
-  final _oldAddress = TextEditingController();
+  String _oldAddress = '';
+  String _guardianInput = '';
+  String _sigInput = '';
   final List<Map<String, String>> _approvals = [];
-  final _guardianInput = TextEditingController();
-  final _sigInput = TextEditingController();
   int _nonce = 1;
   String? _result;
 
@@ -245,14 +246,19 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
 
   Future<void> _addApproval() async {
     // подпись собирается вне приложения (гардиан подписывает у себя);
-    // здесь — ввод пары «адрес гардиана + hex подписи»
+    // здесь — ввод пары «адрес гардиана + hex подписи» (чанки по 20,
+    // PENDING №6); контроль длины/символов — до добавления пары
+    if (!HexChunkField.isValid(_guardianInput, 64) ||
+        !HexChunkField.isValid(_sigInput, 0)) {
+      return;
+    }
     setState(() {
       _approvals.add({
-        'guardian': _guardianInput.text.trim(),
-        'sig': _sigInput.text.trim(),
+        'guardian': _guardianInput,
+        'sig': _sigInput,
       });
-      _guardianInput.clear();
-      _sigInput.clear();
+      _guardianInput = '';
+      _sigInput = '';
     });
   }
 
@@ -269,7 +275,7 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
       // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
       final res = await app.signAndSubmit(
         () => platform.buildMigratePropose(
-          _oldAddress.text.trim(),
+          _oldAddress,
           _approvals,
           _nonce,
         ),
@@ -297,9 +303,11 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
         children: [
           Text(l.startMigrationIntro),
           const SizedBox(height: 12),
-          TextField(
-            controller: _oldAddress,
-            decoration: InputDecoration(labelText: l.oldAddressLabel),
+          HexChunkField(
+            label: l.oldAddressLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _oldAddress = v),
           ),
           const SizedBox(height: 8),
           // nonce виден сразу: гардиан подписывает MigrateStatement с
@@ -336,16 +344,26 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
               leading: const Icon(Icons.how_to_reg),
               title: Text(a['guardian']?.shortHash() ?? ''),
             ),
-          TextField(
-            controller: _guardianInput,
-            decoration: InputDecoration(labelText: l.guardianAddrLabel),
-          ),
-          TextField(
-            controller: _sigInput,
-            decoration: InputDecoration(labelText: l.guardianSigLabel),
+          HexChunkField(
+            label: l.guardianAddrLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _guardianInput = v),
           ),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: _addApproval, child: Text(l.btnAddSig)),
+          HexChunkField(
+            label: l.guardianSigLabel,
+            chunkCount: 8,
+            onChanged: (v) => setState(() => _sigInput = v),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: HexChunkField.isValid(_guardianInput, 64) &&
+                    HexChunkField.isValid(_sigInput, 0)
+                ? _addApproval
+                : null,
+            child: Text(l.btnAddSig),
+          ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: enough ? _propose : null,
@@ -372,8 +390,8 @@ class ApproveMigrationScreen extends StatefulWidget {
 }
 
 class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
-  final _oldAddress = TextEditingController();
-  final _newAddress = TextEditingController();
+  String _oldAddress = '';
+  String _newAddress = '';
   final _nonce = TextEditingController();
   String? _sig;
   String? _error;
@@ -383,8 +401,8 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
     final l = AppLocalizations.of(context)!;
     try {
       final r = await platform.signMigrateStatement(
-        _oldAddress.text.trim(),
-        _newAddress.text.trim(),
+        _oldAddress,
+        _newAddress,
         int.tryParse(_nonce.text) ?? 0,
         l.wardSignTitle,
       );
@@ -401,6 +419,8 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final valid = HexChunkField.isValid(_oldAddress, 64) &&
+        HexChunkField.isValid(_newAddress, 64);
     return Scaffold(
       appBar: AppBar(title: Text(l.approveTitle)),
       body: ListView(
@@ -408,13 +428,18 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
         children: [
           Text(l.approveIntro),
           const SizedBox(height: 12),
-          TextField(
-            controller: _oldAddress,
-            decoration: InputDecoration(labelText: l.oldAddressLabel),
+          HexChunkField(
+            label: l.oldAddressLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _oldAddress = v),
           ),
-          TextField(
-            controller: _newAddress,
-            decoration: InputDecoration(labelText: l.newAddressLabel),
+          const SizedBox(height: 8),
+          HexChunkField(
+            label: l.newAddressLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _newAddress = v),
           ),
           TextField(
             controller: _nonce,
@@ -422,7 +447,10 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _sign, child: Text(l.btnSignBiometric)),
+          FilledButton(
+            onPressed: valid ? _sign : null,
+            child: Text(l.btnSignBiometric),
+          ),
           if (_sig != null) ...[
             const SizedBox(height: 12),
             Text(l.sigToCopy),

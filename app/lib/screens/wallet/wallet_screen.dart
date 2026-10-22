@@ -27,13 +27,50 @@ class _WalletScreenState extends State<WalletScreen> {
   List<AwaitingTx> _awaiting = [];
   bool _loading = true;
 
+  // PENDING №4 (прогон 11.2): история запрашивалась один раз в
+  // initState — до завершения сверки узла после рестарта приложение
+  // показывало «Nothing yet» и не обновлялось. Перезапрашиваем на
+  // каждое изменение состояния приложения (узел поднялся/остановлен,
+  // новый снапшот кошелька после сверки или операции).
+  AppState? _app;
+  bool _refreshing = false;
+  bool _refreshQueued = false;
+
   @override
   void initState() {
     super.initState();
     _refresh();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final app = context.read<AppState>();
+    if (_app != app) {
+      _app?.removeListener(_onAppUpdate);
+      _app = app;
+      app.addListener(_onAppUpdate);
+    }
+  }
+
+  @override
+  void dispose() {
+    _app?.removeListener(_onAppUpdate);
+    super.dispose();
+  }
+
+  void _onAppUpdate() {
+    if (!mounted) return;
+    // рестарт узла/завершение сверки/операция: история могла измениться
+    if (_refreshing) {
+      _refreshQueued = true;
+      return;
+    }
+    _refresh();
+  }
+
   Future<void> _refresh() async {
+    _refreshing = true;
     final platform = context.read<PlatformService>();
     try {
       final history = await platform.history(limit: 50);
@@ -48,6 +85,13 @@ class _WalletScreenState extends State<WalletScreen> {
       });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
+    } finally {
+      _refreshing = false;
+      // пока шёл запрос, состояние менялось ещё раз — перезапрашиваем
+      if (_refreshQueued && mounted) {
+        _refreshQueued = false;
+        _refresh();
+      }
     }
   }
 

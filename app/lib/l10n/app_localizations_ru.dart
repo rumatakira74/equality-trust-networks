@@ -958,4 +958,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get consentSignTitle =>
       'Подтвердите смену гардианов подопечного (вы — гардиан)';
+
+  @override
+  String get biometricTimeout =>
+      'Биометрия не отвечает (таймаут) — попробуйте ещё раз';
+
+  @override
+  String hexChunksCount(int n, int total) {
+    return 'Введено $n из $total';
+  }
+
+  @override
+  String hexChunksSigCount(int n) {
+    return 'Введено символов: $n';
+  }
+
+  @override
+  String hexLenError(int total) {
+    return 'Ожидается ровно $total hex-символов';
+  }
+
+  @override
+  String get hexSigEvenError => 'Подпись — чётное число hex-символов';
+
+  @override
+  String get hexCharsDropped =>
+      'Недопустимые символы удалены (только 0–9, a–f)';
 }

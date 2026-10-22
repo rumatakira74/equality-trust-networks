@@ -1693,6 +1693,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm the ward\'s guardian change (you are the guardian)'**
   String get consentSignTitle;
+
+  /// No description provided for @biometricTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics not responding (timeout) — try again'**
+  String get biometricTimeout;
+
+  /// No description provided for @hexChunksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered {n} of {total}'**
+  String hexChunksCount(int n, int total);
+
+  /// No description provided for @hexChunksSigCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters entered: {n}'**
+  String hexChunksSigCount(int n);
+
+  /// No description provided for @hexLenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected exactly {total} hex characters'**
+  String hexLenError(int total);
+
+  /// No description provided for @hexSigEvenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature must have an even number of hex characters'**
+  String get hexSigEvenError;
+
+  /// No description provided for @hexCharsDropped.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid characters removed (only 0-9, a-f)'**
+  String get hexCharsDropped;
 }
 
 class _AppLocalizationsDelegate

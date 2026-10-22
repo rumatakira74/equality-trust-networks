@@ -931,4 +931,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get consentSignTitle => '确认被监护人的守护人变更（您是守护人）';
+
+  @override
+  String get biometricTimeout => '生物识别无响应（超时）——请重试';
+
+  @override
+  String hexChunksCount(int n, int total) {
+    return '已输入 $n / $total';
+  }
+
+  @override
+  String hexChunksSigCount(int n) {
+    return '已输入字符：$n';
+  }
+
+  @override
+  String hexLenError(int total) {
+    return '应恰好输入 $total 个十六进制字符';
+  }
+
+  @override
+  String get hexSigEvenError => '签名应为偶数个十六进制字符';
+
+  @override
+  String get hexCharsDropped => '已移除无效字符（仅限 0-9、a-f）';
 }

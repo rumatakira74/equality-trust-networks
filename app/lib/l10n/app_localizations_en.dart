@@ -959,4 +959,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get consentSignTitle =>
       'Confirm the ward\'s guardian change (you are the guardian)';
+
+  @override
+  String get biometricTimeout =>
+      'Biometrics not responding (timeout) — try again';
+
+  @override
+  String hexChunksCount(int n, int total) {
+    return 'Entered $n of $total';
+  }
+
+  @override
+  String hexChunksSigCount(int n) {
+    return 'Characters entered: $n';
+  }
+
+  @override
+  String hexLenError(int total) {
+    return 'Expected exactly $total hex characters';
+  }
+
+  @override
+  String get hexSigEvenError =>
+      'Signature must have an even number of hex characters';
+
+  @override
+  String get hexCharsDropped => 'Invalid characters removed (only 0-9, a-f)';
 }

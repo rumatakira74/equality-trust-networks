@@ -6,6 +6,7 @@
 // тревожный PIN открывает режим-приманку: операции «смены» затрагивают
 // только данные приманки (платформенный слой не подписывает и не
 // публикует), реальный список гардианов не меняется.
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
+import '../../widgets/hex_chunk_field.dart';
 import '../pin_gate.dart';
 
 /// Лимит смен — константа протокола (не параметр сети), дублируется
@@ -180,8 +182,8 @@ class ReelectGuardiansScreen extends StatefulWidget {
 
 class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
   final _newGuardians = TextEditingController();
-  final _guardianInput = TextEditingController();
-  final _sigInput = TextEditingController();
+  String _guardianInput = '';
+  String _sigInput = '';
   final List<Map<String, String>> _approvals = [];
   int _nonce = 1;
   String? _hash;
@@ -215,14 +217,19 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
 
   Future<void> _addApproval() async {
     // подпись собирается вне приложения (гардиан подписывает у себя);
-    // здесь — ввод пары «адрес гардиана + hex подписи»
+    // здесь — ввод пары «адрес гардиана + hex подписи» (чанки по 20,
+    // PENDING №6); контроль длины/символов — до добавления пары
+    if (!HexChunkField.isValid(_guardianInput, 64) ||
+        !HexChunkField.isValid(_sigInput, 0)) {
+      return;
+    }
     setState(() {
       _approvals.add({
-        'guardian': _guardianInput.text.trim(),
-        'sig': _sigInput.text.trim(),
+        'guardian': _guardianInput,
+        'sig': _sigInput,
       });
-      _guardianInput.clear();
-      _sigInput.clear();
+      _guardianInput = '';
+      _sigInput = '';
     });
   }
 
@@ -256,9 +263,14 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final gs = _guardiansList;
+    // контроль длины/символов списка (PENDING №6, находка прогона
+    // 11.3: IME терял/дописывал символы в поле списка — битый адрес
+    // менял хеш смены, публикация падала E_GUARDIAN_UPDATE)
+    final badList = gs.any((g) => !HexChunkField.isValid(g, 64));
     final enough = gs.isNotEmpty &&
         gs.length <= 3 &&
-        _approvals.length >= gs.length;
+        _approvals.length >= gs.length &&
+        !badList;
     return Scaffold(
       appBar: AppBar(title: Text(l.reelectTitle)),
       body: ListView(
@@ -268,7 +280,10 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
           const SizedBox(height: 12),
           TextField(
             controller: _newGuardians,
-            decoration: InputDecoration(labelText: l.newGuardiansLabel),
+            decoration: InputDecoration(
+              labelText: l.newGuardiansLabel,
+              errorText: badList ? l.hexLenError(64) : null,
+            ),
             maxLines: 3,
             onChanged: (_) => _updateHash(),
           ),
@@ -304,16 +319,26 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
               leading: const Icon(Icons.how_to_reg),
               title: Text((a['guardian'] ?? '').shortHash()),
             ),
-          TextField(
-            controller: _guardianInput,
-            decoration: InputDecoration(labelText: l.guardianAddrLabel),
-          ),
-          TextField(
-            controller: _sigInput,
-            decoration: InputDecoration(labelText: l.guardianSigLabel),
+          HexChunkField(
+            label: l.guardianAddrLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _guardianInput = v),
           ),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: _addApproval, child: Text(l.btnAddSig)),
+          HexChunkField(
+            label: l.guardianSigLabel,
+            chunkCount: 8,
+            onChanged: (v) => setState(() => _sigInput = v),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: HexChunkField.isValid(_guardianInput, 64) &&
+                    HexChunkField.isValid(_sigInput, 0)
+                ? _addApproval
+                : null,
+            child: Text(l.btnAddSig),
+          ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: enough ? _publish : null,
@@ -331,40 +356,65 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
 
 /// Экран согласия гардиана: адрес подопечного, хеш смены, биометрия
 /// (как ApproveMigrationScreen). Подпись передаётся вручную.
+/// Длинные hex-строки — чанками по 20 символов (PENDING №6): IME
+/// эмуляторов теряет символы при вставке в одно поле.
+/// Таймаут биометрии не вешает UI (PENDING №3): платформенный слой
+/// может не ответить (BiometricPrompt на эмуляторах) — ожидание
+/// ограничено, экран возвращается в рабочее состояние.
 class GuardianConsentScreen extends StatefulWidget {
-  const GuardianConsentScreen({super.key});
+  const GuardianConsentScreen({
+    super.key,
+    this.signTimeout = const Duration(seconds: 60),
+  });
+
+  /// Таймаут ожидания ответа биометрии; в тестах — короче.
+  final Duration signTimeout;
 
   @override
   State<GuardianConsentScreen> createState() => _GuardianConsentScreenState();
 }
 
 class _GuardianConsentScreenState extends State<GuardianConsentScreen> {
-  final _wardAddress = TextEditingController();
-  final _changeHash = TextEditingController();
+  String _wardAddress = '';
+  String _changeHash = '';
   String? _sig;
   String? _error;
+  bool _busy = false;
 
   Future<void> _sign() async {
+    if (_busy) return;
     final platform = context.read<PlatformService>();
     final l = AppLocalizations.of(context)!;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
-      final r = await platform.signGuardianChange(
-        _changeHash.text.trim(),
-        l.consentSignTitle,
-      );
+      final r = await platform
+          .signGuardianChange(_changeHash, l.consentSignTitle)
+          .timeout(widget.signTimeout);
       final sig = r['sig'] as String? ?? '';
+      if (!mounted) return;
       setState(() {
         _sig = sig.isEmpty ? null : sig;
         _error = sig.isEmpty ? l.signNotConfirmed : null;
       });
     } catch (e) {
-      setState(() => _error = l.errorWith('$e'));
+      // таймаут платформенного слоя: UI не висит, экран рабочий
+      if (!mounted) return;
+      setState(() {
+        _error = e is TimeoutException ? l.biometricTimeout : l.errorWith('$e');
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final valid = HexChunkField.isValid(_wardAddress, 64) &&
+        HexChunkField.isValid(_changeHash, 64);
     return Scaffold(
       appBar: AppBar(title: Text(l.consentTitle)),
       body: ListView(
@@ -372,16 +422,30 @@ class _GuardianConsentScreenState extends State<GuardianConsentScreen> {
         children: [
           Text(l.consentIntro),
           const SizedBox(height: 12),
-          TextField(
-            controller: _wardAddress,
-            decoration: InputDecoration(labelText: l.wardAddressLabel),
+          HexChunkField(
+            label: l.wardAddressLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _wardAddress = v),
           ),
-          TextField(
-            controller: _changeHash,
-            decoration: InputDecoration(labelText: l.changeHashLabel),
+          const SizedBox(height: 8),
+          HexChunkField(
+            label: l.changeHashLabel,
+            chunkCount: 4,
+            expectedLength: 64,
+            onChanged: (v) => setState(() => _changeHash = v),
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _sign, child: Text(l.btnSignBiometric)),
+          FilledButton(
+            onPressed: _busy || !valid ? null : _sign,
+            child: _busy
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l.btnSignBiometric),
+          ),
           if (_sig != null) ...[
             const SizedBox(height: 12),
             Text(l.sigToCopy),

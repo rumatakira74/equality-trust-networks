@@ -263,5 +263,11 @@
   "consentIntro": "Você confirma aceitar ser guardião do tutelado. Introduza o endereço do tutelado e o hash da mudança e assine o hash. Devolva o hex da assinatura ao tutelado.",
   "wardAddressLabel": "Endereço do tutelado (hex)",
   "changeHashLabel": "Hash da mudança (hex)",
-  "consentSignTitle": "Confirme a mudança de guardiões do tutelado (você é o guardião)"
+  "consentSignTitle": "Confirme a mudança de guardiões do tutelado (você é o guardião)",
+  "biometricTimeout": "A biometria não responde (tempo esgotado) — tente novamente",
+  "hexChunksCount": "Digitados {n} de {total}",
+  "hexChunksSigCount": "Caracteres digitados: {n}",
+  "hexLenError": "Esperados exatamente {total} caracteres hex",
+  "hexSigEvenError": "A assinatura deve ter um número par de caracteres hex",
+  "hexCharsDropped": "Caracteres inválidos removidos (apenas 0-9, a-f)"
 }

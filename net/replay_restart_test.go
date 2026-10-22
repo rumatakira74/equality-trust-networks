@@ -7,7 +7,6 @@
 package net
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -154,22 +153,44 @@ func TestStoreReplayConvergesWithColdSync(t *testing.T) {
 	apply(e.txAt(n1, "V2", wire.Mint, &wire.MintPayload{Period: 1, Amount: 2000}, true, e.genesisT+62*day+3600))
 	apply(e.txAt(n1, "V1", wire.Mint, &wire.MintPayload{Period: 2, Amount: 1000}, true, e.genesisT+121*day))
 
-	// B — состояние n1 (пинированное применение, семантика сверки)
+	// B — состояние n1 (пинированное применение, семантика сверки);
+	// с PENDING №2 живой узел после сверки доводит сеттлемент до
+	// текущего времени — для сравнимости путей сводим все три
+	n1.settleNow()
 	rootB, burnB := mustRoot(t, n1), n1.Ledger.State.TotalBurned
 	if burnB == 0 {
 		t.Fatal("демередж не осел по историческим границам — тест не воспроизводит Δ")
 	}
 
-	// A — рестарт из той же БД (store-replay, cons.Replay)
+	// A — рестарт из той же БД (store-replay, cons.Replay) + settle
 	n2 := e.newNode(nodeOpts{level: LevelFull, db: db})
+	n2.settleNow()
 	rootA, burnA := mustRoot(t, n2), n2.Ledger.State.TotalBurned
 
-	// C — холодная синхронизация (SyncJournalFrom)
+	// C — холодная синхронизация (SyncJournalFrom): узел синхронизируется
+	// собственным первичным проходом (syncLoop), settle запускается
+	// только после его завершения — пинированное применение истории
+	// оседает по историческим границам (№40), затем живые часы
 	e.start(n1)
 	n3 := e.newNode(nodeOpts{level: LevelFull, manual: manualAddrs(t, n1)})
 	e.start(n3)
-	if _, err := n3.SyncFromPeer(context.Background(), n1.Host.ID()); err != nil {
-		t.Fatalf("холодная сверка: %v", err)
+	// ждём: журнал применён (4 транзакции) и сеттлемент доведён до
+	// текущего времени (settle после первичной сверки)
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		n3.applyMu.RLock()
+		settled := n3.Ledger != nil &&
+			n3.Ledger.State.NetTime >= uint64(time.Now().Unix())-2
+		journal := len(n3.Ledger.AcceptedTxs())
+		n3.applyMu.RUnlock()
+		if journal == 4 && settled {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("холодная синхронизация не завершилась: журнал=%d settled=%v",
+				journal, settled)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 	rootC, burnC := mustRoot(t, n3), n3.Ledger.State.TotalBurned
 

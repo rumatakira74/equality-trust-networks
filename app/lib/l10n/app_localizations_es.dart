@@ -965,4 +965,31 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get consentSignTitle =>
       'Confirme el cambio de tutores del tutelado (usted es el tutor)';
+
+  @override
+  String get biometricTimeout =>
+      'La biometría no responde (tiempo de espera agotado) — inténtelo de nuevo';
+
+  @override
+  String hexChunksCount(int n, int total) {
+    return 'Introducidos $n de $total';
+  }
+
+  @override
+  String hexChunksSigCount(int n) {
+    return 'Caracteres introducidos: $n';
+  }
+
+  @override
+  String hexLenError(int total) {
+    return 'Se esperan exactamente $total caracteres hex';
+  }
+
+  @override
+  String get hexSigEvenError =>
+      'La firma debe tener un número par de caracteres hex';
+
+  @override
+  String get hexCharsDropped =>
+      'Caracteres no válidos eliminados (solo 0-9, a-f)';
 }
