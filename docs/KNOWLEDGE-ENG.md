@@ -35,7 +35,7 @@ Version 9.10 (the owner's decisions of October 27, 2026): profile 8 "Subscriptio
 The specification is split into five parts at numbered-section boundaries; section numbering is continuous. This page is the title, the version history, and the table of contents.
 
 - **[Part 1. Foundations and architecture](KNOWLEDGE-ENG-1.md)** — Sections 0–3: how to read this document; product; analogues and differences; platform architecture.
-- **[Part 2. Profiles and modules](KNOWLEDGE-ENG-2.md)** — Sections 4–6: profile parameters; profiles for the seven scenarios; modules.
+- **[Part 2. Profiles and modules](KNOWLEDGE-ENG-2.md)** — Sections 4–6: profile parameters; profiles for the eight scenarios; modules.
 - **[Part 3. Identity and protection](KNOWLEDGE-ENG-3.md)** — Sections 7–8: identity, vouching, farm protection; keys and owner protection.
 - **[Part 4. Registry, units, and network](KNOWLEDGE-ENG-4.md)** — Sections 9–12: the registry; units, issuance, stock; wallet recovery; network and client.
 - **[Part 5. Governance, model, and roadmap](KNOWLEDGE-ENG-5.md)** — Sections 13–19 and Appendix A: network governance; threat model; applicability bounds; commercial model; parameters; open questions; roadmap; rejected decisions.
