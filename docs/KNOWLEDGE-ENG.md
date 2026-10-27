@@ -1,6 +1,6 @@
 ---
 name: "equality-trust-networks"
-description: "Trust Networks Platform — a constructor of isolated networks without servers or an administrator, running on participants' phones: one person ≈ one wallet (vouching plus hardware attestation), equal periodic issuance, publicly verifiable history; seven application scenarios"
+description: "Trust Networks Platform — a constructor of isolated networks without servers or an administrator, running on participants' phones: one person ≈ one wallet (vouching plus hardware attestation), equal periodic issuance, publicly verifiable history; eight application scenarios"
 ---
 
 # Trust Networks Platform
