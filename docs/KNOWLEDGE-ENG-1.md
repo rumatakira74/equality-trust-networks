@@ -36,7 +36,7 @@ What the "unit" is (money, hours, a quota, points, a voucher) and what can be do
 ### 1.2 This is not a cryptocurrency ✅
 
 - The platform does not issue or sell tokens, does not create an exchange market, and does not reward mining. Units exist only inside a specific network and can be non-transferable.
-- The value is in the application (the seven scenarios below), not in the unit's price.
+- The value is in the application (the eight scenarios below), not in the unit's price.
 - The words "wallet", "checkpoint", `mint` are the technical vocabulary of a log of signed records, not a sign of a financial instrument.
 
 ### 1.3 Principles ✅
@@ -49,7 +49,7 @@ What the "unit" is (money, hours, a quota, points, a voucher) and what can be do
 - **Honesty instead of promises:** each network publishes a manifest from which the guarantee level is computed (Section 3.3).
 - **The source code is open, the license is non-commercial only** ✅: commercial use and commercial derivative works — under a purchased license (Section 16).
 
-### 1.4 Seven scenarios ✅
+### 1.4 Eight scenarios ✅
 
 1. Education and an institutions laboratory (including simulations).
 2. Proof of personhood as a service for other applications.
@@ -58,6 +58,7 @@ What the "unit" is (money, hours, a quota, points, a voucher) and what can be do
 5. An internal currency or a time bank (equal monthly issuance and vouching instead of an administrator keeping accounts).
 6. Volunteer contribution accounting.
 7. A mutual aid fund.
+8. A subscription resource — redistribution of a recurring resource under a subscription (commercial; Section 16.2).
 
 ---
 
@@ -89,7 +90,7 @@ State as of October 2026 from open sources (the list is at the end of the sectio
 
 - **No blockchain and no servers:** the network lives on phones. Circles depends on a chain and a relayer; local-currency software on hosting and an administrator.
 - **Hardware attestation of the device** as an additional anti-sybil layer (together with vouching). This layer is not visible in the reviewed analogues.
-- **A platform of profiles** for seven scenarios instead of one product.
+- **A platform of profiles** for eight scenarios instead of one product.
 - **Owner protection from coercion:** a duress PIN and delayed large transfers.
 - **Networks without an administrator** with immutable-by-default parameters, non-retroactive changes, and the right to fork.
 - **Zero operating costs:** free simulations and sandboxes as the entry to the product.
@@ -120,6 +121,7 @@ State as of October 2026 from open sources (the list is at the end of the sectio
 ### 3.1 Network instances ✅
 
 - Not one network but many isolated ones. Each has its own `network_id`, genesis, seed circle, and profile. There is no exchange between networks (bridges are outside v1).
+- **Network identification (decision of October 27, 2026):** the `network_id` is self-certifying — `network_id = H(manifest ‖ genesis)`; it cannot be squatted or forged. A human-readable `slug` is stored alongside as a label, not identity. The global network is the reserved constant `network_id = "global"`: there is no empty identifier, and `network_id` always takes part in signing and validation, so cross-network replay protection works in the global network too.
 - All scenarios rely on the same three things (Section 1.1). The difference is in **what counts as the unit, where it comes from, whether it can be transferred, and what is done with it**. That is exactly what is moved into the profile.
 - A network is created by a constructor: an organization picks a profile template, configures parameters, and receives a genesis package and an application.
 

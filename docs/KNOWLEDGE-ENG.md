@@ -8,8 +8,8 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 > **Unofficial English translation.** In case of any discrepancy, the Russian
 > original (`KNOWLEDGE.md`) prevails.
 
-Document version: 9.9. Working title — Equality Project.  
-Document date: October 22, 2026.  
+Document version: 9.10. Working title — Equality Project.  
+Document date: October 27, 2026.  
 Author: Kirill Lapchinsky  
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Kirill Lapchinsky. Terms of use are defined by the license (Section 16).
@@ -27,6 +27,8 @@ Version 9.3: working title — Equality Project; v1.0.0 published on Zenodo (DOI
 Version 9.8 (owner's decisions, October 21, 2026): guardian re-election (Section 11) — the new `update_guardians` transaction type: personal guardians can be re-elected after registration (the new guardians' consent is a signature of the change hash, passed manually, like a migration approve), a 48-hour effective window, cancellation by explicit PIN entry only, a limit of 150 effective changes per wallet over its lifetime (the former D4 restriction "appointed forever" is repealed: a network may be started without a seed circle, and public guardians are unattainable during the first year); `migrate` also transfers the **balance** (a formalization of the stage-3 implementation); "known v1 limitations" — migration cancellation remains the old key's right within the 14-day window (the theft-with-known-PIN risk is documented honestly, not fixed). The English translation of versions 9.4–9.7 is pending; the Russian original prevails.
 
 Version 9.9 (the owner's decisions of October 22, 2026, following the block-3 simulation): the adaptive-fee target (10.2) is **15% per window** (was 6%); the mechanics are unchanged (K = 6, a 0.05 pp step, the bounds [0.5; 2]%, fee_min = 0.01, burn); the demurrage floor of profile template 5 is **30** (was 3000; 3 monthly issuances), profile 7 is unchanged (3000); the 14-day moratorium is confirmed unchanged.
+
+Version 9.10 (the owner's decisions of October 27, 2026): profile 8 "Subscription resource" — `recurring` units (Section 4: each unit carries a period mark `period`; transferring a unit of period P is rejected after the boundary of period P+1; not a balance reset — the history stays verifiable; default `recurring = off`); network identification: a self-certifying `network_id = H(manifest ‖ genesis)` plus a human-readable `slug` (a label, not identity); the reserved constant `network_id = "global"` for the global network (there is no empty identifier — cross-network replay protection works in the global network too); a new transfer mode `peer-redeem` (member → member and member → provider) for the flow of recurring quotas between members; genesis validation of combinations: `recurring = on` only with a non-global `network_id`, `unit = quota(resource_id)`, and `transfer_mode ∈ {restricted, peer-redeem}`; APK file names: `equality-{global|slug}-{std|rec}-v{version}.apk` (ergonomics and license transparency, not identity); `recurring = on` is the technical marker of commercial use (Section 16.2).
 
 ## Table of contents
 

@@ -11,10 +11,12 @@
 | Parameter                              | Options                                                                                                                                                                                       | Default ("Currency")         |
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `unit`                                | `currency`, `hours`, `quota(resource_id)`, `points`, `voucher(program_id)`, `heartbeat` (an activity counter without value)                                                                     | `currency`                     |
-| `transfer_mode`                       | `free`; `restricted` (only member → resource provider, or per a list from the network parameters); `soulbound` (non-transferable)                                                               | `free`                         |
+| `transfer_mode`                       | `free`; `restricted` (only member → resource provider, or per a list from the network parameters); `peer-redeem` (member → member and member → provider; for the recurring quotas of profile 8); `soulbound` (non-transferable)                                                               | `free`                         |
 | `issuance_mode`                       | `periodic_equal`; `quota_reset` (a quota per period, unused amounts burn); `on_contribution`; `pool_claim` (equal shares from a pool); `heartbeat`; `none`                                       | `periodic_equal`               |
 | `issuance_amount` / `issuance_period` | any                                                                                                                                                                                            | 1000 / month                   |
 | `accrual_window`                      | 0…N months                                                                                                                                                                                     | 6 months (0 for `quota_reset`) |
+| `recurring`                          | `false`/`true`: units carry a period mark `period`; transferring a unit of period P is rejected after the boundary of period P+1 (not a balance reset — the history stays verifiable). Allowed only with `unit = quota(resource_id)`, a non-global `network_id`, and `transfer_mode ∈ {restricted, peer-redeem}`; forbidden in the global network (there is no organizer defining the period and resource) | `false`                        |
+| `slug`                               | a human-readable network name (a label, not identity); `network_id = H(manifest ‖ genesis)` is self-certifying; the global network is the reserved constant `network_id = "global"` | —                              |
 | `fee_mode`                            | `burn`; `pool` (into the network's common fund); `none`                                                                                                                                         | `burn`, an adaptive rate       |
 | `demurrage_rate` / `demurrage_floor`  | a fraction per month / a tax-free remainder                                                                                                                                                     | disabled                       |
 | `entry_mode`                          | `open_vouch`; `founders_seed` (a seed circle from genesis, then vouching only); `invite_only_vouch` (entry by an invitation key from genesis, then vouching)                                     | `open_vouch`                   |
@@ -32,7 +34,7 @@
 
 ---
 
-## 5. Profiles for the seven scenarios ✅
+## 5. Profiles for the eight scenarios ✅
 
 | №   | Profile                            | Unit / issuance                                                              | Transfer                                     | Stock                                                                        | Entry / K                                    | Devices / signing                                            | Modules                                                |
 | --- | ---------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
@@ -43,6 +45,7 @@
 | 5   | Internal currency / time bank      | `hours` or `currency`; `periodic_equal` (small amounts)                      | `free`                                       | Demurrage enabled (❓ rate), a minimal or `pool` fee                          | `open_vouch`, K = 2–3                         | `strict`; `relaxed` acceptable for closed communities       | `pool` (the common fund), optionally `contribution`     |
 | 6   | Volunteer contribution accounting | `points`; `on_contribution`, paid from the program pool                       | `soulbound` or `restricted` → `redeem`       | none                                                                         | `invite_only_vouch` or `founders_seed`, K = 2–3 | `strict` or `relaxed` by the network's decision               | `contribution` (`peer`), `redeem`, `pool`                |
 | 7   | Mutual aid fund                    | `currency`; `periodic_equal`                                                 | `free`                                       | Demurrage + a burn fee                                                       | `open_vouch`, K = 3                           | `strict`; `biometric_strong`                                 | `pool` (collections), `attest` (presenting "tenure" to foundations) |
+| 8   | Subscription resource (commercial)  | `quota(resource_id)`; `quota_reset`, `recurring = true` (period mark + burn) | `restricted` or `peer-redeem` (member → member / provider) | burns at the period boundary | `invite_only_vouch`, K = 3 | `strict`; `biometric_strong` | `redeem` |
 
 **Notes on the profiles**
 
@@ -50,6 +53,7 @@
 - **Profile 7 and redistribution.** Value is in the flow, not in accumulation. The fee burns on movement and does not penalize holding; holding is penalized by demurrage, which is why it is enabled by default in profiles 5 and 7 (Section 10.3).
 - **Profile 4.** Members can only be owners of suitable smartphones (Section 15).
 - **Profile 2.** The "pulse" is monthly proof that the wallet is alive (reinforced PoW, Section 7.6); the units are not transferred and have no value.
+- **Profile 8 (decision of October 27, 2026).** A recurring resource under a subscription: CPU time, disk space, AI tokens, visits (salons, fitness, coworking), car-sharing minutes, VPN gigabytes. An equal quota per period to every member; unused amounts burn at the period boundary (`recurring = true`); surpluses flow to those who need more (`peer-redeem`); the provider redeems quotas via `redeem` and reads the public registry instead of a billing server. A "pool subscription" as a product: a community or company buys wholesale capacity and the protocol splits it into equal quotas. `recurring = on` is always commercial use: under a paid license only (Section 16.2); in non-commercial builds the mode is not validated. Invalid combinations (recurring in the global network, recurring + `free`) are rejected by genesis validation at network assembly. APK file name: `equality-{global|slug}-{std|rec}-v{version}.apk` — ergonomics and license transparency, not identity (true isolation is the `network_id` in genesis).
 
 ---
 
@@ -71,6 +75,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 - A transfer of a unit to a provider wallet with a `resource_id` and an optional time slot. The provider publishes a signed `receipt`.
 - The provider is an ordinary wallet whose address is listed in the network parameters; it has no special governance rights. For physical access it must wait for network confirmation (Section 12.4).
 - A quota (`quota_reset`) does not accumulate and burns at the end of the period.
+- With `recurring = true`, every unit carries a period mark, and transferring a unit of period P is rejected after the boundary of period P+1; there is no balance reset — the history stays verifiable (decision of October 27, 2026).
 
 ### 6.3 `pool` — the pool (collections, a program budget, a common fund)
 

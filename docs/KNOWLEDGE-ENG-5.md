@@ -66,6 +66,7 @@
 
 - The project is distributed as **open source under a non-commercial-use-only license**: the code can be read, run, modified, and the changes distributed **for non-commercial purposes only**.
 - **Any commercial use and the creation of commercial derivative works require purchasing a commercial license.**
+- **The technical marker of the commercial mode (decision of October 27, 2026):** `recurring = on` (profile 8 "Subscription resource", Section 4). Using a network with recurring units is always commercial and requires a paid license; in non-commercial builds this mode is not validated at network assembly. The protection is legal (DRM and in-app license checks contradict the principles, 16.3); the `rec` APK file name makes commercial builds visible.
 - The license covers all the platform's software: the core, the app, the network constructor, the verifier, the simulator.
 - Such a license does not meet the OSI definition of "open source" (it restricts commercial use). In public materials, it is more accurate to write "the source code is open" (source-available), so as not to mislead.
 - The platform has no operating costs (no servers and no hosting), so the only revenue source from the software is the commercial license. A network-usage fee is not introduced; the protocol contains no payments to the developer (otherwise an embedded rent and a question of trust).
