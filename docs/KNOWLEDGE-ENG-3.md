@@ -27,6 +27,7 @@
 - One fingerprint = one address; a repeated `register` with the same fingerprint and a different address is rejected. Node index: `fingerprint → address`.
 - ✅ By default (`device_policy = strict`) only devices with hardware attestation are allowed (Knox/StrongBox and the like); Play Integrity and Google servers are not used. `relaxed` is acceptable for networks with low stakes; the guarantee level is visible in the manifest.
 - ✅ A second wallet is banned at the application level.
+- ✅ The "one phone — one wallet" rule applies **within a single network** (per-network; clarified October 27, 2026). The address = `SHA-256(fingerprint ‖ network_id)`, so the same phone yields different addresses in different networks — and in each network it is "one wallet per phone". Wallets of different networks can live on the same phone simultaneously: in v1 each network is its own APK (the constructor: a genesis package + an application), one wallet in each. The networks are isolated, cross-network replay is impossible; a double benefit (two quotas) is achievable only inside a single network.
 - 🆕 The `region` field (the country by MCC/MNC) in `register` is not introduced in v1: it gives only crude statistics, and for vulnerable groups it is an extra signal. IMSI/ICCID are never written to the registry.
 - Limitations left explicitly: root and emulators bypass `androidId`, but not hardware attestation; several phones = several wallets (this costs money and time); a factory reset = a new wallet unless migration has been performed (Section 11).
 
