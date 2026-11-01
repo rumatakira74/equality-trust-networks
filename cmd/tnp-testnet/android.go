@@ -37,7 +37,7 @@ type paletteTone struct {
 var equalityPalette = [16]paletteTone{
 	{Name: "red", Hex: "#F44336"},         // Material red 500
 	{Name: "pink", Hex: "#E91E63"},        // Material pink 500
-	{Name: "purple", Hex: "#9C27B0"},     // Material purple 500
+	{Name: "purple", Hex: "#9C27B0"},      // Material purple 500
 	{Name: "deep purple", Hex: "#673AB7"}, // Material deep purple 500
 	{Name: "indigo", Hex: "#3F51B5"},      // Material indigo 500
 	{Name: "blue", Hex: "#2196F3"},        // Material blue 500
@@ -47,9 +47,9 @@ var equalityPalette = [16]paletteTone{
 	{Name: "green", Hex: "#4CAF50"},       // Material green 500
 	{Name: "light green", Hex: "#7CB342"}, // Material light green 600
 	{Name: "lime", Hex: "#AFB42B"},        // Material lime 600
-	{Name: "yellow", Hex: "#FBC02D"},     // Material yellow 600
+	{Name: "yellow", Hex: "#FBC02D"},      // Material yellow 600
 	{Name: "amber", Hex: "#FFB300"},       // Material amber 600
-	{Name: "orange", Hex: "#FB8C00"},     // Material orange 600
+	{Name: "orange", Hex: "#FB8C00"},      // Material orange 600
 	{Name: "brown", Hex: "#795548"},       // Material brown 500
 }
 
@@ -193,10 +193,11 @@ func identiconImage(networkID []byte, c color.RGBA, badge bool) *image.RGBA {
 		}
 	}
 	if badge {
-		// бейдж rec-сборки: круг в углу foreground (акцент поверх палитры)
+		// бейдж rec-сборки: круг в углу foreground (акцент поверх палитры);
+		// цвет — тон red палитры Equality (единый источник с сеткой)
 		const r = 40
 		cx, cy := size-72, size-72
-		badgeCol := color.RGBA{R: 230, G: 57, B: 70, A: 255} // #E63946
+		badgeCol, _ := parseHexColor(equalityPalette[0].Hex)
 		for y := cy - r; y <= cy+r; y++ {
 			for x := cx - r; x <= cx+r; x++ {
 				dx, dy := x-cx, y-cy
