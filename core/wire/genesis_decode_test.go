@@ -72,8 +72,8 @@ func testGenesisPackage() *GenesisPackage {
 		DisplayName: "TNP RoundTrip",
 		Profile:     profile,
 		SeedCircle: []SeedMember{
-			{Address: []byte("addr-1"), PublicKey: []byte("pub-1")},
-			{Address: []byte("addr-2"), PublicKey: []byte("pub-2")},
+			{PublicKey: []byte("pub-1")},
+			{PublicKey: []byte("pub-2")},
 		},
 		SeedSunset: &SeedSunset{UseActiveWallets: true, ActiveWallets: 100, DeadlineEpoch: 24},
 	}

@@ -247,10 +247,11 @@ func fleetCmd(args []string) error {
 			len(seedLabels)+len(walletLabels), *nodes)
 	}
 	// посевные кошельки узлов обязаны быть в seed-круге genesis
-	// (иначе не ACTIVE и не подписывают чекпоинты переходного режима)
+	// (иначе не ACTIVE и не подписывают чекпоинты переходного режима);
+	// манифест хранит публичные ключи — адрес выводится (v9.11)
 	circle := map[string]bool{}
 	for _, m := range gp.Manifest.SeedCircle {
-		circle[hex.EncodeToString(m.Address)] = true
+		circle[hex.EncodeToString(crypto.AddressOfKey(m.PublicKey, gp.Genesis.NetworkID))] = true
 	}
 	for _, l := range seedLabels {
 		addr := addrOf(seedKey(l), gp.Genesis.NetworkID)

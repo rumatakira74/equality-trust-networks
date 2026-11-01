@@ -80,7 +80,7 @@ func newTestEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *testEnv {
 		priv := env.key(id)
 		pub := crypto.MarshalPubKey(&priv.PublicKey)
 		circle = append(circle, wire.SeedMember{
-			Address: env.addr(id), PublicKey: pub,
+			PublicKey: pub,
 		})
 	}
 	gp.Manifest.SeedCircle = circle

@@ -88,8 +88,9 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 	// стартовая ставка комиссии = rate_min (10.2); дальше — адаптивный
 	// пересчёт на границах эпох (settleEpoch)
 	st.FeeRate = p.RateMin
-	// Посевной круг: active из genesis-чекпоинта эпохи 0 (решение D8)
-	st.SeedMembers(m.SeedCircle, gp.Genesis.EpochZero, gp.Genesis.GenesisTime)
+	// Посевной круг: active из genesis-чекпоинта эпохи 0 (решение D8);
+	// адреса выводятся из финального network_id (fingerprint-манифест v9.11)
+	st.SeedMembers(m.SeedCircle, gp.Genesis.NetworkID, gp.Genesis.EpochZero, gp.Genesis.GenesisTime)
 
 	l := &Ledger{
 		State:      st,

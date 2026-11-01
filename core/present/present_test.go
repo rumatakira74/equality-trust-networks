@@ -36,7 +36,7 @@ func newEnv(t *testing.T) *env {
 		pub := crypto.MarshalPubKey(&k.PublicKey)
 		fp := crypto.Fingerprint(pub)
 		addr := crypto.DeriveAddress(fp, e.netID)
-		members = append(members, wire.SeedMember{Address: addr, PublicKey: pub})
+		members = append(members, wire.SeedMember{PublicKey: pub})
 		e.seedPrivs = append(e.seedPrivs, k)
 		e.seedAddrs = append(e.seedAddrs, addr)
 		e.pubs[string(addr)] = pub
