@@ -1,0 +1,10 @@
+=== gradlew assembleRelease -PTNP_APPLICATION_ID=io.equality.cirrus.x783da646 -PTNP_APP_LABEL=Eq-783da646 ===
+BUILD SUCCESSFUL in 1m 20s
+GRADLE-OK
+
+=== aapt dump badging app-release.apk ===
+package: name='io.equality.cirrus.x783da646' versionCode='1' versionName='0.7.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+sdkVersion:'26'
+
+=== контроль: та же сборка без префикса x (прогон 12.2, reports/REPORT-STAGE-12-2.md PENDING 1) ===
+AAPT: error: attribute 'package' ... is not a valid Android package name: 'io.equality.cirrus.783da646'
