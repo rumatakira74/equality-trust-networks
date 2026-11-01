@@ -146,8 +146,8 @@ func configureCmd(args []string) error {
 
 	gp := &wire.GenesisPackage{
 		Manifest: &wire.Manifest{
-			Slug:      slugName,
-			Profile:   &prof,
+			Slug:    slugName,
+			Profile: &prof,
 			SeedSunset: &wire.SeedSunset{UseActiveWallets: true, ActiveWallets: 100,
 				DeadlineEpoch: 24}, // №15
 		},
@@ -305,18 +305,18 @@ func configureCmd(args []string) error {
 		return err
 	}
 	aj, err := json.MarshalIndent(map[string]any{
-		"apk_name":      apk,
+		"apk_name":       apk,
 		"application_id": appID,
-		"label":         label,
-		"display_name":  dn,
-		"slug":          slugName,
-		"recurring":     prof.Recurring,
-		"network_id":    hex.EncodeToString(networkID),
+		"label":          label,
+		"display_name":   dn,
+		"slug":           slugName,
+		"recurring":      prof.Recurring,
+		"network_id":     hex.EncodeToString(networkID),
 		"icon": map[string]any{
-			"background":     spec.Background,
-			"palette_index":  spec.PaletteIndex,
-			"foreground":     spec.Foreground,
-			"badge":          spec.Badge,
+			"background":      spec.Background,
+			"palette_index":   spec.PaletteIndex,
+			"foreground":      spec.Foreground,
+			"badge":           spec.Badge,
 			"adaptive_layers": []string{"icon/background.png", "icon/foreground.png"},
 		},
 	}, "", "  ")

@@ -494,10 +494,10 @@ func generate(args []string) error {
 func manifestJSON(gp *wire.GenesisPackage, name string, seedLabels []string, inviteKey []byte) ([]byte, error) {
 	p := gp.Manifest.Profile
 	type seedRow struct {
-		Label      string `json:"label"`
+		Label       string `json:"label"`
 		Fingerprint string `json:"fingerprint"`
-		Address    string `json:"address"` // выведен из network_id (v9.11)
-		PublicKey  string `json:"public_key"`
+		Address     string `json:"address"` // выведен из network_id (v9.11)
+		PublicKey   string `json:"public_key"`
 	}
 	seeds := make([]seedRow, 0, len(gp.Manifest.SeedCircle))
 	for i, m := range gp.Manifest.SeedCircle {
@@ -507,8 +507,8 @@ func manifestJSON(gp *wire.GenesisPackage, name string, seedLabels []string, inv
 		}
 		seeds = append(seeds, seedRow{Label: label,
 			Fingerprint: crypto.FingerprintHex(crypto.Fingerprint(m.PublicKey)),
-			Address:    hex.EncodeToString(crypto.AddressOfKey(m.PublicKey, gp.Genesis.NetworkID)),
-			PublicKey:  hex.EncodeToString(m.PublicKey)})
+			Address:     hex.EncodeToString(crypto.AddressOfKey(m.PublicKey, gp.Genesis.NetworkID)),
+			PublicKey:   hex.EncodeToString(m.PublicKey)})
 	}
 	out := map[string]any{
 		"name":                          name,

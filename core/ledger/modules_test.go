@@ -65,7 +65,7 @@ func (e *e2eEnv) preStateWallet(id string) *Wallet {
 	addr := e.addr(id)
 	w := &Wallet{
 		Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
-		Status:          wire.StatusActive, Seed: true,
+		Status: wire.StatusActive, Seed: true,
 		RegisteredAt:    e.clock.NetTime() - 400*86400,
 		ActivatedAt:     e.clock.NetTime() - 400*86400,
 		ActivatedPeriod: 1, LastClaimedPeriod: 10,

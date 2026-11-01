@@ -239,10 +239,10 @@ func (m *MigrateStatement) Hash() [32]byte {
 // как approve миграции). Эпоха не входит: окно смены 48 ч может
 // пересекать границу эпохи, подпись не должна протухать на ней.
 type GuardianChangeStatement struct {
-	NetworkID     []byte
-	Ward          []byte // адрес кошелька, чьи гардианы меняются
-	NewGuardians  [][]byte
-	Nonce         uint64
+	NetworkID    []byte
+	Ward         []byte // адрес кошелька, чьи гардианы меняются
+	NewGuardians [][]byte
+	Nonce        uint64
 }
 
 func (g *GuardianChangeStatement) Encode() []byte {
@@ -267,17 +267,17 @@ func (g *GuardianChangeStatement) Hash() [32]byte {
 // эпоха чекпоинта, challenge проверяющего, срок годности, app_id
 // стороннего приложения (для идентификатора H(address ‖ app_id)).
 type AttestStatement struct {
-	NetworkID   []byte
-	Address     []byte
-	Status      WalletStatus
-	AgeDays     uint64
-	VouchDepth  int64
-	Flagged     bool
+	NetworkID    []byte
+	Address      []byte
+	Status       WalletStatus
+	AgeDays      uint64
+	VouchDepth   int64
+	Flagged      bool
 	ManifestHash []byte
-	Epoch       uint64
-	Challenge   []byte
-	ExpiresAt   uint64
-	AppID       []byte
+	Epoch        uint64
+	Challenge    []byte
+	ExpiresAt    uint64
+	AppID        []byte
 }
 
 func (a *AttestStatement) Encode() []byte {

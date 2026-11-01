@@ -89,11 +89,11 @@ func base() wire.ProfileParams {
 		FeeTargetGrowthMicros:      150000,
 		FeeStepMicros:              500,
 		Pow: &wire.PowParams{
-			TargetLight:      0x0000_0100_0000_0000,
-			Argon2MemoryKiB:  32768,
-			Argon2Iterations: 1,
+			TargetLight:       0x0000_0100_0000_0000,
+			Argon2MemoryKiB:   32768,
+			Argon2Iterations:  1,
 			Argon2Parallelism: 1,
-			TargetHard:       0x0040_0000_0000_0000,
+			TargetHard:        0x0040_0000_0000_0000,
 		},
 	}
 }
@@ -169,7 +169,7 @@ func All() []*Template {
 			"hours: малые равные выпуски, свободная передача, демередж включён, минимальная комиссия",
 			func(p *wire.ProfileParams) {
 				p.Unit = wire.UnitHours
-				p.IssuanceAmount = 10 // малые суммы (банк времени)
+				p.IssuanceAmount = 10         // малые суммы (банк времени)
 				p.DemurrageRateMicros = 10000 // 1%/мес — обязателен (10.3, 10.4)
 				p.DemurrageFloor = 30         // 3 месячных выпуска (v9.9: решение владельца 22.10.2026 по итогам блока 3)
 				p.RateMax = 10000             // комиссия минимальная
