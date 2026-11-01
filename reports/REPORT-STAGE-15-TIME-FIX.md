@@ -212,23 +212,26 @@ spec/{00,02,03,04,06}-*.md.
 
 ## CI
 
-Правило CI-verify: пуш ветки — без ожидания статусов в сессии. Прогоны workflows на ветке
-`stage15-time-fix` (номера на момент пуша):
+Правило CI-verify: пуш ветки — без ожидания статусов в сессии. Прогоны workflows,
+запущенные пушем ветки `stage15-time-fix` (номера на момент пуша; все — «CI pending»):
 
-| Workflow | Прогон | Статус на момент пуша |
+| Workflow | Прогон (run #, id) | Статус на момент пуша |
 | --- | --- | --- |
-| core (core.yml) | см. сводку ниже | CI pending |
-| net (net.yml) | см. сводку ниже | CI pending |
-| cons (cons.yml) | см. сводку ниже | CI pending |
-| flutter (flutter.yml) | см. сводку ниже | CI pending |
-| android (android.yml) | см. сводку ниже | CI pending |
+| core (core.yml) | #32, id 41343028891 | CI pending |
+| net (net.yml) | #41, id 41343028960 | CI pending |
+| cons (cons.yml) | #41, id 41343028936 | CI pending |
+| flutter (flutter.yml) | #40, id 41343028925 | CI pending |
+| android (android.yml) | #40, id 41343028900 | CI pending |
 
-Точные номера прогонов (run numbers) — в сводке сессии после пуша; владелец запускает
-CI-verify по `prompts/ci-verify-prompt.md`, подставив имя ветки `stage15-time-fix`.
+Коммит этого отчёта с номерами прогонов запускает workflows повторно — актуальные
+прогоны tip ветки владелец проверяет запуском CI-verify по `prompts/ci-verify-prompt.md`,
+подставив имя ветки `stage15-time-fix` (номера прогонов tip — в сводке сессии).
 
 ## Сводка
 
-- tip ветки `stage15-time-fix`: см. `git log -1` после финального коммита.
+- tip ветки `stage15-time-fix`: коммит отчёта (см. `git log -1`); кодовая часть — `80f1855`.
+- Прогоны CI кодового пуша: core #32, net #41, cons #41, flutter #40, android #40 — все
+  CI pending на момент завершения сессии; прогоны tip — в сводке сессии.
 - protocolVersion: 2.
 - Правила на txNow: M2, M4, M5, M7, T3, T6/X3, V2, V8, ActivatedPeriod, recurring-сгорание
   (T4/T8, redeem), evidence, гардианы (offer/смена/миграция), модули (pool/redeem/
