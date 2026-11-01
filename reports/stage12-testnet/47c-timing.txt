@@ -1,0 +1,4 @@
+/tmp/stage12-testnet-bin/tnp-testnet redeem -genesis net-std/genesis.bin -see  22.98s user 1.34s system 136% cpu 17.755 total
+/tmp/stage12-testnet-bin/tnp-testnet transfer -genesis net-std/genesis.bin     6.15s user 0.31s system 79% cpu 8.128 total
+/tmp/stage12-testnet-bin/tnp-testnet redeem -genesis net-std/genesis.bin -see  22.98s user 1.34s system 136% cpu 17.755 total
+/tmp/stage12-testnet-bin/tnp-testnet transfer -genesis net-std/genesis.bin     6.15s user 0.31s system 79% cpu 8.128 total

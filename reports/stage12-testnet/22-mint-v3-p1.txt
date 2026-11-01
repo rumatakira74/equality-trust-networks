@@ -1,0 +1,14 @@
+узел: Qmd7pLkJMAUg7QQjDv5r9htFB28UkL6b38UoQk4DBpv1qN
+узел: handleTx: tx ea0682ce88c4 type=REGISTER seq=1 от <peer.ID Qm*kTcxcs>
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+tx d01321d5af5b99f1: accept/OK seq=1
+узел: gossipLoop: выход: context canceled

@@ -357,7 +357,7 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 	applied := 0
 	// Replay (INV-3): часы пинируются на timestamp_claim каждой транзакции —
 	// C9 (±30 мин) проверяется на момент публикации, а не пересчёта.
-	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime, n.Cfg.Genesis.Manifest.Profile.EpochSeconds)
+	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime, n.Cfg.Genesis.Manifest.Profile.EpochSeconds, n.Cfg.Genesis.Manifest.Profile.PeriodSeconds)
 	for {
 		var e enc
 		e.u64(after)

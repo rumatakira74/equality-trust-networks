@@ -1,0 +1,4 @@
+узел: QmY4MuA4NFQHarAk4AnnBM5Y79S2Eo8AAX4Yr1mMw3nEA3
+register: кошелёк 3d20ca57233757f680a9c1b96a3989170cb7d235066713fdce0b9d191c73b809
+tx ea0682ce88c470d3: accept/OK seq=1
+узел: gossipLoop: выход: context canceled

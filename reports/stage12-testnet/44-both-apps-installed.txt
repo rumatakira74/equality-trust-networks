@@ -1,0 +1,3 @@
+package:io.equality.rho_t.x437a812d
+package:io.equality.cirrus_t.x9af2cca1
+  mCurrentFocus=Window{68ae884 u0 io.equality.rho_t.x437a812d/platform.tnp.tnp_app.MainActivity}

@@ -1,0 +1,5 @@
+V1: balance=0 liquid=0 status=ACTIVE
+V2: balance=150 liquid=150 status=ACTIVE
+V3: balance=550 liquid=550 status=ACTIVE
+W1B: balance=300 liquid=300 status=REGISTERED
+period 5 journal_len 6 checkpoints 0

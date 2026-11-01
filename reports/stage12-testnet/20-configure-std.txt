@@ -1,0 +1,18 @@
+сеть rho-t по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: ef3d1dc716519fc906ebe1c4724d60b2fbbc679c2f119a8f80b0c7b89ec1f37d
+ manifest_hash: 2cb49f0b5a4635cb25b5a61b08bdf5ec51523eb4f216a4b6680397efc9150fa2
+ genesis_time: 1793536609 (2026-11-01T12:36:49Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ period_seconds: 120 — период заданной длины (тестовая сеть, границы на реальном времени)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: net-std
+ посевной V1: адрес e2a31fa00640ddf8f9297d804134b2ef52d61a022de13c487d819742d708d996 (выведен из network_id)
+ посевной V2: адрес dad4107528e55b2dbab6a09f868ecf8c1392426c29ac08fd4e41346930f7193f (выведен из network_id)
+ посевной V3: адрес 63c0c4c559b84c7a977c7d9a7a5dbd462059fe19dba40dd10f67ea6b60221f04 (выведен из network_id)
+ поставщик 0: fingerprint d0af97f63879cef9d0a2f3aeac5e857f21788e1fe454de6cfabee63e2f0184ab → адрес dad4107528e55b2dbab6a09f868ecf8c1392426c29ac08fd4e41346930f7193f (выведен из network_id)
+ APK: equality-rho-t-std-v1.0.0.apk
+ applicationId: io.equality.rho_t.x437a812d
+ label: Eq-437a812d
+ display_name: "rho-t" · Eq-437a812d

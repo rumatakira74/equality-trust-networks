@@ -257,6 +257,11 @@ func Validate(p *wire.ProfileParams) []string {
 	if p.VouchK < 1 {
 		add("vouch_k < 1")
 	}
+	// period_seconds (поле 61): 0 — конвенция 30 сут; заданная длина
+	// периода — не короче минуты (тестовые сети живого прогона)
+	if p.PeriodSeconds != 0 && p.PeriodSeconds < 60 {
+		add("period_seconds %d < 60 (0 — конвенция 30 сут)", p.PeriodSeconds)
+	}
 	// relaxed — только для сетей с низкими ставками (раздел 4: device_policy);
 	// при выключенной комиссии ставки не действуют
 	if p.DevicePolicy == wire.DevicePolicyRelaxed && p.FeeMode != wire.FeeModeNone &&

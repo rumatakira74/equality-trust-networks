@@ -1,0 +1,30 @@
+{
+  "active_wallets": 4,
+  "checkpoints": 0,
+  "epoch": 109532,
+  "journal_len": 13,
+  "period": 68457,
+  "seed_rights_active": false,
+  "state_root": "4eece5513137c5d255b3f765851b6c18f7d4b31d56c0cfed3e1ddc6a21ea8b54",
+  "wallets": {
+    "W1": {
+      "address": "ccb065697bd92884dedbead6330fc817467a0a9bee3d16e336d60eb3c9898fac",
+      "balance": 701,
+      "cohorts": [
+        {
+          "Period": 68422,
+          "Amount": 700
+        },
+        {
+          "Period": 68422,
+          "Amount": 1
+        }
+      ],
+      "flagged": false,
+      "last_period": 68422,
+      "liquid": 0,
+      "seq": 4,
+      "status": "ACTIVE"
+    }
+  }
+}

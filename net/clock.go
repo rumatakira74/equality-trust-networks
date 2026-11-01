@@ -16,12 +16,16 @@ type RealClock struct {
 	PeriodSecs   uint64 // 30 суток (конвенция headless-ядра)
 }
 
-// NewClock строит RealClock по полям genesis.
-func NewClock(genesisTime, epochSeconds uint64) *RealClock {
+// NewClock строит RealClock по полям genesis. periodSeconds — длина
+// периода выпуска (genesis-поле 61; 0 — конвенция headless-ядра, 30 сут).
+func NewClock(genesisTime, epochSeconds, periodSeconds uint64) *RealClock {
 	if epochSeconds == 0 {
 		epochSeconds = 86400
 	}
-	return &RealClock{GenesisTime: genesisTime, EpochSeconds: epochSeconds, PeriodSecs: 30 * 86400}
+	if periodSeconds == 0 {
+		periodSeconds = 30 * 86400
+	}
+	return &RealClock{GenesisTime: genesisTime, EpochSeconds: epochSeconds, PeriodSecs: periodSeconds}
 }
 
 func (c *RealClock) NetTime() uint64 { return uint64(time.Now().Unix()) }
@@ -51,8 +55,8 @@ type ReplayClock struct {
 }
 
 // NewReplayClock — часы для replay.
-func NewReplayClock(genesisTime, epochSeconds uint64) *ReplayClock {
-	return &ReplayClock{RealClock: *NewClock(genesisTime, epochSeconds)}
+func NewReplayClock(genesisTime, epochSeconds, periodSeconds uint64) *ReplayClock {
+	return &ReplayClock{RealClock: *NewClock(genesisTime, epochSeconds, periodSeconds)}
 }
 
 // Pin фиксирует время транзакции (ее timestamp_claim).

@@ -1,0 +1,2 @@
+узел: QmdKSLaRNCW3gV2un4XEAk2oSj7Fb1HauZ6CgkBAREMDXd
+mint: собран, не опубликован (seq=2 amount=1000)

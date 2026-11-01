@@ -1,0 +1,5 @@
+узел: QmZmdVkBfWEfzQD6hzibLFbnWZifhoTXJ7TZoUR53hNPMg
+узел: handleTx: tx 669f5f8e611b type=MINT seq=1 от <peer.ID Qm*uvtCJN>
+узел: handleTx: tx e1e191e0f8f1 type=MINT seq=1 от <peer.ID Qm*GSkfxZ>
+tx 44192abecc70bd0c: accept/OK seq=1
+узел: gossipLoop: выход: context canceled

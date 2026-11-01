@@ -177,22 +177,23 @@ func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool 
 	if win == 0 {
 		return true
 	}
-	slot := mintChallengeSlot(l.State.GenesisTime, addr, period)
+	slot := mintChallengeSlot(l.State.GenesisTime, addr, period, l.State.Net.Profile.PeriodSecsOrDefault())
 	lo, hi := slot-win, slot+win
 	return now >= lo && now <= hi
 }
 
 // mintChallengeSlot — детерминированный момент слота внутри периода:
 // period_start + (H(...) mod period_seconds). Периоды сети — календарные
-// от genesis (9.2): period_start = genesis_time + period × 30 сут
-// (конвенция headless-ядра; та же конвенция в net.RealClock).
+// от genesis (9.2): period_start = genesis_time + period × период сети
+// (конвенция headless-ядра — 30 сут; genesis-поле 61 задаёт длину —
+// тестовые сети живого прогона). Та же конвенция в net.RealClock.
 // Правка этапа 8 (долг этапа 7): раньше отсчёт шёл от 1970 г. — при
 // genesis-времени близком к текущему слот выпадал в далёкое будущее/прошлое
 // и окно челленджа всегда было закрыто.
-func mintChallengeSlot(genesisTime uint64, addr []byte, period uint64) uint64 {
+func mintChallengeSlot(genesisTime uint64, addr []byte, period, periodSecs uint64) uint64 {
 	h := hashThree(addr, period)
-	periodStart := genesisTime + period*30*86400
-	return periodStart + h%(30*86400)
+	periodStart := genesisTime + period*periodSecs
+	return periodStart + h%periodSecs
 }
 
 // Apply применяет транзакцию: сеттлемент -> C1–C11 -> типовая таблица -> эффекты.

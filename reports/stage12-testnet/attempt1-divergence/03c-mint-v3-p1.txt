@@ -1,0 +1,3 @@
+узел: QmT7e9KC6j38kw99Fn9vkYra8iz9vULrMyrzdebSDzhgMm
+tx 5fa0d31d4474261d: accept/OK seq=1
+узел: gossipLoop: выход: context canceled
