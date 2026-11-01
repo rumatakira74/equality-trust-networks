@@ -1,0 +1,98 @@
+{
+  "epoch": 109467,
+  "metrics": {
+    "common_fund": 0,
+    "gini_balance": 0.2,
+    "supply_burned": 0,
+    "supply_minted": 13000,
+    "supply_net": 13000,
+    "turnover": {
+      "redeem": 100,
+      "transfer": 100
+    },
+    "tx_count": {
+      "MINT": 13,
+      "REDEEM": 1,
+      "REGISTER": 2,
+      "TRANSFER": 1,
+      "VOUCH": 6
+    },
+    "wallets_active": 5,
+    "wallets_synthetic": 0,
+    "wallets_total": 5
+  },
+  "period": 68417,
+  "pools": [],
+  "wallets": [
+    {
+      "address": "60690d9e3756b857720efcc8a4dd3932b4a87757266dda78f9e6bddbab51e992",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 2331,
+      "liquid": 0,
+      "cohorts": 2331,
+      "registered_at": 1785321865,
+      "activated_at": 1785321865,
+      "last_claimed_period": 2,
+      "seq": 4
+    },
+    {
+      "address": "8c660292a2eb00a0ec9588353b186e0838d87d83ae25c9de90fb85ab04a80f14",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 2331,
+      "liquid": 0,
+      "cohorts": 2331,
+      "registered_at": 1785321865,
+      "activated_at": 1785321865,
+      "last_claimed_period": 2,
+      "seq": 4
+    },
+    {
+      "address": "a37d8f11482ac3e758eea40b5e2b30c875b2602b54ac6fbe5abfe35c74dd5864",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1793531578,
+      "activated_at": 1793531694,
+      "last_claimed_period": 0,
+      "seq": 1
+    },
+    {
+      "address": "ccb065697bd92884dedbead6330fc817467a0a9bee3d16e336d60eb3c9898fac",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 6107,
+      "liquid": 0,
+      "cohorts": 6107,
+      "registered_at": 1793530218,
+      "activated_at": 1793530392,
+      "last_claimed_period": 68410,
+      "seq": 10
+    },
+    {
+      "address": "eeb7045af183ce54b1c8f8a132c541db41cd7caa58314b66f2a6f21ea8d6acba",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 2231,
+      "liquid": 0,
+      "cohorts": 2231,
+      "registered_at": 1785321865,
+      "activated_at": 1785321865,
+      "last_claimed_period": 2,
+      "seq": 4
+    }
+  ]
+}

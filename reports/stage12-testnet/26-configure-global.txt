@@ -1,0 +1,16 @@
+сеть global по шаблону 7 (Касса взаимопомощи)
+ network_id: 676c6f62616c
+ manifest_hash: 030e262a0c3da356ae85e0aa41157d2560ac2d97f2f5c12f6a240f3011228b14
+ genesis_time: 1793534400 (2026-11-01T12:00:00Z)
+ уровень гарантий: высокий (strict + decentralized + open_vouch (3.3))
+ единица: currency, выпуск: 1000/1 мес., передача: free, вход: open_vouch, K=3
+ модули: [pool attest]
+ посевной круг: 3
+ артефакты: net-global
+ посевной V1: адрес 29d11850a2b9fb75ce5ef13b1a406f6f95b4de93d48ba775bb440ddeecad5c67 (выведен из network_id)
+ посевной V2: адрес d17c4c24aac8d7862a83809a250798e5dd02782868bb9068e77448f1ff0e179e (выведен из network_id)
+ посевной V3: адрес cfff0af7f44d868d971513a6c9402e7c12d7b2afcdee510fcffa60cb4c093e2f (выведен из network_id)
+ APK: equality-global-std-v1.0.0.apk
+ applicationId: io.equality.global.x8001c274
+ label: Eq-8001c274
+ display_name: "global" · Eq-8001c274

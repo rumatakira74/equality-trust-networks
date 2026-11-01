@@ -1,0 +1,17 @@
+== replay-изоляция: подписанные tx чужих сетей
+-- tx сети A (rec) в сеть B (std):
+tx 65914aa5d1bb89f3: reject/E_NET seq=5
+-- tx сети B (std) в сеть A (rec):
+tx 41c721f86d83f787: reject/E_NET seq=3
+-- tx глобальной сети в A:
+tx 73511f577f72f2db: reject/E_NET seq=1
+-- tx глобальной сети в B:
+tx 73511f577f72f2db: reject/E_NET seq=1
+-- tx сети A в глобальную (локальный узел global):
+tx 65914aa5d1bb89f3: reject/E_NET seq=5
+-- tx сети B в глобальную (локальный узел global):
+tx 41c721f86d83f787: reject/E_NET seq=3
+== сети после replay-попыток:
+rec journal 13 cp 68 root 4eece5513137c5d2
+std journal 6 cp 8 root 7e4dc36aa594f815
+журнал A должен быть 13 (без чужих tx), B — 6

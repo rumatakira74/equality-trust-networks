@@ -1,0 +1,19 @@
+сеть cirrus-t по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 57a39b61aafc5cb3ec12ecc826485c97fa2be3e6d031cd70b6039b68fa8ae4ae
+ manifest_hash: c736688f6a631d28899dcda46485445e891f5bf53e28ad18676457888246ebdd
+ genesis_time: 1785321865 (2026-07-29T10:44:25Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)
+ period_seconds: 120 — период заданной длины (тестовая сеть, границы на реальном времени)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/stage12-testnet/net-rec
+ посевной V1: адрес eeb7045af183ce54b1c8f8a132c541db41cd7caa58314b66f2a6f21ea8d6acba (выведен из network_id)
+ посевной V2: адрес 8c660292a2eb00a0ec9588353b186e0838d87d83ae25c9de90fb85ab04a80f14 (выведен из network_id)
+ посевной V3: адрес 60690d9e3756b857720efcc8a4dd3932b4a87757266dda78f9e6bddbab51e992 (выведен из network_id)
+ поставщик 0: fingerprint d0af97f63879cef9d0a2f3aeac5e857f21788e1fe454de6cfabee63e2f0184ab → адрес 8c660292a2eb00a0ec9588353b186e0838d87d83ae25c9de90fb85ab04a80f14 (выведен из network_id)
+ APK: equality-cirrus-t-rec-v1.0.0.apk
+ applicationId: io.equality.cirrus_t.x9af2cca1
+ label: Eq-9af2cca1
+ display_name: "cirrus-t" · Eq-9af2cca1

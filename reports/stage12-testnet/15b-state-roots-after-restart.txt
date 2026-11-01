@@ -1,0 +1,12 @@
+
+== state_root всех узлов после рестарта:
+node01 4eece5513137c5d2 journal 13
+node02 4eece5513137c5d2 journal 13
+node03 4eece5513137c5d2 journal 13
+node04 4eece5513137c5d2 journal 13
+node05 4eece5513137c5d2 journal 13
+node06 4eece5513137c5d2 journal 13
+node07 4eece5513137c5d2 journal 13
+node08 4eece5513137c5d2 journal 13
+node09 4eece5513137c5d2 journal 13
+node10 4eece5513137c5d2 journal 13
