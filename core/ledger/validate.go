@@ -550,7 +550,9 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		if prof.TransferMode == wire.TransferModeSoulbound {
 			return reject("E_TRANSFER_MODE")
 		}
-		// T2: restricted — только поставщику из списка (раздел 4)
+		// T2: restricted — только поставщику из списка (раздел 4);
+		// peer-redeem — участник → участнику (погашение поставщику —
+		// через redeem, 6.2; v9.10)
 		if prof.TransferMode == wire.TransferModeRestricted {
 			found := false
 			for _, pr := range prof.Providers {
@@ -563,11 +565,24 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 				return reject("E_TRANSFER_RECIPIENT")
 			}
 		}
+		if prof.TransferMode == wire.TransferModePeerRedeem {
+			rcpt := l.State.Wallet(tp.Send.Recipient)
+			if rcpt == nil || rcpt.Terminal {
+				return reject("E_TRANSFER_RECIPIENT")
+			}
+		}
 		// T3: мораторий от register (7.6; статус не снимает)
 		if now-w.RegisteredAt < prof.TransferMoratoriumDays*86400 {
 			return reject("E_MORATORIUM")
 		}
 		fee := l.State.Net.Fee(amount, l.State.FeeRate)
+		// T4/T8 (recurring): сгорание по периодной метке (v9.10, раздел 4)
+		// — перевод единицы периода P отвергается после границы P+1;
+		// отложенного пути нет (T6/T7 — только free-режим)
+		if prof.Recurring {
+			recipient := l.State.Wallet(tp.Send.Recipient)
+			return l.recurringSend(tx, w, recipient, amount, fee, period)
+		}
 		// T4/T8: переводимый остаток (когорты + liquid − резерв) >= amount + fee
 		if w.Spendable(period, prof.FreshTransferWindowPeriods) < amount+fee {
 			return reject("E_BALANCE")
@@ -629,6 +644,50 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		return accept(tx.TxID())
 	}
 	return reject("E_TYPE")
+}
+
+// recurringSend — перевод/погашение в recurring-сети (v9.10, раздел 4):
+// списание amount+fee из переводимых когорт (единица периода P переводима,
+// пока текущий период ≤ P+1); получателю доли приходят с теми же метками
+// периода, fee — по fee_mode. Баланс не сбрасывается: сгоревшие когорты
+// остаются в кошельке, история публична и проверяема.
+func (l *Ledger) recurringSend(tx *wire.Transaction, w, recipient *Wallet,
+	amount, fee, period uint64) Result {
+	if w.RecurringSpendable(period) < amount+fee {
+		// остаток есть, но метки просрочены — сгоревшая единица (не E_BALANCE)
+		if w.TotalBalance() >= amount+fee {
+			return reject("E_BURNED")
+		}
+		return reject("E_BALANCE")
+	}
+	spent := w.RecurringSpend(amount+fee, period)
+	// получателю — доли на сумму amount с метками периода отправителя
+	var credit []Cohort
+	remain := amount
+	for _, c := range spent {
+		if remain == 0 {
+			break
+		}
+		take := c.Amount
+		if take > remain {
+			take = remain
+		}
+		credit = append(credit, Cohort{Period: c.Period, Amount: take})
+		remain -= take
+	}
+	if recipient != nil {
+		recipient.CreditCohorts(credit)
+	}
+	// несписанное в получателя — комиссия (fee по построению)
+	if prof := l.State.Net.Profile; fee > 0 {
+		if prof.FeeMode == wire.FeeModeBurn {
+			l.State.TotalBurned += fee
+		} else if prof.FeeMode == wire.FeeModePool {
+			l.State.CommonFund += fee
+		}
+	}
+	w.LastTouchEpoch = l.Clock.Epoch()
+	return accept(tx.TxID())
 }
 
 // ---------------------------------------------------------------------------

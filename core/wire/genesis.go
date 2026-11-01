@@ -2,7 +2,11 @@
 // нужно для manifest_hash = SHA-256(canonical(Manifest)) и проверки genesis.
 package wire
 
-import "crypto/sha256"
+import (
+	"bytes"
+	"crypto/sha256"
+	"errors"
+)
 
 type UnitType uint32
 
@@ -23,6 +27,10 @@ const (
 	TransferModeFree        TransferMode = 1
 	TransferModeRestricted  TransferMode = 2
 	TransferModeSoulbound   TransferMode = 3
+	// TransferModePeerRedeem — участник → участнику и участник → поставщику
+	// (v9.10, решение владельца 27.10.2026): поток recurring-квот профиля 8;
+	// погашение поставщиком — через redeem (6.2).
+	TransferModePeerRedeem TransferMode = 4
 )
 
 type IssuanceMode uint32
@@ -255,6 +263,12 @@ type ProfileParams struct {
 	FeeTargetGrowthMicros uint64
 	// FeeStepMicros — шаг пересчёта rate в micros (поле 59).
 	FeeStepMicros uint64
+	// Recurring — периодная метка на единицах (поле 60; v9.10, раздел 4):
+	// каждая выпущенная единица несёт period; перевод единицы периода P
+	// отвергается после границы периода P+1 (не сброс баланса — история
+	// остаётся проверяемой). Допустим только при unit = quota(resource_id),
+	// не-глобальном network_id и transfer_mode ∈ {restricted, peer-redeem}.
+	Recurring bool
 }
 
 func (p *ProfileParams) Encode() []byte {
@@ -303,6 +317,7 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 57, p.FeeAdjustEpochs)
 	b = appendU64Field(b, 58, p.FeeTargetGrowthMicros)
 	b = appendU64Field(b, 59, p.FeeStepMicros)
+	b = appendBoolField(b, 60, p.Recurring)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)
@@ -336,6 +351,9 @@ func (p *ProfileParams) Encode() []byte {
 type Manifest struct {
 	NetworkID   []byte
 	DisplayName string
+	// Slug — человекочитаемое имя сети (v9.10, раздел 4): метка, не
+	// идентичность; истинная изоляция — network_id в genesis.
+	Slug        string
 	Profile     *ProfileParams
 	SeedCircle  []SeedMember
 	SeedSunset  *SeedSunset
@@ -346,6 +364,7 @@ func (m *Manifest) Encode() []byte {
 	var b []byte
 	b = appendBytesField(b, 1, m.NetworkID)
 	b = appendStringField(b, 2, m.DisplayName)
+	b = appendStringField(b, 7, m.Slug)
 	if m.Profile != nil {
 		b = appendMessageField(b, 3, m.Profile.Encode())
 	}
@@ -393,4 +412,73 @@ func (g *GenesisRecord) Encode() []byte {
 type GenesisPackage struct {
 	Manifest *Manifest
 	Genesis  *GenesisRecord
+}
+
+// GlobalNetworkID — зарезервированная константа network_id глобальной
+// сети (v9.10, раздел 1): пустого идентификатора не бывает, network_id
+// участвует в подписи и валидации всегда, поэтому защита от replay
+// между сетями работает и в глобальной сети. Константа не деривируется.
+var GlobalNetworkID = []byte("global")
+
+// IsGlobalNetwork — глобальная сеть (network_id = "global").
+func IsGlobalNetwork(networkID []byte) bool {
+	return string(networkID) == string(GlobalNetworkID)
+}
+
+// DeriveNetworkID — само-сертифицирующийся network_id = H(manifest ‖ genesis)
+// (v9.10, раздел 1). Формула: SHA-256(canonical(Manifest) ‖ canonical(
+// GenesisRecord)), где оба сообщения кодируются с пустым полем network_id
+// (иначе деривация круговая: network_id входит в оба кодирования).
+// Любое изменение манифеста или genesis-полей меняет network_id —
+// застолбить или подделать его нельзя.
+func DeriveNetworkID(m *Manifest, g *GenesisRecord) []byte {
+	m0 := *m
+	m0.NetworkID = nil
+	g0 := *g
+	g0.NetworkID = nil
+	h := sha256.Sum256(append(m0.Encode(), g0.Encode()...))
+	return h[:]
+}
+
+// FinalizeGenesis — сборка сети (конфигуратор): manifest_hash считается по
+// манифесту с пустым network_id (деривация network_id включает genesis,
+// genesis включает manifest_hash — иначе круг), затем network_id
+// заполняется в манифест и genesis-запись одним значением.
+func FinalizeGenesis(gp *GenesisPackage) {
+	gp.Manifest.NetworkID = nil
+	mh := gp.Manifest.ManifestHash()
+	gp.Genesis.ManifestHash = mh[:]
+	nid := DeriveNetworkID(gp.Manifest, gp.Genesis)
+	gp.Manifest.NetworkID = append([]byte(nil), nid...)
+	gp.Genesis.NetworkID = append([]byte(nil), nid...)
+}
+
+// VerifySelfCertified — проверка само-сертификации genesis-пакета:
+// network_id непуст и совпадает в манифесте и genesis-записи; для
+// не-глобальной сети network_id обязан равняться H(manifest ‖ genesis)
+// (с пустым network_id в обоих кодированиях), а manifest_hash —
+// SHA-256(manifest с пустым network_id). Глобальная сеть — константа,
+// не деривируется. Тестовые genesis (песочница, векторы) с явными
+// network_id эту проверку не проходят — она применяется к сетям,
+// собранным конфигуратором.
+func VerifySelfCertified(gp *GenesisPackage) error {
+	if len(gp.Manifest.NetworkID) == 0 {
+		return errors.New("wire: пустой network_id (не бывает, v9.10)")
+	}
+	if !bytes.Equal(gp.Manifest.NetworkID, gp.Genesis.NetworkID) {
+		return errors.New("wire: network_id манифеста и genesis-записи не совпадают")
+	}
+	if IsGlobalNetwork(gp.Manifest.NetworkID) {
+		return nil
+	}
+	m0 := *gp.Manifest
+	m0.NetworkID = nil
+	mh := m0.ManifestHash()
+	if !bytes.Equal(mh[:], gp.Genesis.ManifestHash) {
+		return errors.New("wire: manifest_hash не сходится (манифест изменён)")
+	}
+	if want := DeriveNetworkID(gp.Manifest, gp.Genesis); !bytes.Equal(want, gp.Manifest.NetworkID) {
+		return errors.New("wire: network_id != H(manifest ‖ genesis) — не само-сертифицирован")
+	}
+	return nil
 }

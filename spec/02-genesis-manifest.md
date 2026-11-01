@@ -16,6 +16,7 @@ Manifest {
   repeated SeedMember seed_circle = 4;
   SeedSunset seed_sunset = 5;
   bytes genesis_hash = 6;
+  string slug = 7;              // v9.10: метка, не идентичность
 }
 GenesisRecord {
   bytes network_id = 1; bytes manifest_hash = 2;
@@ -33,8 +34,14 @@ GenesisRecord {
 - `manifest_hash = SHA-256(canonical(Manifest))`. Предъявление `attest` несёт
   хеш манифеста: потребитель видит, из какой сети и с какими гарантиями
   приходит «человек» (3.3).
-- `network_id` — 32-байтный уникальный идентификатор, генерируется при
-  создании сети, входит в манифест и в конверт каждой транзакции (решение D1).
+- `network_id` — 32-байтный уникальный идентификатор, входит в манифест и в
+  конверт каждой транзакции (решение D1). Идентификация сети (v9.10):
+  `network_id` само-сертифицирующийся — `network_id = H(manifest ‖ genesis)`
+  (SHA-256 канонических кодировок манифеста и genesis-записи с пустым полем
+  `network_id` в обоих — иначе деривация круговая); глобальная сеть —
+  зарезервированная константа `network_id = "global"`, не деривируется.
+  Пустого идентификатора не бывает; `slug` — человекочитаемая метка рядом,
+  не идентичность.
 - `invite_key` существует только для `network_access = INVITE_ONLY`: ключ сети
   передаётся в приглашении (QR/ссылка), каналы и зашитые списки не
   используются (12.3); в манифесте не публикуется.
@@ -163,8 +170,10 @@ guarantee_level(manifest):
 
 | # | Условие | Результат |
 | --- | --- | --- |
-| 1 | `SHA-256(canonical(manifest)) = genesis.manifest_hash` | иначе genesis невалиден |
-| 2 | `manifest.network_id = genesis.network_id`, длина 32 байта | иначе невалиден |
+| 1 | `SHA-256(canonical(manifest)) = genesis.manifest_hash` (для деривированных сетей — по кодировке с пустым `network_id`, см. 2.1) | иначе genesis невалиден |
+| 2 | `manifest.network_id = genesis.network_id`, длина 32 байта; пустого не бывает; глобальная сеть — константа `"global"` | иначе невалиден |
+| 2a | Не-глобальная сеть, собранная конструктором: `network_id = H(manifest ‖ genesis)` (само-сертификация, 2.1); тестовые genesis с явными `network_id` — вне проверки | иначе genesis невалиден |
+| 2b | `recurring = on` ⇒ `network_id ≠ "global"` И `unit = quota(resource_id)` И `transfer_mode ∈ {RESTRICTED, PEER_REDEEM}` (v9.10, раздел 4; комбинация global+rec не существует) | иначе невалиден |
 | 3 | `manifest.seed_sunset = genesis.seed_sunset` | иначе невалиден |
 | 4 | Все обязательные поля профиля заданы и непротиворечивы (например, `slot_tiers` покрывают все возраста; `rate_min ≤ rate_max`) | иначе невалиден |
 | 5 | `params_mutable = true` ⇒ `mutable_bounds` непуст и не содержит защитных параметров | иначе невалиден |

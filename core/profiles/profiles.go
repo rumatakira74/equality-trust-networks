@@ -11,6 +11,7 @@
 package profiles
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
@@ -187,10 +188,25 @@ func All() []*Template {
 				p.DemurrageRateMicros = 10000 // 1%/мес — обязателен (10.3, 10.4)
 				p.Modules = []uint32{wire.ModulePool, wire.ModuleAttest}
 			}),
+		t(8, "subscriber-resource", "Абонентский ресурс (коммерческий)",
+			"Подписка на повторяющийся ресурс: равная квота за период с периодной меткой (recurring), сгорание на границе P+1, передача квоты участникам (peer-redeem), погашение поставщиком через redeem",
+			func(p *wire.ProfileParams) {
+				p.Unit = wire.UnitQuota
+				p.ResourceID = "resource" // организатор задаёт свой resource_id
+				p.IssuanceMode = wire.IssuanceQuotaReset
+				p.AccrualWindowPeriods = 0
+				p.Recurring = true // периодная метка + сгорание (v9.10, раздел 4)
+				p.TransferMode = wire.TransferModePeerRedeem
+				p.EntryMode = wire.EntryInviteOnlyVouch
+				p.NetworkAccess = wire.NetworkAccessInviteOnly
+				p.FeeMode = wire.FeeModeNone
+				p.DemurrageRateMicros = 0
+				p.Modules = []uint32{wire.ModuleRedeem}
+			}),
 	}
 }
 
-// ByID — шаблон по номеру (1–7); nil — нет такого.
+// ByID — шаблон по номеру (1–8); nil — нет такого.
 func ByID(id int) *Template {
 	for _, t := range All() {
 		if t.ID == id {
@@ -292,6 +308,36 @@ func Validate(p *wire.ProfileParams) []string {
 	// invite_only_vouch — закрытый доступ
 	if p.EntryMode == wire.EntryInviteOnlyVouch && p.NetworkAccess != wire.NetworkAccessInviteOnly {
 		add("invite_only_vouch с открытым доступом (4: network_access)")
+	}
+	// recurring (v9.10, раздел 4): только quota(resource_id) и
+	// transfer_mode ∈ {restricted, peer-redeem}; глобальная сеть —
+	// отдельно в ValidateGenesis (нужен network_id)
+	if p.Recurring {
+		if p.Unit != wire.UnitQuota || p.ResourceID == "" {
+			add("recurring при unit != quota(resource_id) (4: только квота на ресурс)")
+		}
+		if p.TransferMode != wire.TransferModeRestricted && p.TransferMode != wire.TransferModePeerRedeem {
+			add("recurring при transfer_mode %d (4: только restricted или peer-redeem)", uint32(p.TransferMode))
+		}
+	}
+	return bad
+}
+
+// ValidateGenesis — валидация комбинаций genesis-пакета при сборке сети
+// (v9.10, раздел 4): network_id непуст; recurring = on — только при
+// не-глобальном network_id (в глобальной сети нет организатора,
+// определяющего период и ресурс — recurring запрещён, комбинации
+// global+rec не существует). Возвращает список нарушений.
+func ValidateGenesis(gp *wire.GenesisPackage) []string {
+	var bad []string
+	if len(gp.Manifest.NetworkID) == 0 {
+		bad = append(bad, "пустой network_id (не бывает, v9.10)")
+	}
+	if !bytes.Equal(gp.Manifest.NetworkID, gp.Genesis.NetworkID) {
+		bad = append(bad, "network_id манифеста и genesis-записи не совпадают")
+	}
+	if gp.Manifest.Profile != nil && gp.Manifest.Profile.Recurring && wire.IsGlobalNetwork(gp.Manifest.NetworkID) {
+		bad = append(bad, "recurring в глобальной сети (4: нет организатора, определяющего период; комбинация global+rec не существует)")
 	}
 	return bad
 }

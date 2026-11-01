@@ -123,3 +123,88 @@ func TestFeeTargetGrowthTemplates(t *testing.T) {
 		}
 	}
 }
+
+// TestRecurringCombinations — genesis-валидация комбинаций recurring
+// (v9.10, раздел 4): только quota(resource_id) и transfer_mode ∈
+// {restricted, peer-redeem}; ошибочные комбинации отвергаются при
+// сборке сети.
+func TestRecurringCombinations(t *testing.T) {
+	base := func() wire.ProfileParams {
+		p := ByID(8).Profile
+		return p
+	}
+	// шаблон 8 валиден как есть
+	p8 := base()
+	if bad := Validate(&p8); len(bad) > 0 {
+		t.Fatalf("шаблон 8 не проходит валидацию: %v", bad)
+	}
+	// restricted тоже допустим
+	p := base()
+	p.TransferMode = wire.TransferModeRestricted
+	if bad := Validate(&p); len(bad) > 0 {
+		t.Fatalf("recurring + restricted обязан проходить: %v", bad)
+	}
+	// recurring + free — запрещён
+	p = base()
+	p.TransferMode = wire.TransferModeFree
+	if bad := Validate(&p); len(bad) == 0 {
+		t.Fatalf("recurring + free обязан отвергаться")
+	}
+	// recurring + soulbound — запрещён
+	p = base()
+	p.TransferMode = wire.TransferModeSoulbound
+	if bad := Validate(&p); len(bad) == 0 {
+		t.Fatalf("recurring + soulbound обязан отвергаться")
+	}
+	// recurring + не-quota unit — запрещён
+	p = base()
+	p.Unit = wire.UnitCurrency
+	if bad := Validate(&p); len(bad) == 0 {
+		t.Fatalf("recurring + currency обязан отвергаться")
+	}
+	// recurring + quota без resource_id — запрещён
+	p = base()
+	p.ResourceID = ""
+	if bad := Validate(&p); len(bad) == 0 {
+		t.Fatalf("recurring + quota без resource_id обязан отвергаться")
+	}
+}
+
+// TestValidateGenesisGlobalRecurring — recurring в глобальной сети
+// запрещён (v9.10: нет организатора, определяющего период и ресурс;
+// комбинации global+rec не существует); в не-глобальной — допустим.
+func TestValidateGenesisGlobalRecurring(t *testing.T) {
+	tpl := ByID(8)
+	// не-глобальная сеть — комбинация допустима
+	gp := &wire.GenesisPackage{
+		Manifest: &wire.Manifest{NetworkID: []byte("a"), Profile: &tpl.Profile},
+		Genesis:  &wire.GenesisRecord{NetworkID: []byte("a")},
+	}
+	if bad := ValidateGenesis(gp); len(bad) > 0 {
+		t.Fatalf("recurring в не-глобальной сети: %v", bad)
+	}
+	// глобальная сеть + recurring — отвергается при сборке
+	gp = &wire.GenesisPackage{
+		Manifest: &wire.Manifest{NetworkID: wire.GlobalNetworkID, Profile: &tpl.Profile},
+		Genesis:  &wire.GenesisRecord{NetworkID: wire.GlobalNetworkID},
+	}
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("recurring в глобальной сети обязан отвергаться")
+	}
+	// пустой network_id не бывает
+	gp = &wire.GenesisPackage{
+		Manifest: &wire.Manifest{NetworkID: nil, Profile: &tpl.Profile},
+		Genesis:  &wire.GenesisRecord{NetworkID: nil},
+	}
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("пустой network_id обязан отвергаться")
+	}
+	// расхождение network_id манифеста и genesis-записи
+	gp = &wire.GenesisPackage{
+		Manifest: &wire.Manifest{NetworkID: []byte("a"), Profile: &tpl.Profile},
+		Genesis:  &wire.GenesisRecord{NetworkID: []byte("b")},
+	}
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("расхождение network_id обязан отвергаться")
+	}
+}

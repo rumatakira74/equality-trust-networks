@@ -326,6 +326,8 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.FeeTargetGrowthMicros = v
 	case 59:
 		p.FeeStepMicros = v
+	case 60:
+		p.Recurring = v != 0
 	default:
 		return errUnknownField
 	}
@@ -352,6 +354,12 @@ func DecodeManifest(b []byte) (*Manifest, error) {
 				return nil, err
 			}
 			m.DisplayName = string(v)
+		case f == 7 && wt == 2:
+			v, err := d.bytes()
+			if err != nil {
+				return nil, err
+			}
+			m.Slug = string(v)
 		case f == 3 && wt == 2:
 			v, err := d.bytes()
 			if err != nil {

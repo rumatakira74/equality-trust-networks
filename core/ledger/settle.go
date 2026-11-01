@@ -77,8 +77,12 @@ func (l *Ledger) seedSunsetMet(epoch uint64) bool {
 func (l *Ledger) settlePeriod(period, now uint64) {
 	prof := l.State.Net.Profile
 	// quota_reset (раздел 4, 6.2): квота не накапливается и сгорает в
-	// конце периода — когорты прошлых периодов сжигаются
-	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+	// конце периода — когорты прошлых периодов сжигаются.
+	// recurring (v9.10): сброса баланса нет — сгорание по периодной метке
+	// в валидации transfer/redeem (перевод единицы периода P отвергается
+	// после границы P+1), когорты остаются в кошельке: история публична
+	// и проверяема
+	if prof.IssuanceMode == wire.IssuanceQuotaReset && !prof.Recurring {
 		for _, w := range l.State.Wallets {
 			burn := uint64(0)
 			keep := w.Cohorts[:0]

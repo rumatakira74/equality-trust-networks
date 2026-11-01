@@ -279,6 +279,78 @@ func (w *Wallet) TotalBalance() uint64 {
 	return w.Liquid + w.sumCohorts()
 }
 
+// RecurringSpendable — переводимый остаток в recurring-сети (v9.10,
+// раздел 4): единица периода P переводима, пока текущий период ≤ P+1
+// (перевод отвергается после границы периода P+1 — сгорание меткой,
+// не сброс баланса: когорты остаются в кошельке и истории). Liquid
+// в recurring-сети не используется — все единицы несут периодную
+// метку (в том числе полученные переводом).
+func (w *Wallet) RecurringSpendable(currentPeriod uint64) uint64 {
+	var sum uint64
+	for _, c := range w.Cohorts {
+		if currentPeriod <= c.Period+1 {
+			sum += c.Amount
+		}
+	}
+	if sum > w.Locked {
+		return sum - w.Locked
+	}
+	return 0
+}
+
+// RecurringSpend списывает amount в recurring-сети из переводимых
+// когорт (период P: текущий ≤ P+1), старейшие вперёд; возвращает
+// списанные доли когорт — получателю они приходят с теми же метками
+// периода (история проверяема). Списание обязано быть ≤ RecurringSpendable.
+func (w *Wallet) RecurringSpend(amount uint64, currentPeriod uint64) []Cohort {
+	var spent []Cohort
+	for i := 0; i < len(w.Cohorts) && amount > 0; i++ {
+		c := &w.Cohorts[i]
+		if currentPeriod > c.Period+1 {
+			continue // сгоревшая когорта не тратится (история остаётся)
+		}
+		take := c.Amount
+		if take > amount {
+			take = amount
+		}
+		c.Amount -= take
+		amount -= take
+		if take > 0 {
+			spent = append(spent, Cohort{Period: c.Period, Amount: take})
+		}
+	}
+	// убрать пустые когорты
+	keep := w.Cohorts[:0]
+	for _, c := range w.Cohorts {
+		if c.Amount > 0 {
+			keep = append(keep, c)
+		}
+	}
+	w.Cohorts = keep
+	return spent
+}
+
+// CreditCohorts зачисляет доли когорт кошельку (recurring-сеть):
+// полученные единицы сохраняют периодные метки отправителя.
+func (w *Wallet) CreditCohorts(spent []Cohort) {
+	for _, c := range spent {
+		if c.Amount == 0 {
+			continue
+		}
+		merged := false
+		for i := range w.Cohorts {
+			if w.Cohorts[i].Period == c.Period {
+				w.Cohorts[i].Amount += c.Amount
+				merged = true
+				break
+			}
+		}
+		if !merged {
+			w.Cohorts = append(w.Cohorts, c)
+		}
+	}
+}
+
 // Spend списывает amount из переводимых средств: сначала Liquid, затем
 // старейшие зрелые когорты (T8). Списания обязаны быть ≤ Spendable.
 func (w *Wallet) Spend(amount uint64, currentPeriod, window uint64) {

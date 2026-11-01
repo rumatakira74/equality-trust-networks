@@ -329,12 +329,22 @@ func (l *Ledger) applyRedeem(tx *wire.Transaction) Result {
 		return reject("E_REDEEM_SLOT")
 	}
 	w := l.State.Wallet(tx.Wallet)
-	if err := l.spendWithFee(w, p.Amount); err != nil {
-		return reject(err.Error())
-	}
 	provider := l.State.Wallet(p.Provider)
-	if provider != nil {
-		provider.Liquid += p.Amount
+	// recurring (v9.10, 6.2): каждая единица несёт периодную метку —
+	// погашение сгоревшей единицы (после границы P+1) отвергается;
+	// поставщику доли приходят с метками периода участника
+	if l.State.Net.Profile.Recurring {
+		fee := l.State.Net.Fee(p.Amount, l.State.FeeRate)
+		if res := l.recurringSend(tx, w, provider, p.Amount, fee, l.Clock.Period()); res.Outcome != Accepted {
+			return res
+		}
+	} else {
+		if err := l.spendWithFee(w, p.Amount); err != nil {
+			return reject(err.Error())
+		}
+		if provider != nil {
+			provider.Liquid += p.Amount
+		}
 	}
 	txid := tx.TxID()
 	l.State.Redeems[string(txid[:])] = &RedeemInfo{
