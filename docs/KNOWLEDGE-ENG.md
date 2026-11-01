@@ -14,7 +14,7 @@ Author: Kirill Lapchinsky
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Kirill Lapchinsky. Terms of use are defined by the license (Section 16).
 
-**DOI:** [10.5281/zenodo.23474357](https://doi.org/10.5281/zenodo.23474357)
+**DOI:** [10.5281/zenodo.23474316](https://doi.org/10.5281/zenodo.23474316)
 
 Documentation: [equality-user-docs](https://github.com/rumatakira74/equality-user-docs) — for participants; [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs) — for developers.
 
