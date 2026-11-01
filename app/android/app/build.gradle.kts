@@ -19,12 +19,24 @@ android {
     }
 
     defaultConfig {
-        applicationId = "platform.tnp.tnp_app"
+        // Идентификация сети (этап 12, v9.10): applicationId на сеть
+        // io.equality.<slug> (глобальная — io.equality.global) и label
+        // Eq-<hash8> задаются при сборке APK конкретной сети
+        // (-P TNP_APPLICATION_ID=... TNP_APP_LABEL=...); значения
+        // генерирует конфигуратор (android.json). По умолчанию —
+        // универсальная сборка конструктора.
+        applicationId = (project.findProperty("TNP_APPLICATION_ID") as String?)
+            ?: "platform.tnp.tnp_app"
         // Keystore-аттестация и BIOMETRIC_STRONG — с API 26 (этап 6)
         minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // label приложения: Eq- + 8 hex SHA-256(network_id) (v9.10,
+        // решение 7); в launcher — только Eq-хеш, display_name живёт
+        // внутри приложения и всегда в паре с ним
+        manifestPlaceholders["appLabel"] =
+            (project.findProperty("TNP_APP_LABEL") as String?) ?: "Сети доверия"
     }
 
     buildTypes {

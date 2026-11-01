@@ -32,13 +32,25 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l.networkLine(manifest?.displayName ?? '—'),
+                  // «О сети» (этап 12): display_name всегда в паре с
+                  // Eq-хешем, никогда отдельно (v9.10, решение 8)
+                  Text(l.aboutNetwork,
+                      style: Theme.of(context).textTheme.labelSmall),
+                  Text(manifest?.displayPair ?? '—',
                       style: Theme.of(context).textTheme.titleMedium),
                   Text('network_id: ${manifest?.networkId ?? '—'}',
                       style: Theme.of(context).textTheme.bodySmall),
+                  if ((manifest?.slug ?? '').isNotEmpty)
+                    Text(l.networkSlug(manifest!.slug),
+                        style: Theme.of(context).textTheme.bodySmall),
                   const Divider(),
                   _param(l.paramUnit, manifest?.unit ?? '—'),
                   _param(l.paramTransfer, manifest?.transferMode ?? '—'),
+                  _param(l.paramRecurring,
+                      manifest?.recurring == true ? l.recurringOn : l.recurringOff),
+                  if (manifest?.recurring == true)
+                    Text(l.recurringNote,
+                        style: Theme.of(context).textTheme.bodySmall),
                   _param(l.paramIssuance,
                       l.paramIssuanceValue('${manifest?.issuanceAmount ?? '—'}',
                           '${manifest?.issuancePeriodMonths ?? '—'}')),

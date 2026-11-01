@@ -984,4 +984,34 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get hexCharsDropped =>
       'Недопустимые символы удалены (только 0–9, a–f)';
+
+  @override
+  String get aboutNetwork => 'О сети';
+
+  @override
+  String networkSlug(String slug) {
+    return 'slug: $slug';
+  }
+
+  @override
+  String get paramRecurring => 'Периодные единицы (recurring)';
+
+  @override
+  String get recurringOn => 'включены (сгорание на границе периода)';
+
+  @override
+  String get recurringOff => 'выключены';
+
+  @override
+  String get recurringNote =>
+      'Каждая единица несёт метку периода: перевод единицы периода P отвергается после границы периода P+1. Баланс не сбрасывается — история остаётся публичной и проверяемой.';
+
+  @override
+  String get burnedUnitError =>
+      'Единица сгорела: граница периода P+1 прошла. Перевод и погашение невозможны, но баланс не сброшен — история сохранена (E_BURNED).';
+
+  @override
+  String obNetworkLine(String pair) {
+    return 'Сеть: $pair';
+  }
 }

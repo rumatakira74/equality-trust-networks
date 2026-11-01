@@ -955,4 +955,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hexCharsDropped => '已移除无效字符（仅限 0-9、a-f）';
+
+  @override
+  String get aboutNetwork => '关于网络';
+
+  @override
+  String networkSlug(String slug) {
+    return 'slug：$slug';
+  }
+
+  @override
+  String get paramRecurring => '周期单位（recurring）';
+
+  @override
+  String get recurringOn => '已启用（周期边界失效）';
+
+  @override
+  String get recurringOff => '未启用';
+
+  @override
+  String get recurringNote =>
+      '每个单位都带有周期标记：周期 P 的单位在 P+1 期边界之后将被拒绝转账。余额不会被重置——历史保持公开且可验证。';
+
+  @override
+  String get burnedUnitError =>
+      '单位已失效：P+1 期边界已过。无法转账或兑换，但余额不会被重置——历史保留（E_BURNED）。';
+
+  @override
+  String obNetworkLine(String pair) {
+    return '网络：$pair';
+  }
 }

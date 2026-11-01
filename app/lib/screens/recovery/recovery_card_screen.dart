@@ -75,7 +75,9 @@ class _RecoveryCardScreenState extends State<RecoveryCardScreen> {
     final wallet = app.wallet;
     final l = AppLocalizations.of(context)!;
     final guardians = wallet?.personalGuardians ?? const <String>[];
-    final networkName = app.manifest?.displayName ?? '—';
+    // display_name всегда в паре с Eq-хешем (v9.10, решение 8);
+    // network_id — истинная идентификация сети
+    final networkName = app.manifest?.displayPair ?? '—';
     final networkId = app.manifest?.networkId ?? '';
     final address = app.address;
     return Scaffold(

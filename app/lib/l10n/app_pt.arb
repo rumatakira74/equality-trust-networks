@@ -269,5 +269,15 @@
   "hexChunksSigCount": "Caracteres digitados: {n}",
   "hexLenError": "Esperados exatamente {total} caracteres hex",
   "hexSigEvenError": "A assinatura deve ter um número par de caracteres hex",
-  "hexCharsDropped": "Caracteres inválidos removidos (apenas 0-9, a-f)"
+  "hexCharsDropped": "Caracteres inválidos removidos (apenas 0-9, a-f)",
+  "aboutNetwork": "Sobre a rede",
+  "networkSlug": "slug: {slug}",
+  "@networkSlug": {"placeholders": {"slug": {"type": "String"}}},
+  "paramRecurring": "Unidades periódicas (recurring)",
+  "recurringOn": "ativadas (extinção no limite do período)",
+  "recurringOff": "desativadas",
+  "recurringNote": "Cada unidade carrega a marca do período: a transferência de uma unidade do período P é rejeitada após o limite do período P+1. O saldo não é zerado — o histórico permanece público e verificável.",
+  "burnedUnitError": "A unidade expirou: o limite do período P+1 já passou. A transferência e o resgate são impossíveis, mas o saldo não é zerado — o histórico é preservado (E_BURNED).",
+  "obNetworkLine": "Rede: {pair}",
+  "@obNetworkLine": {"placeholders": {"pair": {"type": "String"}}}
 }

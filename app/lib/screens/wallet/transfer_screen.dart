@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/platform_service.dart';
+import '../../services/tx_errors.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
 
@@ -81,11 +82,13 @@ class _TransferScreenState extends State<TransferScreen> {
         return;
       }
       final res = await platform.submitTx(id);
+      // понятные ошибки по конвенции кодов (этап 12: сгоревшая единица)
+      final txError = res.accepted ? null : localizedTxError(l, res.code);
       setState(() => _result = res.accepted
           ? (_willBeDelayed
               ? l.transferDelayed(_delayHours)
               : l.transferSent)
-          : l.rejectedWithCode(res.code));
+          : (txError ?? l.rejectedWithCode(res.code)));
       await app.refreshWallet();
     } catch (e) {
       setState(() => _result = l.errorWith('$e'));
@@ -209,6 +212,15 @@ class _TransferScreenState extends State<TransferScreen> {
               padding: const EdgeInsets.only(top: 16),
               child: Text(
                 l.moratoriumNote(manifest.transferMoratoriumDays),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          // recurring-сеть (v9.10): граница периода — до отправки
+          if (manifest != null && manifest.recurring)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                l.recurringNote,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

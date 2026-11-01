@@ -7,6 +7,9 @@
 class ManifestParams {
   final String networkId;
   final String displayName;
+  final String slug; // человекочитаемая метка (не идентичность)
+  final String eqLabel; // Eq- + 8 hex SHA-256(network_id) — label приложения
+  final bool recurring; // периодная метка + сгорание (v9.10)
   final String unit;
   final String transferMode;
   final String issuanceMode;
@@ -38,6 +41,9 @@ class ManifestParams {
   ManifestParams.fromJson(Map<String, dynamic> j)
       : networkId = j['network_id'] as String? ?? '',
         displayName = j['display_name'] as String? ?? '',
+        slug = j['slug'] as String? ?? '',
+        eqLabel = j['eq_label'] as String? ?? '',
+        recurring = j['recurring'] as bool? ?? false,
         unit = j['unit'] as String? ?? 'currency',
         transferMode = j['transfer_mode'] as String? ?? 'free',
         issuanceMode = j['issuance_mode'] as String? ?? 'periodic_equal',
@@ -72,6 +78,10 @@ class ManifestParams {
   bool get demurrageEnabled => demurrageRateMicros > 0;
   bool get transfersDelayed =>
       transferMode == 'free' && !sandbox; // 8.3: только передаваемые
+
+  /// display_name всегда в паре с Eq-хешем, никогда отдельно (v9.10,
+  /// решение 8): «Monte Cloud · Eq-4f2a9c1d».
+  String get displayPair => '$displayName · $eqLabel';
 }
 
 /// Снапшот кошелька (net/query.go -> WalletInfoJSON).

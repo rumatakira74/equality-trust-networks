@@ -985,4 +985,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hexCharsDropped => 'Invalid characters removed (only 0-9, a-f)';
+
+  @override
+  String get aboutNetwork => 'About network';
+
+  @override
+  String networkSlug(String slug) {
+    return 'slug: $slug';
+  }
+
+  @override
+  String get paramRecurring => 'Recurring units';
+
+  @override
+  String get recurringOn => 'enabled (burn at the period boundary)';
+
+  @override
+  String get recurringOff => 'disabled';
+
+  @override
+  String get recurringNote =>
+      'Each unit carries a period mark: a transfer of a unit of period P is rejected after the boundary of period P+1. The balance is not reset — the history stays public and verifiable.';
+
+  @override
+  String get burnedUnitError =>
+      'The unit has burned: the boundary of period P+1 has passed. Transfer and redemption are impossible, but the balance is not reset — the history is preserved (E_BURNED).';
+
+  @override
+  String obNetworkLine(String pair) {
+    return 'Network: $pair';
+  }
 }

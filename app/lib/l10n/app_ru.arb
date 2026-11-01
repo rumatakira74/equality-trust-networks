@@ -269,5 +269,15 @@
   "hexChunksSigCount": "Введено символов: {n}",
   "hexLenError": "Ожидается ровно {total} hex-символов",
   "hexSigEvenError": "Подпись — чётное число hex-символов",
-  "hexCharsDropped": "Недопустимые символы удалены (только 0–9, a–f)"
+  "hexCharsDropped": "Недопустимые символы удалены (только 0–9, a–f)",
+  "aboutNetwork": "О сети",
+  "networkSlug": "slug: {slug}",
+  "@networkSlug": {"placeholders": {"slug": {"type": "String"}}},
+  "paramRecurring": "Периодные единицы (recurring)",
+  "recurringOn": "включены (сгорание на границе периода)",
+  "recurringOff": "выключены",
+  "recurringNote": "Каждая единица несёт метку периода: перевод единицы периода P отвергается после границы периода P+1. Баланс не сбрасывается — история остаётся публичной и проверяемой.",
+  "burnedUnitError": "Единица сгорела: граница периода P+1 прошла. Перевод и погашение невозможны, но баланс не сброшен — история сохранена (E_BURNED).",
+  "obNetworkLine": "Сеть: {pair}",
+  "@obNetworkLine": {"placeholders": {"pair": {"type": "String"}}}
 }

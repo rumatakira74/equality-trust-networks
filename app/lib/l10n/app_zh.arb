@@ -269,5 +269,15 @@
   "hexChunksSigCount": "已输入字符：{n}",
   "hexLenError": "应恰好输入 {total} 个十六进制字符",
   "hexSigEvenError": "签名应为偶数个十六进制字符",
-  "hexCharsDropped": "已移除无效字符（仅限 0-9、a-f）"
+  "hexCharsDropped": "已移除无效字符（仅限 0-9、a-f）",
+  "aboutNetwork": "关于网络",
+  "networkSlug": "slug：{slug}",
+  "@networkSlug": {"placeholders": {"slug": {"type": "String"}}},
+  "paramRecurring": "周期单位（recurring）",
+  "recurringOn": "已启用（周期边界失效）",
+  "recurringOff": "未启用",
+  "recurringNote": "每个单位都带有周期标记：周期 P 的单位在 P+1 期边界之后将被拒绝转账。余额不会被重置——历史保持公开且可验证。",
+  "burnedUnitError": "单位已失效：P+1 期边界已过。无法转账或兑换，但余额不会被重置——历史保留（E_BURNED）。",
+  "obNetworkLine": "网络：{pair}",
+  "@obNetworkLine": {"placeholders": {"pair": {"type": "String"}}}
 }

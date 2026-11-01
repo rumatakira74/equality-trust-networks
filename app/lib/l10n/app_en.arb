@@ -742,5 +742,15 @@
   "hexLenError": "Expected exactly {total} hex characters",
   "@hexLenError": {"placeholders": {"total": {"type": "int"}}},
   "hexSigEvenError": "Signature must have an even number of hex characters",
-  "hexCharsDropped": "Invalid characters removed (only 0-9, a-f)"
+  "hexCharsDropped": "Invalid characters removed (only 0-9, a-f)",
+  "aboutNetwork": "About network",
+  "networkSlug": "slug: {slug}",
+  "@networkSlug": {"placeholders": {"slug": {"type": "String"}}},
+  "paramRecurring": "Recurring units",
+  "recurringOn": "enabled (burn at the period boundary)",
+  "recurringOff": "disabled",
+  "recurringNote": "Each unit carries a period mark: a transfer of a unit of period P is rejected after the boundary of period P+1. The balance is not reset — the history stays public and verifiable.",
+  "burnedUnitError": "The unit has burned: the boundary of period P+1 has passed. Transfer and redemption are impossible, but the balance is not reset — the history is preserved (E_BURNED).",
+  "obNetworkLine": "Network: {pair}",
+  "@obNetworkLine": {"placeholders": {"pair": {"type": "String"}}}
 }

@@ -1729,6 +1729,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid characters removed (only 0-9, a-f)'**
   String get hexCharsDropped;
+
+  /// No description provided for @aboutNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'About network'**
+  String get aboutNetwork;
+
+  /// No description provided for @networkSlug.
+  ///
+  /// In en, this message translates to:
+  /// **'slug: {slug}'**
+  String networkSlug(String slug);
+
+  /// No description provided for @paramRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring units'**
+  String get paramRecurring;
+
+  /// No description provided for @recurringOn.
+  ///
+  /// In en, this message translates to:
+  /// **'enabled (burn at the period boundary)'**
+  String get recurringOn;
+
+  /// No description provided for @recurringOff.
+  ///
+  /// In en, this message translates to:
+  /// **'disabled'**
+  String get recurringOff;
+
+  /// No description provided for @recurringNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Each unit carries a period mark: a transfer of a unit of period P is rejected after the boundary of period P+1. The balance is not reset — the history stays public and verifiable.'**
+  String get recurringNote;
+
+  /// No description provided for @burnedUnitError.
+  ///
+  /// In en, this message translates to:
+  /// **'The unit has burned: the boundary of period P+1 has passed. Transfer and redemption are impossible, but the balance is not reset — the history is preserved (E_BURNED).'**
+  String get burnedUnitError;
+
+  /// No description provided for @obNetworkLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Network: {pair}'**
+  String obNetworkLine(String pair);
 }
 
 class _AppLocalizationsDelegate

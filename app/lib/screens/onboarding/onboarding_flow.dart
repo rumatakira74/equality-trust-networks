@@ -92,12 +92,22 @@ class _BiometricsStepState extends State<_BiometricsStep> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // идентификация сети (этап 12): display_name всегда в паре с
+    // Eq-хешем, никогда отдельно (v9.10, решение 8)
+    final manifest = context.watch<AppState>().manifest;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (manifest != null)
+            Text(
+              l.obNetworkLine(manifest.displayPair),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          const SizedBox(height: 12),
           Text(
             l.obBioRequired,
             textAlign: TextAlign.center,

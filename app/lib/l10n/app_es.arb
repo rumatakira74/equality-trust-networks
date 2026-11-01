@@ -269,5 +269,15 @@
   "hexChunksSigCount": "Caracteres introducidos: {n}",
   "hexLenError": "Se esperan exactamente {total} caracteres hex",
   "hexSigEvenError": "La firma debe tener un número par de caracteres hex",
-  "hexCharsDropped": "Caracteres no válidos eliminados (solo 0-9, a-f)"
+  "hexCharsDropped": "Caracteres no válidos eliminados (solo 0-9, a-f)",
+  "aboutNetwork": "Acerca de la red",
+  "networkSlug": "slug: {slug}",
+  "@networkSlug": {"placeholders": {"slug": {"type": "String"}}},
+  "paramRecurring": "Unidades periódicas (recurring)",
+  "recurringOn": "activadas (se extinguen en el límite del período)",
+  "recurringOff": "desactivadas",
+  "recurringNote": "Cada unidad lleva la marca del período: la transferencia de una unidad del período P se rechaza después del límite del período P+1. El saldo no se reinicia: el historial sigue siendo público y verificable.",
+  "burnedUnitError": "La unidad se ha extinguido: ha pasado el límite del período P+1. La transferencia y el canje son imposibles, pero el saldo no se reinicia: el historial se conserva (E_BURNED).",
+  "obNetworkLine": "Red: {pair}",
+  "@obNetworkLine": {"placeholders": {"pair": {"type": "String"}}}
 }

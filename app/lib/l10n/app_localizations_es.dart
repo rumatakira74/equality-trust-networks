@@ -992,4 +992,34 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get hexCharsDropped =>
       'Caracteres no válidos eliminados (solo 0-9, a-f)';
+
+  @override
+  String get aboutNetwork => 'Acerca de la red';
+
+  @override
+  String networkSlug(String slug) {
+    return 'slug: $slug';
+  }
+
+  @override
+  String get paramRecurring => 'Unidades periódicas (recurring)';
+
+  @override
+  String get recurringOn => 'activadas (se extinguen en el límite del período)';
+
+  @override
+  String get recurringOff => 'desactivadas';
+
+  @override
+  String get recurringNote =>
+      'Cada unidad lleva la marca del período: la transferencia de una unidad del período P se rechaza después del límite del período P+1. El saldo no se reinicia: el historial sigue siendo público y verificable.';
+
+  @override
+  String get burnedUnitError =>
+      'La unidad se ha extinguido: ha pasado el límite del período P+1. La transferencia y el canje son imposibles, pero el saldo no se reinicia: el historial se conserva (E_BURNED).';
+
+  @override
+  String obNetworkLine(String pair) {
+    return 'Red: $pair';
+  }
 }
