@@ -1,9 +1,9 @@
-// PENDING №2 (отчёт 11.2): settle отложенных операций после рестарта
-// узла. Replay из БД пинирует часы на timestamp_claim (cons.Replay), а
-// flushPending срабатывал только при живом apply-триггере — зрелые
-// отложенные переводы «зависали» до ближайшей транзакции. После фикса
-// узел доводит сеттлемент до текущего времени на старте (Start) и
-// периодически (settleLoop) — без внешнего триггера.
+// Settle отложенных операций после рестарта узла (v9.13 — этап фикса
+// времени): сеттлемент — только от max(txNow) по журналу. Зрелый
+// отложенный перевод применяется ближайшей ПРИНЯТОЙ tx с достаточным
+// claim (на любом узле и в replay одинаково); доведения до часов узла
+// нет — оно расходило бы live с replay. Незрелый перевод остаётся
+// в ожидании независимо от локального времени.
 package net
 
 import (
@@ -51,30 +51,20 @@ func settleRestartEnv(t *testing.T, delayHours uint64) (*testEnv, *Node, string,
 	return e, n1, db, seq
 }
 
-// waitExecuted — дождаться, пока узел после старта сам применит
-// зрелый перевод (settle после первичной сверки, ~500 мс; без внешнего
-// триггера).
-func waitExecuted(t *testing.T, n *Node, key string, timeoutMs int) {
-	t.Helper()
-	deadline := time.Now().Add(time.Duration(timeoutMs) * time.Millisecond)
-	for time.Now().Before(deadline) {
-		n.applyMu.RLock()
-		pt := n.Ledger.State.PendingTransfers[key]
-		done := pt != nil && pt.Executed
-		n.applyMu.RUnlock()
-		if done {
-			return
-		}
-		time.Sleep(25 * time.Millisecond)
-	}
-	t.Fatalf("settle не применил зрелый перевод за %d мс", timeoutMs)
+// triggerTx — принятая tx-триггер сеттлемента: регистрация свежего
+// кошелька (claim = текущее время, без побочных эффектов на проверяемые
+// данные; сеттлемент оседает от её txNow).
+func (e *testEnv) triggerTx(n *Node) *wire.Transaction {
+	e.t.Helper()
+	return e.register(n, "TRIG")
 }
 
-// TestSettleAfterRestartMatured — рестарт узла после зрелости
-// отложенного перевода (D = 0): перевод применяется после сверки без
-// внешнего триггера; повторное применение исключено (повторный flush и
-// повторный рестарт из той же БД баланс не меняют).
-func TestSettleAfterRestartMatured(t *testing.T) {
+// TestSettleAfterRestartMaturedOnTrigger — рестарт узла после зрелости
+// отложенного перевода (D = 0): без транзакций перевод остаётся в
+// ожидании (сеттлемент — от журнала, не от часов); ближайшая принятая
+// tx с достаточным claim применяет его; повторный рестарт из той же БД
+// воспроизводит то же состояние ровно один раз (детерминизм).
+func TestSettleAfterRestartMaturedOnTrigger(t *testing.T) {
 	e, n1, db, seq := settleRestartEnv(t, 0)
 
 	// до рестарта: перевод в ожидании, резерв заблокирован
@@ -89,17 +79,34 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 		t.Fatalf("получатель до исполнения: %v", r)
 	}
 
-	// рестарт из той же БД: replay + settle после сверки — без триггера
+	// рестарт из той же БД: replay применяет журнал, но триггера нет —
+	// зрелый перевод НЕ исполняется от часов узла (v9.13)
+	time.Sleep(200 * time.Millisecond) // D = 0: дедлайн давно прошёл
 	n2 := e.newNode(nodeOpts{level: LevelFull, db: db})
-	e.start(n2)
-	waitExecuted(t, n2, ptKeyNet(e.addr("V1"), seq), 5000)
 	n2.applyMu.RLock()
-	r2 := n2.Ledger.State.Wallet(e.addr("R"))
-	v2 := n2.Ledger.State.Wallet(e.addr("V1"))
 	pt2 := n2.Ledger.State.PendingTransfers[ptKeyNet(e.addr("V1"), seq)]
+	r2 := n2.Ledger.State.Wallet(e.addr("R"))
+	n2.applyMu.RUnlock()
+	if pt2 == nil || pt2.Executed {
+		t.Fatal("перевод исполнен без tx-триггера — сеттлемент ушёл от журнала")
+	}
+	if r2 == nil || r2.Liquid != 0 {
+		t.Fatalf("зрелый перевод зачислен без триггера: R=%v", r2)
+	}
+
+	// ближайшая принятая tx (claim строго позже max(txNow) журнала —
+	// сеттлемент монотонно движится вперёд) применяет перевод
+	time.Sleep(1100 * time.Millisecond)
+	if n2.ImportJournal([]*wire.Transaction{e.triggerTx(n2)}) != 1 {
+		t.Fatal("триггер не применён")
+	}
+	n2.applyMu.RLock()
+	r2 = n2.Ledger.State.Wallet(e.addr("R"))
+	v2 := n2.Ledger.State.Wallet(e.addr("V1"))
+	pt2 = n2.Ledger.State.PendingTransfers[ptKeyNet(e.addr("V1"), seq)]
 	n2.applyMu.RUnlock()
 	if r2 == nil || r2.Liquid != 800 {
-		t.Fatalf("зрелый перевод не применён после рестарта: R=%v", r2)
+		t.Fatalf("зрелый перевод не применён от claim принятой tx: R=%v", r2)
 	}
 	if v2 == nil || v2.Locked != 0 {
 		t.Fatalf("резерв отправителя не разобран: %v", v2)
@@ -108,22 +115,11 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 		t.Fatal("перевод не помечен исполненным")
 	}
 
-	// повторное применение исключено: повторный flush без эффекта
-	n2.settleNow()
-	n2.applyMu.RLock()
-	got := n2.Ledger.State.Wallet(e.addr("R")).Liquid
-	n2.applyMu.RUnlock()
-	if got != 800 {
-		t.Fatalf("повторный flush применил перевод повторно: %d", got)
-	}
-
 	// повторный рестарт из той же БД: детерминированный пересчёт
-	// применяет перевод ровно один раз
+	// применяет перевод ровно один раз (триггер — в журнале)
 	n3 := e.newNode(nodeOpts{level: LevelFull, db: db})
-	e.start(n3)
-	waitExecuted(t, n3, ptKeyNet(e.addr("V1"), seq), 5000)
 	n3.applyMu.RLock()
-	got = n3.Ledger.State.Wallet(e.addr("R")).Liquid
+	got := n3.Ledger.State.Wallet(e.addr("R")).Liquid
 	locked := n3.Ledger.State.Wallet(e.addr("V1")).Locked
 	n3.applyMu.RUnlock()
 	if got != 800 || locked != 0 {
@@ -132,24 +128,23 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 }
 
 // TestSettleAfterRestartImmature — незрелый перевод (D = 48 ч) после
-// рестарта остаётся в ожидании: резерв заблокирован, исполнения нет.
+// рестарта остаётся в ожидании даже при принятых tx: claim триггера
+// раньше дедлайна; резерв заблокирован, исполнения нет.
 func TestSettleAfterRestartImmature(t *testing.T) {
 	e, _, db, seq := settleRestartEnv(t, 48)
 
 	n2 := e.newNode(nodeOpts{level: LevelFull, db: db})
-	e.start(n2)
-	// первичная сверка узла прошла (~500 мс); дополнительный явный
-	// settle — тот же путь, что периодический (синхронно, для
-	// детерминизма; зрелый случай покрыт ожиданием выше)
-	time.Sleep(700 * time.Millisecond)
-	n2.settleNow()
+	// принятая tx-триггер с claim = сейчас (< дедлайна): исполнения нет
+	if n2.ImportJournal([]*wire.Transaction{e.triggerTx(n2)}) != 1 {
+		t.Fatal("триггер не применён")
+	}
 	n2.applyMu.RLock()
 	r := n2.Ledger.State.Wallet(e.addr("R"))
 	v := n2.Ledger.State.Wallet(e.addr("V1"))
 	pt := n2.Ledger.State.PendingTransfers[ptKeyNet(e.addr("V1"), seq)]
 	n2.applyMu.RUnlock()
 	if pt == nil || pt.Executed {
-		t.Fatal("незрелый перевод исполнен после рестарта")
+		t.Fatal("незрелый перевод исполнен до дедлайна")
 	}
 	if r == nil || r.Liquid != 0 {
 		t.Fatalf("незрелый перевод зачислен: R=%v", r)

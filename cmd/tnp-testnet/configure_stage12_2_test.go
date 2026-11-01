@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
@@ -48,8 +47,7 @@ func TestConfigureFingerprintManifest(t *testing.T) {
 		t.Fatalf("выведенный адрес V2: %x (нужен %x)", gotAddr, wantAddr)
 	}
 	// ядро: кошельки посевного круга создаются по выведенным адресам
-	clock := &ledger.FixedClock{T: uint64(time.Now().Unix()), E: 1, P: 1}
-	l, err := ledger.New(gp, clock, ledger.Options{SkipMintChallengeWindow: true})
+	l, err := ledger.New(gp, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("ledger.New: %v", err)
 	}

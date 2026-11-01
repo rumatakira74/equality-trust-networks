@@ -107,6 +107,8 @@ func New(gp *wire.GenesisPackage, opts Options) (*Ledger, error) {
 	st.Epoch = gp.Genesis.EpochZero
 	st.CurrentPeriod = 0
 	st.GenesisTime = gp.Genesis.GenesisTime
+	// сетевое время стартует с genesis; дальше — max(txNow) по журналу
+	st.NetTime = gp.Genesis.GenesisTime
 	// стартовая ставка комиссии = rate_min (10.2); дальше — адаптивный
 	// пересчёт на границах эпох (settleEpoch)
 	st.FeeRate = p.RateMin

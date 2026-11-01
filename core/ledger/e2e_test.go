@@ -19,8 +19,8 @@ import (
 )
 
 type e2eEnv struct {
-	t        *testing.T
-	ledger   *Ledger
+	t      *testing.T
+	ledger *Ledger
 	// now — тестовое время (v9.13: оно же claim всех собираемых tx;
 	// часы узла ядро не читает). genesis подобран так, что в момент
 	// T0 = 1_700_000_000 период выпуска = 1 (эпоха = 30).
@@ -35,7 +35,7 @@ type e2eEnv struct {
 const e2eT0 = 1_700_000_000
 
 // epoch/period — значения валидации на момент e.now (txNow).
-func (e *e2eEnv) epoch() uint64 { return e.ledger.epochAt(e.now) }
+func (e *e2eEnv) epoch() uint64  { return e.ledger.epochAt(e.now) }
 func (e *e2eEnv) period() uint64 { return e.ledger.periodAt(e.now) }
 
 // settle — довести сеттлемент до e.now (тот же примитив, что Apply
