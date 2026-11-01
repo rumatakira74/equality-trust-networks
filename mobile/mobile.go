@@ -617,13 +617,19 @@ func (nd *Node) OfflineStatus(txid []byte) string {
 	return nd.n.OfflineStatus(id).String()
 }
 
-// StatsText — сводка узла для UI (JSON).
+// StatsText — сводка узла для UI (JSON). state_root — корень SMT
+// состояния (этап 16: сверка узла приложения с пиром после рестарта;
+// лёгкий узел — пустая строка).
 func (nd *Node) StatsText() string {
 	s := nd.n.Stats()
+	stateRoot := ""
+	if r, err := nd.n.StateRoot(); err == nil {
+		stateRoot = fmt.Sprintf("%x", r)
+	}
 	return fmt.Sprintf(`{"level":%q,"peer_id":%q,"peers":%d,"journal_len":%d,`+
-		`"spam_rejected":%d,"pending":%d,"awaiting":%d,"conflicts":%d}`,
+		`"spam_rejected":%d,"pending":%d,"awaiting":%d,"conflicts":%d,"state_root":%q}`,
 		s.Level, s.PeerID, s.Peers, s.JournalLen, s.SpamRejected, s.PendingN,
-		s.AwaitingN, s.Conflicts)
+		s.AwaitingN, s.Conflicts, stateRoot)
 }
 
 // Close — остановка узла.

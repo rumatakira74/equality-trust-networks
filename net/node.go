@@ -330,10 +330,13 @@ func (n *Node) Start(ctx context.Context) error {
 		n.logf("mdns: %v", err)
 	}
 
-	// Bootstrap-каскад (4.5).
+	// Bootstrap-каскад (4.5). Недоступность пиров при старте — не
+	// фатальна (12.3: узел запускается и ждёт; этап 16, №38: рестарт
+	// приложения без сети обязан поднять узел — баланс/история из
+	// локальной БД; сверка доходит при появлении пиров — syncLoop
+	// слушает identify, входящие подключения тоже триггерят сверку).
 	if err := n.bootstrap(n.ctx); err != nil {
-		n.Close()
-		return err
+		n.logf("%v", err)
 	}
 	if err := kdht.Bootstrap(n.ctx); err != nil {
 		n.logf("dht bootstrap: %v", err)

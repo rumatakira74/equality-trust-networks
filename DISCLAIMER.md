@@ -18,7 +18,7 @@
 
 5. **Границы безопасности.** Защита от принуждения не абсолютна (реестр публичен; подготовленный нападающий может проверить адрес). Без назначенных заранее гардианов утрата устройства означает утрату средств. Защита от ферм — экономическая, а не абсолютная. Остаточные риски описаны в модели угроз спецификации и остаются на участниках.
 
-6. **Доступность не гарантирована.** Сеть живёт на телефонах участников; серверов и обязательств по сопровождению не существует. Связность, целостность истории и непрерывность работы зависят от участников.
+6. **Доступность не гарантирована.** Сеть живёт на телефонах участников; серверов и обязательств по сопровождению не существует. Узел приложения хранит журнал в локальной базе (приватный каталог) и восстанавливает его после перезапуска, но удаление приложения или утрата устройства без назначенных заранее гардианов означает утрату доступа. Связность, целостность истории и непрерывность работы зависят от участников.
 
 7. **Соблюдение законодательства** вашей юрисдикции — ответственность пользователя и организатора сети.
 
@@ -40,7 +40,7 @@
 
 5. **Security limits.** Coercion protection is not absolute (the registry is public; a prepared attacker can verify an address). Without guardians assigned in advance, loss of the device means loss of funds. Anti-farm protection is economic, not absolute. Residual risks are described in the threat model of the specification and remain with participants.
 
-6. **No availability guarantee.** The network lives on participants' phones; there are no servers and no support obligations. Connectivity, history integrity, and continuity depend on participants.
+6. **No availability guarantee.** The network lives on participants' phones; there are no servers and no support obligations. The app node keeps its journal in a local database (private app storage) and restores it after restart, but uninstalling the app or losing the device without guardians assigned in advance means loss of access. Connectivity, history integrity, and continuity depend on participants.
 
 7. **Compliance with the laws** of your jurisdiction is the responsibility of the user and the network organizer.
 

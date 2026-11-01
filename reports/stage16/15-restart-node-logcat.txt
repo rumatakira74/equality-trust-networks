@@ -1,0 +1,26 @@
+11-02 00:40:49.224  6968  7019 D TnpNode : stats: null
+11-02 00:40:56.529  6968  7019 D TnpNode : запущен: {"level":"full","peer_id":"QmThPA2J1aijzkFRNqRwE7vBv7y3Zp1fvSYPRq6MeHjsif","peers":2,"journal_len":10,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":6,"state_root":"256dca9432ef81a8f27221e5de986c69a10d26f3d071daa0fffb6e855250127a"}
+11-02 00:40:56.532  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.533  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_SEQ
+11-02 00:40:56.535  6968  7019 D TnpNode : отклонена 000000000000: E_DUP
+11-02 00:40:56.536  6968  7019 D TnpNode : конфликтная ветка 037a8b044cdb (seq=3) доставлена
+11-02 00:40:56.537  6968  7019 D TnpNode : конфликтная ветка aae78fccca66 (seq=3) доставлена
+11-02 00:40:56.538  6968  7019 D TnpNode : конфликтная ветка 8cc43ad9973a (seq=3) доставлена
+11-02 00:40:56.539  6968  7019 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=10 err=<nil>; <peer.ID Qm*8JBtJC>: applied=10 err=<nil>
+11-02 00:40:56.540  6968  7019 D TnpNode : stats: {"level":"full","peer_id":"QmThPA2J1aijzkFRNqRwE7vBv7y3Zp1fvSYPRq6MeHjsif","peers":2,"journal_len":10,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":9,"state_root":"256dca9432ef81a8f27221e5de986c69a10d26f3d071daa0fffb6e855250127a"}
+11-02 00:40:56.546  6968  7019 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=<nil>; <peer.ID Qm*8JBtJC>: applied=0 err=<nil>
+11-02 00:40:56.547  6968  7019 D TnpNode : stats: {"level":"full","peer_id":"QmThPA2J1aijzkFRNqRwE7vBv7y3Zp1fvSYPRq6MeHjsif","peers":2,"journal_len":10,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":9,"state_root":"256dca9432ef81a8f27221e5de986c69a10d26f3d071daa0fffb6e855250127a"}
