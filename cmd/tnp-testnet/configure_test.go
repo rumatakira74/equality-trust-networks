@@ -18,7 +18,7 @@ func TestConfigureMigrateDelayDays(t *testing.T) {
 		out := filepath.Join(t.TempDir(), "net")
 		args := append([]string{
 			"-template", "laboratory",
-			"-network-id", "migrate-delay-test",
+			"-slug", "migrate-delay-test",
 			"-out", out,
 		}, extra...)
 		if err := configureCmd(args); err != nil {

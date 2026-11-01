@@ -113,6 +113,8 @@ func main() {
 		err = publishCmd(os.Args[2:])
 	case "transfer":
 		err = transferCmd(os.Args[2:])
+	case "redeem":
+		err = redeemCmd(os.Args[2:])
 	case "cancel":
 		err = cancelCmd(os.Args[2:])
 	case "migrate":
@@ -1077,3 +1079,42 @@ type peerList []string
 
 func (p *peerList) String() string     { return "multiaddr" }
 func (p *peerList) Set(v string) error { *p = append(*p, v); return nil }
+
+// redeemCmd — погашение квоты поставщиком (6.2, этап 12: полный путь
+// профиля 8 — participant → provider через redeem).
+func redeemCmd(args []string) error {
+	var c txFlags
+	fs := flag.NewFlagSet("redeem", flag.ContinueOnError)
+	addCommonFlags(fs, &c)
+	seed := fs.String("seed", "", "метка отправителя")
+	provider := fs.String("provider", "", "адрес поставщика (hex)")
+	resource := fs.String("resource-id", "", "resource_id сети")
+	amount := fs.Uint64("amount", 0, "сумма")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *seed == "" || *provider == "" || *amount == 0 {
+		return fmt.Errorf("нужны -seed, -provider, -amount (-resource-id — по умолчанию из манифеста)")
+	}
+	env, cleanup, err := startEnv(&c)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	prov, err := hexAddr(*provider)
+	if err != nil {
+		return err
+	}
+	if *resource == "" {
+		*resource = env.gp.Manifest.Profile.ResourceID
+	}
+	key := seedKey(*seed)
+	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	payload := &wire.RedeemPayload{Provider: prov, ResourceID: *resource, Amount: *amount}
+	tx, err := buildTx(env, key, addr, wire.Redeem, payload, false)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("redeem: %d → %s (%s)\n", *amount, *provider, *resource)
+	return submit(env, tx)
+}

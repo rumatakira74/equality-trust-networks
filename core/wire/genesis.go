@@ -5,6 +5,7 @@ package wire
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 )
 
@@ -423,6 +424,16 @@ var GlobalNetworkID = []byte("global")
 // IsGlobalNetwork — глобальная сеть (network_id = "global").
 func IsGlobalNetwork(networkID []byte) bool {
 	return string(networkID) == string(GlobalNetworkID)
+}
+
+// EqLabel — label приложения (v9.10, решение 7): "Eq-" + первые 8 символов
+// SHA-256(network_id); не из slug и не обрезкой slug — slug может совпадать
+// у разных организаторов. Глобальная сеть — тот же алгоритм от константы
+// network_id = "global". display_name в UI показывается всегда в паре
+// с Eq-хешем, никогда отдельно; в launcher — только label.
+func EqLabel(networkID []byte) string {
+	h := sha256.Sum256(networkID)
+	return "Eq-" + hex.EncodeToString(h[:4])
 }
 
 // DeriveNetworkID — само-сертифицирующийся network_id = H(manifest ‖ genesis)

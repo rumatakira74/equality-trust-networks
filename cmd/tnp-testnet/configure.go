@@ -22,8 +22,14 @@ import (
 func configureCmd(args []string) error {
 	fs := flag.NewFlagSet("configure", flag.ContinueOnError)
 	list := fs.Bool("list", false, "показать шаблоны профилей и выйти")
-	template := fs.String("template", "", "шаблон: 1–7 или имя (laboratory, humanness, quota, voucher, community, contribution, mutual-aid)")
-	name := fs.String("network-id", "", "имя сети (обязательно; network_id = SHA-256 префикса+имени)")
+	template := fs.String("template", "", "шаблон: 1–8 или имя (laboratory, humanness, quota, voucher, community, contribution, mutual-aid, subscriber-resource)")
+	name := fs.String("network-id", "", "метка сети для детерминизма ключа приглашения (по умолчанию — slug; network_id деривируется = H(manifest ‖ genesis))")
+	slug := fs.String("slug", "", "человекочитаемое имя сети (обязательно для не-глобальной; метка, не идентичность)")
+	global := fs.Bool("global", false, "глобальная сеть (network_id = \"global\", зарезервированная константа)")
+	recurring := fs.String("recurring", "auto", "recurring-единицы: auto (из шаблона) | on | off")
+	displayName := fs.String("display-name", "", "отображаемое имя сети (по умолчанию slug, до ~24 символов; только внутри приложения, всегда в паре с Eq-хешем)")
+	logo := fs.String("logo", "", "логотип организатора для foreground иконки (PNG, необязательно; без него — идентикон из network_id)")
+	appVersion := fs.String("app-version", "1.0.0", "версия приложения для имени APK")
 	out := fs.String("out", "", "каталог артефактов (по умолчанию network-<шаблон>)")
 	genesisTime := fs.Int64("genesis-time", 0, "genesis-время, unix (0 = сейчас)")
 	seeds := fs.String("seeds", "V1,V2,V3", "метки посевного круга, через запятую")
@@ -32,8 +38,7 @@ func configureCmd(args []string) error {
 	vouchK := fs.Uint64("vouch-k", 0, "vouch_k (0 — из шаблона)")
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds (0 — из шаблона)")
 	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
-	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4)")
-	displayName := fs.String("display-name", "", "отображаемое имя сети")
+	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4, 8)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -44,12 +49,37 @@ func configureCmd(args []string) error {
 	if err != nil {
 		return err
 	}
+	// идентификация сети (v9.10): slug — человекочитаемая метка (обязательна
+	// для не-глобальной сети), глобальная сеть — константа network_id =
+	// "global"; network_id не выбирается — деривируется H(manifest ‖ genesis)
+	slugName := *slug
+	if *global {
+		if slugName == "" {
+			slugName = "global"
+		}
+	} else {
+		if slugName == "" {
+			return fmt.Errorf("нужен -slug (человекочитаемое имя сети; -global — глобальная сеть)")
+		}
+	}
+	if err := validateSlug(slugName); err != nil {
+		return err
+	}
 	if *name == "" {
-		return fmt.Errorf("нужно -network-id (имя сети)")
+		*name = slugName
 	}
 
 	// параметры: шаблон + оверрайды организатора
 	prof := tpl.Profile
+	switch *recurring {
+	case "auto": // из шаблона (профиль 8 — on, остальные — off)
+	case "on":
+		prof.Recurring = true
+	case "off":
+		prof.Recurring = false
+	default:
+		return fmt.Errorf("-recurring: auto | on | off (получено %q)", *recurring)
+	}
 	if *issuance > 0 {
 		prof.IssuanceAmount = *issuance
 	}
@@ -73,16 +103,14 @@ func configureCmd(args []string) error {
 		return fmt.Errorf("профиль не проходит валидацию:\n  - %s", strings.Join(bad, "\n  - "))
 	}
 
-	networkID := networkIDOf(*name)
 	gp := &wire.GenesisPackage{
 		Manifest: &wire.Manifest{
-			NetworkID: networkID,
+			Slug:      slugName,
 			Profile:   &prof,
 			SeedSunset: &wire.SeedSunset{UseActiveWallets: true, ActiveWallets: 100,
 				DeadlineEpoch: 24}, // №15
 		},
 		Genesis: &wire.GenesisRecord{
-			NetworkID:       networkID,
 			GenesisTime:     uint64(*genesisTime),
 			EpochZero:       0,
 			ProtocolVersion: 1,
@@ -90,9 +118,15 @@ func configureCmd(args []string) error {
 		},
 	}
 	gp.Genesis.SeedSunset = gp.Manifest.SeedSunset
+	// display_name (вариант 1): человекочитаемое имя до ~24 символов,
+	// по умолчанию slug; показывается только внутри приложения и всегда
+	// в паре с Eq-хешем
 	dn := *displayName
 	if dn == "" {
-		dn = tpl.DisplayName + " " + *name
+		dn = slugName
+	}
+	if len([]rune(dn)) > 24 {
+		fmt.Printf("внимание: display_name длиннее ~24 символов: %q\n", dn)
 	}
 	gp.Manifest.DisplayName = dn
 	if *genesisTime == 0 {
@@ -101,7 +135,12 @@ func configureCmd(args []string) error {
 	gp.Genesis.GenesisTime = uint64(*genesisTime)
 
 	// посевной круг (детерминированные метки — тестовая сеть; живая сеть
-	// генерирует ключи на устройствах)
+	// генерирует ключи на устройствах). Адреса зависят от network_id —
+	// поэтому network_id деривируется ДО посевного круга
+	networkID := wire.DeriveNetworkID(gp.Manifest, gp.Genesis)
+	if *global {
+		networkID = wire.GlobalNetworkID
+	}
 	var circle []wire.SeedMember
 	seedLabels := strings.Split(*seeds, ",")
 	for _, label := range seedLabels {
@@ -130,8 +169,24 @@ func configureCmd(args []string) error {
 	if prof.EntryMode == wire.EntryInviteOnlyVouch {
 		gp.Genesis.InviteKey = inviteKey
 	}
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	// само-сертифицирующийся network_id = H(manifest ‖ genesis) (v9.10);
+	// глобальная сеть — зарезервированная константа "global"
+	wire.FinalizeGenesis(gp)
+	if *global {
+		gp.Manifest.NetworkID = append([]byte(nil), wire.GlobalNetworkID...)
+		gp.Genesis.NetworkID = append([]byte(nil), wire.GlobalNetworkID...)
+	}
+	networkID = gp.Genesis.NetworkID
+	// genesis-валидация комбинаций (v9.10, раздел 4): ошибочные комбинации
+	// (recurring в глобальной сети, recurring + free, recurring + не-quota
+	// unit, recurring + посторонний transfer_mode) отвергаются при сборке
+	if bad := profiles.ValidateGenesis(gp); len(bad) > 0 {
+		return fmt.Errorf("генезис не проходит валидацию комбинаций:\n  - %s", strings.Join(bad, "\n  - "))
+	}
+	if err := wire.VerifySelfCertified(gp); err != nil {
+		return fmt.Errorf("генезис не само-сертифицирован: %v", err)
+	}
+	mh := gp.Genesis.ManifestHash
 
 	outDir := *out
 	if outDir == "" {
@@ -181,6 +236,41 @@ func configureCmd(args []string) error {
 	if err := os.WriteFile(outDir+"/invite.txt", []byte(inv.String()), 0o644); err != nil {
 		return err
 	}
+	// артефакты Android-сборки (этап 12, шаг 3): имя APK, applicationId,
+	// label Eq-<hash8>, display_name, adaptive-иконка (вариант 3)
+	slugComponent := slugName
+	if *global {
+		slugComponent = "global"
+	}
+	apk := APKName(slugComponent, prof.Recurring, *appVersion)
+	appID := ApplicationID(slugComponent)
+	label := wire.EqLabel(networkID)
+	spec := iconSpec(networkID, *logo != "", prof.Recurring)
+	if err := writeIconAssets(outDir+"/icon", networkID, spec, *logo); err != nil {
+		return err
+	}
+	aj, err := json.MarshalIndent(map[string]any{
+		"apk_name":      apk,
+		"application_id": appID,
+		"label":         label,
+		"display_name":  dn,
+		"slug":          slugName,
+		"recurring":     prof.Recurring,
+		"network_id":    hex.EncodeToString(networkID),
+		"icon": map[string]any{
+			"background":     spec.Background,
+			"palette_index":  spec.PaletteIndex,
+			"foreground":     spec.Foreground,
+			"badge":          spec.Badge,
+			"adaptive_layers": []string{"icon/background.png", "icon/foreground.png"},
+		},
+	}, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(outDir+"/android.json", aj, 0o644); err != nil {
+		return err
+	}
 
 	fmt.Printf("сеть %s по шаблону %d (%s)\n", *name, tpl.ID, tpl.DisplayName)
 	fmt.Printf(" network_id: %s\n manifest_hash: %s\n genesis_time: %d (%s)\n",
@@ -190,8 +280,13 @@ func configureCmd(args []string) error {
 	fmt.Printf(" единица: %s, выпуск: %d/%d мес., передача: %s, вход: %s, K=%d\n",
 		unitName(prof.Unit), prof.IssuanceAmount, prof.IssuancePeriodMonths,
 		transferModeName(prof.TransferMode), entryName(prof.EntryMode), prof.VouchK)
+	if prof.Recurring {
+		fmt.Printf(" recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)\n")
+	}
 	fmt.Printf(" модули: %v\n посевной круг: %d\n артефакты: %s\n",
 		moduleNames(prof.Modules), len(circle), outDir)
+	fmt.Printf(" APK: %s\n applicationId: %s\n label: %s\n display_name: %q · %s\n",
+		apk, appID, label, dn, label)
 	return nil
 }
 
@@ -206,10 +301,10 @@ func listTemplates() error {
 
 func pickTemplate(s string) (*profiles.Template, error) {
 	if s == "" {
-		return nil, fmt.Errorf("нужно -template (1–7 или имя; -list — список)")
+		return nil, fmt.Errorf("нужно -template (1–8 или имя; -list — список)")
 	}
 	var tpl *profiles.Template
-	if n := len(s); n == 1 && s[0] >= '1' && s[0] <= '7' {
+	if n := len(s); n == 1 && s[0] >= '1' && s[0] <= '8' {
 		tpl = profiles.ByID(int(s[0] - '0'))
 	} else {
 		tpl = profiles.ByName(s)

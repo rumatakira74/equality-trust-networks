@@ -328,6 +328,8 @@ func transferModeName(v wire.TransferMode) string {
 		return "restricted"
 	case wire.TransferModeSoulbound:
 		return "soulbound"
+	case wire.TransferModePeerRedeem:
+		return "peer-redeem"
 	}
 	return "unspecified"
 }
@@ -441,6 +443,12 @@ func (g *Genesis) ManifestJSON() string {
 	out := struct {
 		NetworkID   string `json:"network_id"`
 		DisplayName string `json:"display_name"`
+		Slug        string `json:"slug"`
+		// EqLabel — label приложения (v9.10, решение 7): "Eq-" + первые
+		// 8 символов SHA-256(network_id); display_name в UI всегда в паре
+		// с ним, никогда отдельно
+		EqLabel  string `json:"eq_label"`
+		Recurring bool  `json:"recurring"`
 		Unit        string `json:"unit"`
 		ResourceID  string `json:"resource_id,omitempty"`
 
@@ -512,8 +520,11 @@ func (g *Genesis) ManifestJSON() string {
 		Argon2Iterations uint32 `json:"argon2_iterations"`
 		Argon2Par        uint32 `json:"argon2_par"`
 	}{
-		NetworkID:   string(m.NetworkID),
+		NetworkID:   hex.EncodeToString(m.NetworkID),
 		DisplayName: m.DisplayName,
+		Slug:        m.Slug,
+		EqLabel:     wire.EqLabel(m.NetworkID),
+		Recurring:   p.Recurring,
 		Unit:        unitName(p.Unit),
 		ResourceID:  p.ResourceID,
 
