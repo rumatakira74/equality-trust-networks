@@ -21,27 +21,48 @@ import (
 type e2eEnv struct {
 	t        *testing.T
 	ledger   *Ledger
-	clock    *FixedClock
+	// now — тестовое время (v9.13: оно же claim всех собираемых tx;
+	// часы узла ядро не читает). genesis подобран так, что в момент
+	// T0 = 1_700_000_000 период выпуска = 1 (эпоха = 30).
+	now      uint64
 	keys     map[string]*ecdsa.PrivateKey
 	addrs    map[string][]byte
 	rootKey  *ecdsa.PrivateKey
 	rootCert *x509.Certificate
 }
 
-func newE2E(t *testing.T) *e2eEnv {
+// e2eT0 — стартовое время e2e-сценариев.
+const e2eT0 = 1_700_000_000
+
+// epoch/period — значения валидации на момент e.now (txNow).
+func (e *e2eEnv) epoch() uint64 { return e.ledger.epochAt(e.now) }
+func (e *e2eEnv) period() uint64 { return e.ledger.periodAt(e.now) }
+
+// settle — довести сеттлемент до e.now (тот же примитив, что Apply
+// принятых tx; тесты зовут его без tx-триггера).
+func (e *e2eEnv) settle() { e.ledger.settleTo(e.now) }
+
+// e2eGenesis — тестовый genesis e2e: genesis_time за один период (30 сут)
+// до T0 — в момент T0 период выпуска = 1.
+func e2eGenesis() *wire.GenesisPackage {
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 30*86400
+	return gp
+}
+
+func newE2E(t *testing.T) *e2eEnv {
+	gp := e2eGenesis()
 	gp.Manifest.Profile.Pow = &wire.PowParams{
 		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8, Argon2Iterations: 1,
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 	env := &e2eEnv{
-		t: t, ledger: l, clock: clock,
+		t: t, ledger: l, now: e2eT0,
 		keys:  make(map[string]*ecdsa.PrivateKey),
 		addrs: make(map[string][]byte),
 	}
@@ -106,7 +127,7 @@ func (e *e2eEnv) register(id string, guardians ...string) Result {
 		Type:            wire.Register,
 		Payload:         rp,
 		ProtocolVersion: e.ledger.State.Net.ProtocolVersion,
-		TimestampClaim:  e.clock.NetTime(),
+		TimestampClaim:  e.now,
 	}
 	e.solveAndSign(tx, id, true)
 	return e.ledger.Apply(tx)
@@ -123,7 +144,7 @@ func (e *e2eEnv) tx(id string, typ wire.TxType, payload wire.Payload, hard bool)
 		Type:            typ,
 		Payload:         payload,
 		ProtocolVersion: e.ledger.State.Net.ProtocolVersion,
-		TimestampClaim:  e.clock.NetTime(),
+		TimestampClaim:  e.now,
 	}
 	e.solveAndSign(tx, id, hard)
 	return tx
@@ -204,7 +225,7 @@ func TestRegisterChallengeBinding(t *testing.T) {
 		Type:            wire.Register,
 		Payload:         rp,
 		ProtocolVersion: e.ledger.State.Net.ProtocolVersion,
-		TimestampClaim:  e.clock.NetTime(),
+		TimestampClaim:  e.now,
 	}
 	e.solveAndSign(tx, "CH", true)
 	res := e.ledger.Apply(tx)
@@ -225,8 +246,8 @@ func TestE2EHeadlessScenario(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -246,7 +267,7 @@ func TestE2EHeadlessScenario(t *testing.T) {
 	// 2. vouch x3 -> active
 	for _, v := range []string{"V1", "V2", "V3"} {
 		res := e.ledger.Apply(e.tx(v, wire.Vouch, &wire.VouchPayload{
-			Candidate: e.addr("ALICE"), Epoch: e.clock.Epoch(),
+			Candidate: e.addr("ALICE"), Epoch: e.epoch(),
 		}, false))
 		e.requireAccepted(res, "vouch "+v)
 	}
@@ -256,8 +277,7 @@ func TestE2EHeadlessScenario(t *testing.T) {
 
 	// 3. mint первого периода (активация в периоде 1; заявляем период 1)
 	// current period = 1 -> завершённых периодов нет; сдвигаем время на период 2
-	e.clock.P = 2
-	e.clock.T += 31 * 86400
+	e.now += 31 * 86400
 	e.requireAccepted(e.ledger.Apply(e.tx("ALICE", wire.Mint,
 		&wire.MintPayload{Period: 1, Amount: 1000}, true)), "mint p1")
 	if alice.TotalBalance() != 901 { // 1000 − R 100 + остаток деления 1
@@ -272,7 +292,7 @@ func TestE2EHeadlessScenario(t *testing.T) {
 
 	// 4. перевод сразу после выпуска: свежая когорта ещё в окне
 	// переводимости (3 мес., T8) -> E_BALANCE — так и должно быть
-	e.clock.T += 14*86400 + 60
+	e.now += 14*86400 + 60
 	res4 := e.ledger.Apply(e.tx("ALICE", wire.Transfer, &wire.TransferPayload{
 		Send: &wire.TransferSend{Recipient: e.addr("V1"), Amount: 100},
 	}, false))
@@ -284,9 +304,8 @@ func TestE2EHeadlessScenario(t *testing.T) {
 	}
 
 	// 5. созревание когорты: период 5 (окно 3: период 1 переводим с 4)
-	e.clock.P = 5
-	e.clock.T += 3 * 31 * 86400
-	e.ledger.syncTimeForTest()
+	e.now += 3 * 31 * 86400
+	e.settle()
 	res := e.ledger.Apply(e.tx("ALICE", wire.Transfer, &wire.TransferPayload{
 		Send: &wire.TransferSend{Recipient: e.addr("V1"), Amount: 100},
 	}, false))
@@ -302,8 +321,8 @@ func TestE2EHeadlessScenario(t *testing.T) {
 	if e.ledger.State.Wallet(e.addr("V1")).Locked == 0 {
 		t.Fatal("перевод выше P не зарезервирован")
 	}
-	e.clock.T += 49 * 3600
-	e.ledger.syncTimeForTest()
+	e.now += 49 * 3600
+	e.settle()
 	if e.ledger.State.Wallet(e.addr("ALICE")).Liquid < 5000 {
 		t.Fatal("отложенный перевод не исполнен по сроку")
 	}
@@ -342,7 +361,7 @@ func TestE2EHeadlessScenario(t *testing.T) {
 		stmt := &wire.MigrateStatement{
 			NetworkID:  e.ledger.State.Net.NetworkID,
 			OldAddress: e.addr("ALICE"), NewAddress: e.addr("NEW"),
-			Nonce: 1, Epoch: e.clock.Epoch(),
+			Nonce: 1, Epoch: e.epoch(),
 		}
 		sh := stmt.Hash()
 		sig, err := crypto.SignDER(e.key(g), sh[:])
@@ -356,8 +375,8 @@ func TestE2EHeadlessScenario(t *testing.T) {
 	e.requireAccepted(e.ledger.Apply(e.tx("NEW", wire.Migrate,
 		&wire.MigratePayload{Propose: pro}, false)), "migrate propose")
 	// исполнение через 14 дней
-	e.clock.T += 15 * 86400
-	e.ledger.syncTimeForTest()
+	e.now += 15 * 86400
+	e.settle()
 	newW := e.ledger.State.Wallet(e.addr("NEW"))
 	oldW := e.ledger.State.Wallet(e.addr("ALICE"))
 	if newW.Status != wire.StatusActive {
@@ -395,8 +414,8 @@ func TestReplayFromStore(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -407,7 +426,7 @@ func TestReplayFromStore(t *testing.T) {
 	}
 	for _, v := range []string{"V1", "V2", "V3"} {
 		e.requireAccepted(e.ledger.Apply(e.tx(v, wire.Vouch, &wire.VouchPayload{
-			Candidate: e.addr("R1"), Epoch: e.clock.Epoch(),
+			Candidate: e.addr("R1"), Epoch: e.epoch(),
 		}, false)), "vouch")
 	}
 
@@ -431,11 +450,10 @@ func TestReplayFromStore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
-	clock2 := &FixedClock{T: e.clock.NetTime(), E: e.clock.Epoch(), P: e.clock.Period()}
-	gp := params.TestGenesis()
+	gp := e2eGenesis()
 	gp.Manifest.Profile.Pow = e.ledger.State.Net.Profile.Pow
 	wire.SetManifestHash(gp)
-	l2, err := New(gp, clock2, Options{SkipMintChallengeWindow: true})
+	l2, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis2: %v", err)
 	}
@@ -448,8 +466,8 @@ func TestReplayFromStore(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}

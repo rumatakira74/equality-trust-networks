@@ -19,6 +19,7 @@ import (
 func newEnvWithNetworkID(t *testing.T, networkID []byte) *e2eEnv {
 	t.Helper()
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 30*86400 // период 1 при T0 (v9.13)
 	gp.Manifest.NetworkID = networkID
 	gp.Genesis.NetworkID = networkID
 	gp.Manifest.Profile.Pow = &wire.PowParams{
@@ -26,12 +27,11 @@ func newEnvWithNetworkID(t *testing.T, networkID []byte) *e2eEnv {
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	return &e2eEnv{t: t, ledger: l, clock: clock,
+	return &e2eEnv{t: t, ledger: l, now: e2eT0,
 		keys: make(map[string]*ecdsa.PrivateKey), addrs: make(map[string][]byte)}
 }
 
@@ -56,7 +56,8 @@ func newRecurringEnv(t *testing.T) *e2eEnv {
 	v1pub := crypto.MarshalPubKey(&e.key("V1").PublicKey)
 	p.Providers = [][]byte{crypto.Fingerprint(v1pub)}
 
-	e.clock.P = 11
+	// claim в периоде 11: период 10 завершён (№24)
+	e.now = e.ledger.State.GenesisTime + 11*30*86400 + 86400
 	for _, id := range []string{"V1", "ALICE", "BOB"} {
 		e.preStateWallet(id)
 		// квота периода 10: last_claimed 9 (M3/M5/M6 — ровно один период)
@@ -89,7 +90,7 @@ func TestRecurringBurnBoundary(t *testing.T) {
 	e.requireAccepted(e.ledger.Apply(forward), "перевод полученных единиц")
 
 	// граница прошла: период 12 > P+1 — сгоревшая единица, E_BURNED
-	e.clock.P = 12
+	e.now = e.ledger.State.GenesisTime + 12*30*86400 + 86400
 	burned := e.tx("ALICE", wire.Transfer,
 		&wire.TransferPayload{Send: &wire.TransferSend{Recipient: bob.Address, Amount: 10}}, false)
 	if res := e.ledger.Apply(burned); res.Outcome != Rejected || res.Code != "E_BURNED" {
@@ -115,7 +116,7 @@ func TestRecurringNewPeriodUsable(t *testing.T) {
 	alice := e.ledger.State.Wallet(e.addr("ALICE"))
 	bob := e.ledger.State.Wallet(e.addr("BOB"))
 	// период 12: квота периода 11 свежая, квота периода 10 сгорела
-	e.clock.P = 12
+	e.now = e.ledger.State.GenesisTime + 12*30*86400 + 86400
 	mint := e.tx("ALICE", wire.Mint, &wire.MintPayload{Period: 11, Amount: 1000}, true)
 	e.requireAccepted(e.ledger.Apply(mint), "mint периода 11")
 	send := e.tx("ALICE", wire.Transfer,
@@ -174,7 +175,7 @@ func TestPeerRedeem(t *testing.T) {
 	}
 
 	// после границы P+1 погашение сгоревшей единицы — E_BURNED
-	e.clock.P = 12
+	e.now = e.ledger.State.GenesisTime + 12*30*86400 + 86400
 	burned := e.tx("ALICE", wire.Redeem, &wire.RedeemPayload{
 		Provider: e.addr("V1"), ResourceID: "compute", Amount: 10}, false)
 	if res := e.ledger.Apply(burned); res.Outcome != Rejected || res.Code != "E_BURNED" {
@@ -202,7 +203,8 @@ func TestReplayBetweenNetworks(t *testing.T) {
 
 	// глобальная сеть: network_id = "global" участвует в валидации так же
 	eg := newEnvWithNetworkID(t, wire.GlobalNetworkID)
-	eg.clock.P = 11
+	// claim в периоде 11 (v9.13)
+	eg.now = eg.ledger.State.GenesisTime + 11*30*86400 + 86400
 	eg.ledger.State.Net.Profile.FreshTransferWindowPeriods = 0 // когорты сразу переводимы
 	for _, id := range []string{"ALICE", "BOB"} {
 		eg.preStateWallet(id)

@@ -3,7 +3,7 @@
   "id": "valid-contribution-confirm-01",
   "title": "Второе peer-подтверждение принимает заявку вклада (N=2 локально)",
   "source": "KNOWLEDGE.md 6.4; spec/03 3.12 (K2–K6); PENDING: вопрос №13 — N, лимиты",
-  "network": { "params": { "contribution_confirmations_required_local": 2, "contribution_confirm_limit_per_period_local": 5, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "network": { "params": { "contribution_confirmations_required_local": 2, "contribution_confirm_limit_per_period_local": 5, "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800 } },
   "pre_state": {
     "epoch": 100, "network_time": 1790000000, "current_period": 16,
     "wallets": {
@@ -26,7 +26,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_PEER2", "seq": 7, "prev": "txid:W_PEER2:6", "type": "CONTRIBUTION_CONFIRM",
-      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "timestamp_claim": 1790000100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "contribution_confirm": { "claim_txid": "txid:W_VOLUNTEER:13" } },
       "signature": "SIG_PLACEHOLDER"

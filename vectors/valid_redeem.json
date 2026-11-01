@@ -3,7 +3,7 @@
   "id": "valid-redeem-01",
   "title": "Погашение: перевод единицы поставщику из параметров сети (restricted)",
   "source": "KNOWLEDGE.md 6.2; spec/03 3.11",
-  "network": { "params": { "transfer_mode": "RESTRICTED", "providers": ["W_PROVIDER"], "fee_mode": "NONE", "transfer_moratorium_days": 7, "demurrage_rate_micros": 0, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "network": { "params": { "transfer_mode": "RESTRICTED", "providers": ["W_PROVIDER"], "fee_mode": "NONE", "transfer_moratorium_days": 7, "demurrage_rate_micros": 0, "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800 } },
   "pre_state": {
     "epoch": 100, "network_time": 1790000000, "current_period": 16,
     "wallets": {
@@ -15,7 +15,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_USER", "seq": 11, "prev": "txid:W_USER:10", "type": "REDEEM",
-      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "timestamp_claim": 1790000100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "redeem": {

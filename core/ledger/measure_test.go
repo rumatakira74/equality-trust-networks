@@ -25,8 +25,8 @@ func TestMeasurements(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -68,8 +68,8 @@ func TestMeasurements(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e2.clock.NetTime() - 400*86400,
-			ActivatedAt:     e2.clock.NetTime() - 400*86400,
+			RegisteredAt:    e2.now - 400*86400,
+			ActivatedAt:     e2.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -101,8 +101,8 @@ func TestMeasurements(t *testing.T) {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e3.clock.NetTime() - 400*86400,
-			ActivatedAt:     e3.clock.NetTime() - 400*86400,
+			RegisteredAt:    e3.now - 400*86400,
+			ActivatedAt:     e3.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}

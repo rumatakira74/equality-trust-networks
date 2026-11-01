@@ -42,7 +42,7 @@ func TestMintChallengeSlotShortPeriod(t *testing.T) {
 func TestCheckMintChallengeWindowFromGenesis(t *testing.T) {
 	gp := params.TestGenesis()
 	gp.Genesis.GenesisTime = 1_760_000_000 // genesis в 2020-х, не 1970
-	l, err := New(gp, &FixedClock{}, Options{})
+	l, err := New(gp, Options{})
 	if err != nil {
 		t.Fatalf("ledger: %v", err)
 	}

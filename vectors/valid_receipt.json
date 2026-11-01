@@ -3,7 +3,7 @@
   "id": "valid-receipt-01",
   "title": "Поставщик публикует подписанную квитанцию на состоявшееся погашение",
   "source": "KNOWLEDGE.md 6.2; spec/03 3.11 (D5)",
-  "network": { "params": { "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "network": { "params": { "epoch_seconds": 410614, "genesis_time": 1749428000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800 } },
   "pre_state": {
     "epoch": 101, "network_time": 1790900000, "current_period": 16,
     "wallets": {
@@ -20,7 +20,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_PROVIDER", "seq": 22, "prev": "txid:W_PROVIDER:21", "type": "RECEIPT",
-      "timestamp_claim": 1790900100, "protocol_version": 1,
+      "timestamp_claim": 1790900100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "receipt": {

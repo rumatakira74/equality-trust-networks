@@ -21,6 +21,7 @@ import (
 func newFingerprintEnv(t *testing.T, networkID []byte) *e2eEnv {
 	t.Helper()
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 30*86400 // период 1 при T0 (v9.13)
 	gp.Manifest.NetworkID = networkID
 	gp.Genesis.NetworkID = networkID
 	prof := gp.Manifest.Profile
@@ -45,12 +46,11 @@ func newFingerprintEnv(t *testing.T, networkID []byte) *e2eEnv {
 	provPub := crypto.MarshalPubKey(&crypto.DeterministicKey("e2e:PROV").PublicKey)
 	prof.Providers = [][]byte{crypto.Fingerprint(provPub)}
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	return &e2eEnv{t: t, ledger: l, clock: clock,
+	return &e2eEnv{t: t, ledger: l, now: e2eT0,
 		keys: make(map[string]*ecdsa.PrivateKey), addrs: make(map[string][]byte)}
 }
 
@@ -90,7 +90,7 @@ func TestSeedAddressesDerivedFromNetworkID(t *testing.T) {
 // манифеста принимается (C8), подпись чужим ключом — E_SIG.
 func TestSeedMembershipByFingerprintSignature(t *testing.T) {
 	e := newFingerprintEnv(t, []byte("fp-manifest-sig"))
-	e.clock.P = 2 // период 1 завершён (заявляются завершённые, №24)
+	e.now += 31 * 86400 // период 1 завершён (заявляются завершённые, №24)
 	// выпуск посевным кошельком: подпись ключом из манифеста — accept
 	mint := e.tx("S1", wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true)
 	if res := e.ledger.Apply(mint); res.Outcome != Accepted {
@@ -106,7 +106,7 @@ func TestSeedMembershipByFingerprintSignature(t *testing.T) {
 		Type:            wire.Mint,
 		Payload:         &wire.MintPayload{Period: 1, Amount: 1000},
 		ProtocolVersion: e.ledger.State.Net.ProtocolVersion,
-		TimestampClaim:  e.clock.NetTime(),
+		TimestampClaim:  e.now,
 	}
 	e.solveAndSign(tx, "S3", true)
 	sh := tx.SigningHash()
@@ -130,7 +130,8 @@ func TestProviderMembershipByFingerprint(t *testing.T) {
 	// существующий кошелёк — иначе INV-8: единицы исчезают)
 	e.preStateWallet("ALICE")
 	e.preStateWallet("PROV")
-	e.clock.P = 12
+	// claim в периоде 12: период 11 завершён (№24)
+	e.now = e.ledger.State.GenesisTime + 12*30*86400 + 86400
 	mint := e.tx("ALICE", wire.Mint, &wire.MintPayload{Period: 11, Amount: 1000}, true)
 	e.requireAccepted(e.ledger.Apply(mint), "mint ALICE")
 	// redeem на выведенный адрес поставщика — accept (членство по
