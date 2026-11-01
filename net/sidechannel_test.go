@@ -75,6 +75,14 @@ func TestSideChannelPublishPropagates(t *testing.T) {
 	if res, err := a.SubmitTx(ctx, e.mintTx(a, "V1")); err != nil || res.Outcome.String() != "accept" {
 		t.Fatalf("mint: %v/%s", res.Outcome, res.Code)
 	}
+	// издатель офлайн-перевода обязан иметь выпуск до публикации:
+	// публикация одноразовая, при E_SEQ (выпуск ещё не догнал) транзакция
+	// остаётся в ожидании без буфера — под -race gossip выпуска иногда
+	// опаздывал и тест флюкал; сверка предусловия делает его
+	// детерминированным (как в TestSideChannelAwaitingPublication)
+	if !waitJournal(t, b, 1, 30*time.Second) {
+		t.Fatalf("B не догнал выпуск: %d", b.Stats().JournalLen)
+	}
 	offline := e.transferTx(a, "V1", "V2", 100)
 	ch := NewMemSideChannel(4)
 	if err := ch.Send(offline); err != nil {

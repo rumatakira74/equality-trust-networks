@@ -40,3 +40,25 @@ VerifyProofAgainstCheckpoint, выход при первом совпадени�
 
 Проверка: go test -race -run TestLightNodeCheckpointProof -count=8 ./net/ —
 8/8 зелёные (21 с); до фикса — 3/8 красные.
+
+Сопутствующая гонка (найдена -race при прогоне TestSyncAnchorContinuation)
+------------------------------------------------------------------------
+1) Тайминг: тест ждал прокси-условие (длина журнала n2 == 3), а не само
+   утверждение (якорь пира pos=3 с txid): журнал наполняется gossip'ом,
+   якорь двигает только сверка SyncFromPeer — под -race на медленном
+   раннере сверка позже gossip, проверка якоря срабатывала раньше.
+   Фикс: waitFor ждёт само условие якоря (30 с).
+2) Дата-рейс: хелпер anchorOf возвращал *syncAnchor под RLock, тест читал
+   a.pos/a.txid вне лока, пока SyncFromPeer (sync.go:336) пишет их под
+   n.mu. Репорт -race: Write SyncFromPeer / Previous read тест (строки 60/63).
+   Фикс: anchorOf возвращает копию структуры под локом.
+   Проверка: go test -race -run TestSyncAnchor -count=10 ./net/ — 30/30
+   зелёные; до фикса гонка ловилась в ~1 прогоне из 3-5.
+
+CI-находка (не гонка): jobs android/aar и flutter/apk падали на
+"gomobile: open android/libs/tnp.aar: no such file or directory" —
+каталог android/libs/ в .gitignore и не существует в свежем checkout,
+gomobile не создаёт промежуточные каталоги. Локально каталог существовал
+от прошлых сборок, поэтому падение проявлялось только в CI.
+Фикс: mkdir -p android/libs перед gomobile bind в android.yml и flutter.yml.
+

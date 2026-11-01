@@ -27,6 +27,7 @@ jobs:
         run: go install golang.org/x/mobile/cmd/gomobile@v0.0.0-20261011034528-197770444867 && go install golang.org/x/mobile/cmd/gobind@v0.0.0-20261011034528-197770444867
       - name: gomobile bind (AAR)
         run: |
+          mkdir -p android/libs
           gomobile bind -target=android -androidapi 26 -ldflags "-checklinkname=0" -o android/libs/tnp.aar ./mobile
           ls -la android/libs/tnp.aar
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
