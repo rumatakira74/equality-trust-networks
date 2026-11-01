@@ -154,7 +154,11 @@ func (e *testEnv) newNode(o nodeOpts) *Node {
 		CorroborationN: o.corroN,
 		LinkGroups:     o.linkGroups,
 		TrustedRoots:   []*x509.Certificate{e.rootCert},
-		PollInterval:   500 * time.Millisecond,
+		// Этап 14, A2: тестовое окружение регистрирует кошельки
+		// синтетическими цепочками при sandbox = false — test-only
+		// обход запрета синтетических корней вне песочницы.
+		AllowSyntheticRoots: true,
+		PollInterval:        500 * time.Millisecond,
 	}
 	if o.walletID != "" {
 		cfg.WalletKey = e.key(o.walletID)

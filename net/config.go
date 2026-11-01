@@ -104,8 +104,14 @@ type NodeConfig struct {
 	// OwnWallet — адрес собственного кошелька (лёгкий узел, 12.5).
 	OwnWallet []byte
 	// TrustedRoots — корни аттестации (core/attest; одинаковые у всех
-	// узлов сети; распространение — этап 6).
+	// узлов сети; распространение — этап 6). Прод-путь — корни Google
+	// (attest.GoogleRoots); синтетические — только genesis с
+	// sandbox = true (этап 14, A2), проверка в NewNode.
 	TrustedRoots []*x509.Certificate
+	// AllowSyntheticRoots — тестовый обход A2-проверки «синтетический
+	// корень только в песочнице». Только unit-тесты и headless-утилиты
+	// (cmd/tnp-testnet); прод-путь (мост mobile) не выставляет.
+	AllowSyntheticRoots bool
 	// Log — журнал узла (nil — тихий режим).
 	Log func(format string, args ...any)
 }

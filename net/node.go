@@ -23,6 +23,7 @@ import (
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 
+	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/smt"
@@ -143,6 +144,18 @@ func (n *Node) wallet(addr []byte) *ledger.Wallet {
 func NewNode(cfg *NodeConfig) (*Node, error) {
 	if cfg.Genesis == nil || cfg.Genesis.Manifest == nil || cfg.Genesis.Genesis == nil {
 		return nil, errors.New("net: неполный genesis-пакет")
+	}
+	// Этап 14, A2: синтетические корни аттестации — только genesis с
+	// sandbox = true. Не-sandbox сеть с синтетическим корнем —
+	// невалидная конфигурация узла (прод доверяет корням Google).
+	// Тестовый обход — AllowSyntheticRoots (unit-тесты, headless-утилиты).
+	if !cfg.AllowSyntheticRoots &&
+		cfg.Genesis.Manifest.Profile != nil && !cfg.Genesis.Manifest.Profile.Sandbox {
+		for _, r := range cfg.TrustedRoots {
+			if attest.IsSyntheticRoot(r) {
+				return nil, errors.New("net: синтетический корень аттестации вне песочницы (A2)")
+			}
+		}
 	}
 	cfg.defaults()
 	if cfg.NodeKey == nil {
