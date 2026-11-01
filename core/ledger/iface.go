@@ -1,26 +1,13 @@
 // Интерфейсы, реализуемые на этапах 4–5 (сеть и консенсус).
-// Этап 3 — headless: время внедряется тестами, финализация — заглушка.
+// Этап 3 — headless: финализация — заглушка.
+//
+// v9.13 (этап фикса времени): ядро не читает часы узла. Время валидации —
+// txNow = timestamp_claim самой транзакции; эпохи/периоды — арифметически
+// от genesis. Отдельного «режима часов» replay нет: live и replay
+// применяют журнал одним механизмом (ledger.Apply). Часы остаются у сети:
+// cons.Clock (закрытие эпох) и net.RealClock (отображение, допуск C9).
+
 package ledger
-
-// EpochSource — источник сетевого времени (9.2: источник правды — эпохи
-// чекпоинтов, не медиана timestamps). Реализация — этап 5.
-type EpochSource interface {
-	NetTime() uint64 // сетевое время, Unix-секунды UTC
-	Epoch() uint64   // номер текущей эпохи
-	Period() uint64  // номер текущего календарного периода выпуска (месяц)
-}
-
-// FixedClock — фиксированное время для тестов и векторов.
-type FixedClock struct {
-	T, E, P uint64
-}
-
-func (c *FixedClock) NetTime() uint64 { return c.T }
-func (c *FixedClock) Epoch() uint64   { return c.E }
-func (c *FixedClock) Period() uint64  { return c.P }
-
-// Advance — сдвиг времени (детерминированный, для сценариев).
-func (c *FixedClock) Advance(t uint64) { c.T = t }
 
 // Finalizer — разрешение конфликтных веток (9.1: выборочное голосование;
 // этап 5). Headless-заглушка выбирает первую поступившую ветку.

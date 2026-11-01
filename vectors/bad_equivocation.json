@@ -3,7 +3,7 @@
   "id": "bad-equivocation-01",
   "title": "Эквивокация: два перевода с одним seq разным получателям; конфликт и метка flagged",
   "source": "KNOWLEDGE.md 7.5, 9.1; spec/03 3.7; spec/04 INV-1c",
-  "network": { "params": { "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "transfer_moratorium_days": 7, "delayed_threshold_default": 1000, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800, "flagged_mint_suspension_months_local": 3 } },
+  "network": { "params": { "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "transfer_moratorium_days": 7, "delayed_threshold_default": 1000, "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800, "flagged_mint_suspension_months_local": 3 } },
   "pre_state": {
     "epoch": 100, "network_time": 1790000000, "current_period": 16,
     "wallets": {
@@ -21,21 +21,21 @@
   "transactions": [
     {
       "id": "T_A", "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER",
-      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "timestamp_claim": 1790000100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 400 } } },
       "signature": "SIG_PLACEHOLDER_A"
     },
     {
       "id": "T_B", "wallet": "W_MALLORY", "seq": 6, "prev": "txid:W_MALLORY:5", "type": "TRANSFER",
-      "timestamp_claim": 1790000200, "protocol_version": 1,
+      "timestamp_claim": 1790000200, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "transfer": { "send": { "recipient": "W_CAROL", "amount": 400 } } },
       "signature": "SIG_PLACEHOLDER_B"
     },
     {
       "id": "T_E", "wallet": "W_WATCHER", "seq": 10, "prev": "txid:W_WATCHER:9", "type": "EVIDENCE",
-      "timestamp_claim": 1790000300, "protocol_version": 1,
+      "timestamp_claim": 1790000300, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "evidence": { "tx_a": "T_A", "tx_b": "T_B", "kind": "EVIDENCE_EQUIVOCATION" } },
       "signature": "SIG_PLACEHOLDER"

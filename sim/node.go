@@ -109,7 +109,7 @@ func (n *Node) rebuild(net *Network) {
 	for k := range n.applied {
 		before[k] = true
 	}
-	l, err := ledger.New(net.GP, &netClock{net: net}, ledger.Options{SkipMintChallengeWindow: true})
+	l, err := ledger.New(net.GP, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		panic(err)
 	}

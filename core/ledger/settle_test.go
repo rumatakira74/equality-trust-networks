@@ -1,6 +1,11 @@
 // Сеттлемент на границах эпох/периодов: демередж (10.3), истечение
 // registered (7.3), освобождение слотов (7.4), seed_sunset (13),
 // отложенное повышение P (8.3).
+//
+// v9.13: сеттлемент детерминирован от времени сети (max(txNow) по
+// журналу); genesis теста подобран так, что в момент T период = 16,
+// эпоха = 100 (как pre-state теста), — тесты зовут settleTo напрямую
+// (тот же примитив, что Apply принятых tx).
 package ledger
 
 import (
@@ -12,19 +17,34 @@ import (
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
-func newSettleLedger(t *testing.T) (*Ledger, *FixedClock) {
+// settle-тест: база времени (genesis → period 16 / epoch 100 при T)
+const (
+	settleGenesis   = 1_748_528_000    // T − 16 периодов (30 сут)
+	settleEpochSecs = 41_472_000 / 100 // 16 периодов = 100 эпох ровно
+	settleT         = 1_790_000_000
+)
+
+func newSettleLedger(t *testing.T) (*Ledger, uint64) {
 	gp := params.TestGenesis()
-	// демередж 1%/мес, floor 3000 (значения 1.2)
+	// демередж 1%/мес, floor 3000 (значения 1.2); длины эпохи/периода и
+	// genesis_time — согласованы с pre-state (период 16, эпоха 100 при T)
+	gp.Genesis.GenesisTime = settleGenesis
+	gp.Manifest.Profile.EpochSeconds = settleEpochSecs
+	gp.Manifest.Profile.PeriodSeconds = 30 * 86400
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_790_000_000, E: 100, P: 16}
-	l, err := New(gp, clock, Options{})
+	l, err := New(gp, Options{})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 	// состояние на момент теста: периоды/эпохи уже материализованы
 	l.State.CurrentPeriod = 16
 	l.State.Epoch = 100
-	return l, clock
+	return l, settleT
+}
+
+// settleAtPeriod — сеттлемент к моменту внутри периода p.
+func (l *Ledger) settleAtPeriod(p uint64) {
+	l.settleTo(l.State.GenesisTime + p*30*86400 + 86400)
 }
 
 func mkWallet(l *Ledger, id string, status wire.WalletStatus, balance uint64) *Wallet {
@@ -46,13 +66,13 @@ func mkWallet(l *Ledger, id string, status wire.WalletStatus, balance uint64) *W
 }
 
 func TestSettleDemurrage(t *testing.T) {
-	l, clock := newSettleLedger(t)
+	l, now := newSettleLedger(t)
 	// кошелёк с 10000: демередж 1% на (10000 − 3000) = 70 за период
 	w := mkWallet(l, "RICH", wire.StatusActive, 10000)
 	// кошелёк с 2000 (ниже floor): не демереджится
 	poor := mkWallet(l, "POOR", wire.StatusActive, 2000)
-	clock.P = 17
-	l.syncTimeForTest()
+	w.RegisteredAt, poor.RegisteredAt = now-400*86400, now-400*86400
+	l.settleAtPeriod(17)
 	if w.Liquid != 10000-70 {
 		t.Fatalf("демередж: %d, ожидается %d", w.Liquid, 10000-70)
 	}
@@ -64,8 +84,7 @@ func TestSettleDemurrage(t *testing.T) {
 	}
 	// два периода: целочисленный burn = floor((base − floor) × rate / 10^6)
 	// (детерминизм; эквивалент (1−r)^n с накоплением остатка)
-	clock.P = 18
-	l.syncTimeForTest()
+	l.settleAtPeriod(18)
 	base2 := uint64(9930)
 	burn2 := (base2 - 3000) * 10000 / 1_000_000 // 69
 	if w.Liquid != base2-burn2 {
@@ -78,65 +97,66 @@ func TestSettleDemurrage(t *testing.T) {
 }
 
 func TestSettleRegisteredExpiry(t *testing.T) {
-	l, clock := newSettleLedger(t)
+	l, now := newSettleLedger(t)
 	w := mkWallet(l, "OLD", wire.StatusRegistered, 0)
 	// 3 года без активации (7.3)
-	w.RegisteredAt = clock.NetTime() - (3*365*86400 + 10)
-	clock.E++
-	l.syncTimeForTest()
+	w.RegisteredAt = now - (3*365*86400 + 10)
+	// одна эпоха вперёд (граница эпохи — момент сеттлемента)
+	l.settleTo(l.State.GenesisTime + 101*settleEpochSecs)
 	if w.Status != wire.StatusExpired {
 		t.Fatalf("registered не истёк: %s", w.Status)
 	}
 }
 
 func TestSettleSlotRelease(t *testing.T) {
-	l, clock := newSettleLedger(t)
+	l, now := newSettleLedger(t)
 	v := mkWallet(l, "V", wire.StatusActive, 0)
+	v.RegisteredAt = now - 400*86400
 	// слот с неактивированным кандидатом: 90 дней -> освобождение
 	v.OccupiedSlots = append(v.OccupiedSlots, Slot{
 		Candidate:    []byte("cand-1"),
-		SinceNetTime: clock.NetTime() - 91*86400,
+		SinceNetTime: now - 91*86400,
 	})
 	// слот с активированным кандидатом, завершившим 3 периода
 	cand := mkWallet(l, "CAND", wire.StatusActive, 0)
+	cand.RegisteredAt = now - 400*86400
 	cand.LastClaimedPeriod = 15
 	v.OccupiedSlots = append(v.OccupiedSlots, Slot{
-		Candidate: cand.Address, SinceNetTime: clock.NetTime(),
+		Candidate: cand.Address, SinceNetTime: now,
 		CandidateActive: true, MintsBase: 12,
 	})
 	if len(v.OccupiedSlots) != 2 {
 		t.Fatal("слоты не заняты")
 	}
-	clock.E++
-	l.syncTimeForTest()
+	l.settleTo(l.State.GenesisTime + 101*settleEpochSecs)
 	if len(v.OccupiedSlots) != 0 {
 		t.Fatalf("слоты не освободились: %d", len(v.OccupiedSlots))
 	}
 }
 
 func TestSettleSeedSunset(t *testing.T) {
-	l, clock := newSettleLedger(t)
+	l, now := newSettleLedger(t)
 	// порог 100 active (решение №15, тестовый genesis) — заселим 100
 	for i := 0; i < 100; i++ {
-		mkWallet(l, fmt.Sprintf("S%d", i), wire.StatusActive, 0)
+		w := mkWallet(l, fmt.Sprintf("S%d", i), wire.StatusActive, 0)
+		w.RegisteredAt = now - 400*86400
 	}
 	if !l.State.SeedRightsActive {
 		t.Fatal("права посевного круга уже отключены")
 	}
-	clock.E++
-	l.syncTimeForTest()
+	l.settleTo(l.State.GenesisTime + 101*settleEpochSecs)
 	if l.State.SeedRightsActive {
 		t.Fatal("seed_sunset не сработал")
 	}
 }
 
 func TestSettleThresholdRaise(t *testing.T) {
-	l, clock := newSettleLedger(t)
+	l, now := newSettleLedger(t)
 	w := mkWallet(l, "T", wire.StatusActive, 0)
+	w.RegisteredAt = now - 400*86400
 	w.PendingThreshold = 5000
-	w.PendingThresholdNotBefore = clock.NetTime() + 48*3600
-	clock.T += 49 * 3600
-	l.syncTimeForTest()
+	w.PendingThresholdNotBefore = now + 48*3600
+	l.settleTo(now + 49*3600)
 	if w.DelayedThreshold != 5000 {
 		t.Fatalf("повышение P не вступило: %d", w.DelayedThreshold)
 	}

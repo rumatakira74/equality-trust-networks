@@ -98,68 +98,53 @@ func Canonicalize(txs []*wire.Transaction, view *FinalityView) []*wire.Transacti
 // сверяется с эпохой публикации — рестарт из БД больше не даёт
 // E_VOUCH_EPOCH), демередж оседает по историческим границам периодов
 // (расхождение store-replay/синхронизация Δ125 закрыто).
-type pinClock struct {
-	genesis    uint64
-	epochSecs  uint64
-	periodSecs uint64
-	t          uint64
-}
-
-// newPinClock — параметры genesis берутся из состояния реестра; конвенция
-// периода — от genesis (headless-ядро: net.RealClock, mintChallengeSlot;
-// 0 — 30 сут, genesis-поле 61 задаёт длину).
-func newPinClock(l *ledger.Ledger) *pinClock {
-	epochSecs := l.State.Net.EpochSeconds
-	if epochSecs == 0 {
-		epochSecs = 24 * 3600
-	}
-	return &pinClock{
-		genesis:    l.State.GenesisTime,
-		epochSecs:  epochSecs,
-		periodSecs: l.State.Net.Profile.PeriodSecsOrDefault(),
-	}
-}
-
-// Pin фиксирует время транзакции (её timestamp_claim).
-func (c *pinClock) Pin(t uint64) { c.t = t }
-
-func (c *pinClock) NetTime() uint64 { return c.t }
-
-func (c *pinClock) Epoch() uint64 {
-	if c.t <= c.genesis {
-		return 0
-	}
-	return (c.t - c.genesis) / c.epochSecs
-}
-
-func (c *pinClock) Period() uint64 {
-	if c.t <= c.genesis {
-		return 0
-	}
-	return (c.t - c.genesis) / c.periodSecs
-}
-
-var _ ledger.EpochSource = (*pinClock)(nil)
+//
+// v9.13 (этап фикса времени): pinClock удалён — ядро применяет каждую
+// tx от txNow = timestamp_claim само (ledger.Apply), live и replay
+// работают одним механизмом; C9 — слой допуска сети, replay его не
+// применяет.
 
 // Replay — пересчёт состояния из genesis + журнала (INV-3): применяет
-// транзакции в каноническом порядке с пинированием часов (NetTime, Epoch,
-// Period) на timestamp_claim; конфликтная ветка (не победитель)
-// фиксируется через Apply как Conflict и остаётся в журнале хранения.
+// транзакции в каноническом порядке тем же механизмом, что live
+// (ledger.Apply от txNow = timestamp_claim — отдельного режима часов
+// нет). Strict — без послаблений: любая отклонённая tx — ошибка
+// (журнал принятой сети обязан воспроизводиться целиком); конфликтная
+// ветка (не победитель) фиксируется через Apply как Conflict и остаётся
+// в журнале хранения. При расхождении — диагностика replayDiag.
 func Replay(l *ledger.Ledger, txs []*wire.Transaction, view *FinalityView) error {
-	orig := l.Clock
-	pc := newPinClock(l)
-	l.Clock = pc
-	defer func() { l.Clock = orig }()
 	for _, tx := range Canonicalize(txs, view) {
-		pc.Pin(tx.TimestampClaim)
 		res := l.Apply(tx)
 		switch res.Outcome {
 		case ledger.Accepted:
 		case ledger.Conflict:
 			// альтернативная ветка — честно воспроизводит выбор (INV-1c)
 		default:
-			return fmt.Errorf("cons: replay: tx %x: %s", res.TxID, res.Code)
+			return fmt.Errorf("cons: replay: %s", replayDiag(l, tx, res))
 		}
 	}
 	return nil
+}
+
+// replayDiag — диагностика расхождения strict-replay: какая tx
+// (txid/тип/seq/claim), заявленный период (mint), период и эпоха
+// валидации (пинированы на claim — как в live), вердикт.
+func replayDiag(l *ledger.Ledger, tx *wire.Transaction, res ledger.Result) string {
+	id := tx.TxID()
+	g := l.State.GenesisTime
+	ps := l.State.Net.Profile.PeriodSecsOrDefault()
+	es := l.State.Net.EpochSeconds
+	if es == 0 {
+		es = 24 * 3600
+	}
+	period, epoch := uint64(0), uint64(0)
+	if tx.TimestampClaim > g {
+		period = (tx.TimestampClaim - g) / ps
+		epoch = (tx.TimestampClaim - g) / es
+	}
+	diag := fmt.Sprintf("tx %x (type=%d seq=%d claim=%d): период валидации %d, эпоха %d, вердикт %s",
+		id[:], tx.Type, tx.Seq, tx.TimestampClaim, period, epoch, res.Code)
+	if mp, ok := tx.Payload.(*wire.MintPayload); ok {
+		diag += fmt.Sprintf("; заявленный период mint %d", mp.Period)
+	}
+	return diag
 }

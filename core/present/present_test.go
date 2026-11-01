@@ -18,7 +18,7 @@ import (
 
 type env struct {
 	l            *ledger.Ledger
-	clock        *ledger.FixedClock
+	now          uint64 // время проверяющего (v9.13: часы — вне ядра)
 	netID        []byte
 	manifestHash []byte
 	seedPrivs    []*ecdsa.PrivateKey
@@ -29,7 +29,8 @@ type env struct {
 func newEnv(t *testing.T) *env {
 	t.Helper()
 	gp := params.TestGenesis()
-	e := &env{netID: gp.Genesis.NetworkID, pubs: map[string][]byte{}}
+	gp.Genesis.GenesisTime = 1_700_000_000
+	e := &env{netID: gp.Genesis.NetworkID, now: 1_700_000_000, pubs: map[string][]byte{}}
 	var members []wire.SeedMember
 	for _, tag := range []string{"present-s1", "present-s2", "present-s3"} {
 		k := crypto.DeterministicKey(tag)
@@ -44,8 +45,7 @@ func newEnv(t *testing.T) *env {
 	gp.Manifest.SeedCircle = members
 	wire.SetManifestHash(gp)
 	e.manifestHash = append([]byte(nil), gp.Genesis.ManifestHash...)
-	e.clock = &ledger.FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := ledger.New(gp, e.clock, ledger.Options{})
+	l, err := ledger.New(gp, ledger.Options{})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -68,7 +68,7 @@ func (e *env) pubOf(addr []byte) (*ecdsa.PublicKey, bool) {
 // checkpoint — сборка и пороговая подпись чекпоинта эпохи 1 (2 из 3).
 func (e *env) checkpoint(t *testing.T, signers int) *wire.Checkpoint {
 	t.Helper()
-	cp, err := cons.Build(e.netID, 1, e.l, nil, e.clock.NetTime(), 1,
+	cp, err := cons.Build(e.netID, 1, e.l, nil, e.now, 1,
 		e.seedAddrs, 2, nil)
 	if err != nil {
 		t.Fatalf("build: %v", err)
@@ -109,7 +109,7 @@ func TestAttestFullCycle(t *testing.T) {
 
 	challenge := []byte("challenge-от-проверяющего-123")
 	appID := []byte("civic-app-v1")
-	expires := e.clock.NetTime() + 3600
+	expires := e.now + 3600
 	p, err := Build(e.l, addr, priv, challenge, appID, e.manifestHash, 1, expires)
 	if err != nil {
 		t.Fatalf("build: %v", err)
@@ -137,7 +137,7 @@ func TestAttestFullCycle(t *testing.T) {
 		t.Fatalf("light sync: %v", err)
 	}
 	res, err := Verify(p2, ls.AtEpoch(1), e.netID, e.manifestHash, challenge,
-		e.clock.NetTime(), e.pubOf)
+		e.now, e.pubOf)
 	if err != nil {
 		t.Fatalf("verify: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestAttestRejects(t *testing.T) {
 	priv := e.seedPrivs[0]
 	challenge := []byte("ch-123")
 	p, err := Build(e.l, addr, priv, challenge, []byte("app"), e.manifestHash, 1,
-		e.clock.NetTime()+3600)
+		e.now+3600)
 	if err != nil {
 		t.Fatalf("build: %v", err)
 	}
@@ -174,28 +174,28 @@ func TestAttestRejects(t *testing.T) {
 	}{
 		{"чужой challenge", func() error {
 			_, err := Verify(p, cp, e.netID, e.manifestHash, []byte("другой"),
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 		{"просрочка", func() error {
 			_, err := Verify(p, cp, e.netID, e.manifestHash, challenge,
-				e.clock.NetTime()+7200, e.pubOf)
+				e.now+7200, e.pubOf)
 			return err
 		}},
 		{"чужой манифест", func() error {
 			_, err := Verify(p, cp, e.netID, []byte("другой-манифест"), challenge,
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 		{"чужая сеть", func() error {
 			_, err := Verify(p, cp, []byte("чужая-сеть"), e.manifestHash, challenge,
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 		{"порог не достигнут", func() error {
 			weak := e.checkpoint(t, 1)
 			_, err := Verify(p, weak, e.netID, e.manifestHash, challenge,
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 		{"подмена утверждения", func() error {
@@ -204,7 +204,7 @@ func TestAttestRejects(t *testing.T) {
 			st.AgeDays = 9999 // возраст не подписан кошельком
 			bad.Statement = &st
 			_, err := Verify(&bad, cp, e.netID, e.manifestHash, challenge,
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 		{"подмена листа", func() error {
@@ -213,7 +213,7 @@ func TestAttestRejects(t *testing.T) {
 			leaf.Balance = 1_000_000
 			bad.Leaf = &leaf
 			_, err := Verify(&bad, cp, e.netID, e.manifestHash, challenge,
-				e.clock.NetTime(), e.pubOf)
+				e.now, e.pubOf)
 			return err
 		}},
 	}
@@ -224,7 +224,7 @@ func TestAttestRejects(t *testing.T) {
 	}
 	// корректное предъявление всё ещё проходит
 	if _, err := Verify(p, cp, e.netID, e.manifestHash, challenge,
-		e.clock.NetTime(), e.pubOf); err != nil {
+		e.now, e.pubOf); err != nil {
 		t.Fatalf("после подлогов честное предъявление отклонено: %v", err)
 	}
 }

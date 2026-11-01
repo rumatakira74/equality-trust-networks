@@ -1,9 +1,9 @@
-// Регресс-тесты №40 (блокер 8.1, этап 9): пинирование Epoch/Period в
-// cons.Replay при пересчёте из БД — та же семантика, что у сетевой сверки
-// (SyncJournalFrom/ImportJournal, net.ReplayClock). Критерии: рестарт узла
+// Регресс-тесты сходимости путей пересчёта (№40, блокер 8.1; v9.13 —
+// этап фикса времени): ядро применяет каждую tx от txNow =
+// timestamp_claim, отдельного режима часов нет. Критерии: рестарт узла
 // из БД с vouch-ами разных эпох не даёт E_VOUCH_EPOCH; store-replay
-// сходится с холодной синхронизацией (state_root A=B=C, демередж по
-// историческим границам периодов).
+// сходится с пинированным применением и холодной синхронизацией
+// (state_root A=B=C, демередж по историческим границам периодов).
 package net
 
 import (
@@ -153,34 +153,30 @@ func TestStoreReplayConvergesWithColdSync(t *testing.T) {
 	apply(e.txAt(n1, "V2", wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true, e.genesisT+62*day+3600))
 	apply(e.txAt(n1, "V1", wire.Mint, &wire.MintPayload{Period: 2, Amount: 1000}, true, e.genesisT+121*day))
 
-	// B — состояние n1 (пинированное применение, семантика сверки);
-	// с PENDING №2 живой узел после сверки доводит сеттлемент до
-	// текущего времени — для сравнимости путей сводим все три
-	n1.settleNow()
+	// B — состояние n1 (применение от txNow; v9.13: сеттлемент — только
+	// от max(txNow) по журналу, доведения до часов узла нет)
 	rootB, burnB := mustRoot(t, n1), n1.Ledger.State.TotalBurned
 	if burnB == 0 {
 		t.Fatal("демередж не осел по историческим границам — тест не воспроизводит Δ")
 	}
 
-	// A — рестарт из той же БД (store-replay, cons.Replay) + settle
+	// A — рестарт из той же БД (store-replay, cons.Replay)
 	n2 := e.newNode(nodeOpts{level: LevelFull, db: db})
-	n2.settleNow()
 	rootA, burnA := mustRoot(t, n2), n2.Ledger.State.TotalBurned
 
 	// C — холодная синхронизация (SyncJournalFrom): узел синхронизируется
-	// собственным первичным проходом (syncLoop), settle запускается
-	// только после его завершения — пинированное применение истории
-	// оседает по историческим границам (№40), затем живые часы
+	// собственным первичным проходом (syncLoop). v9.13: сеттлемент
+	// оседает от max(txNow) журнала — как у A и B
 	e.start(n1)
 	n3 := e.newNode(nodeOpts{level: LevelFull, manual: manualAddrs(t, n1)})
 	e.start(n3)
-	// ждём: журнал применён (4 транзакции) и сеттлемент доведён до
-	// текущего времени (settle после первичной сверки)
+	// ждём: журнал применён (4 транзакции), сеттлемент — от последнего
+	// claim (max(txNow) = genesis + 121 сут)
 	deadline := time.Now().Add(10 * time.Second)
 	for {
 		n3.applyMu.RLock()
 		settled := n3.Ledger != nil &&
-			n3.Ledger.State.NetTime >= uint64(time.Now().Unix())-2
+			n3.Ledger.State.NetTime == e.genesisT+121*day
 		journal := len(n3.Ledger.AcceptedTxs())
 		n3.applyMu.RUnlock()
 		if journal == 4 && settled {

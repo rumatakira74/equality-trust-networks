@@ -20,7 +20,7 @@
       "fee_min": 1,
       "rate_micros": 10000,
       "demurrage_rate_micros": 0,
-      "epoch_seconds": 86400,
+      "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000,
       "registered_expiry_days": 1095,
       "slot_free_days": 90,
       "slot_free_mint_periods": 3,
@@ -92,7 +92,7 @@
       "prev": "txid:W_ALICE:8",
       "type": "MINT",
       "timestamp_claim": 1790000100,
-      "protocol_version": 1,
+      "protocol_version": 2,
       "pow": {
         "algorithm": "POW_ARGON2ID",
         "nonce": "POW_NONCE_PLACEHOLDER"

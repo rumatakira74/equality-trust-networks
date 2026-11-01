@@ -35,8 +35,10 @@
 
 - Time is network time, not device time; NTP/GPS — calibration and diagnostics only.
 - The source of truth is the checkpoint epochs, not the median of timestamps (with low traffic it can be shifted).
-- The calendar is UTC; "the 1st of the month" = the first epoch that started after 00:00 UTC on the 1st by consensus time.
-- A claimed timestamp is accepted with a deviation from network time of no more than ±30 minutes; it does not affect the issuance period.
+- **The validation time is txNow = the transaction's own `timestamp_claim` (v9.13, the time-fix stage).** All time-dependent rules (M2, M4, M7, T3, V2, recurring burn, evidence/deadlines, `ActivatedPeriod`, modules) are checked from txNow; `periodAt`/`epochAt` are computed from txNow arithmetically from `genesis_time`. One tx — one deterministic verdict: the same journal yields the same `state_root` on any node and in replay (before v9.13 live validation read the node clock at apply, while replay was pinned to the claim — verdicts diverged at the period boundary, the 12-testnet run finding).
+- **C9 is a network admission layer (v9.13), not a validation rule.** A claimed timestamp is accepted with a deviation from the node clock of no more than ±30 minutes (`timestamp_tolerance_seconds`) — a tx outside the tolerance is not accepted and not relayed by the network; the core and replay do not apply C9 (the verdict is fully deterministic from txNow). For sandbox/test networks the tolerance is managed: the check is not applied (short `period_seconds` and pre-built txs do not break test runs).
+- **Issuance periods are arithmetic from `genesis_time`: `period = (t − genesis_time) / period_seconds`** (field 61; 0 — the 30-day convention). The period length scales the node clock, replay and the mint challenge slot (7.6) identically; period boundaries are deterministic for all nodes.
+- **Settlement is monotonic from max(txNow) over the journal (v9.13).** Demurrage, quota burning, period/epoch boundaries and deferred-operation deadlines (transfers D, migrations, guardian changes, P raises) settle from the claim of accepted transactions: settlement never rolls back, repeated applications are idempotent, a journal re-computation after a restart reproduces the same state. There is no settling up to the node clock — it would diverge live from replay; matured deferred operations are applied by the nearest accepted tx with a sufficient claim.
 - Network time cannot shift between checkpoints by more than a set limit.
 
 ### 9.3 Transaction types
@@ -56,6 +58,7 @@ The values in this section are the default "Currency" profile; the other profile
 
 - Base issuance of 1000 units, on the 1st of each month, a single date for everyone.
 - The first `mint` = `period − 1` (no retro-accruals). The `period` of a new issuance is strictly greater than the previous one; `amount = base_emission × periods_elapsed`.
+- **The M4/M5 validation moment is txNow = `timestamp_claim` (v9.13):** periods completed relative to the claim's validation period are claimed (`period < periodAt(claim)`), not relative to the publication moment. A tx built before the period boundary and published after it is validated by its claim — the verdict is the same on all nodes and in replay (the "built in N / published in N+1" divergence is closed).
 - Issuance is available only to a wallet in `active` status.
 - **Accrual for missed months is limited by a window** (`accrual_window`, 6 months by default): unlimited accrual creates "sleeping" accruals and an incentive for a delayed attack. The units are not blocked: beyond the window, the accrual simply burns.
 - The emission is constant: 1000 × the number of `active` wallets per month; a decreasing emission is not used.
@@ -74,7 +77,7 @@ The values in this section are the default "Currency" profile; the other profile
 
 - The only mechanism that penalizes precisely holding. A reserve lever in the base profile (disabled); enabled by default in profiles 5 and 7. The values are to be tuned by simulation.
 - Parameters: `demurrage_rate` (a fraction per month) and `demurrage_floor` (a tax-free remainder).
-- There are no deduction transactions: the effective balance is computed deterministically at the wallet's next operation by the number of elapsed epochs n: `balance_eff = floor + (balance − floor) × (1 − rate)^n` with `balance > floor`; the deducted amount is burned.
+- There are no deduction transactions: demurrage is materialized deterministically at period boundaries from max(txNow) over the journal (v9.13): `burn = (balance − floor) × rate` for each crossed boundary with `balance > floor`; the deducted amount is burned. Settlement is monotonic (never rolls back), idempotent and is reproduced by a journal re-computation after a restart.
 
 ### 10.4 Economics ⏳
 

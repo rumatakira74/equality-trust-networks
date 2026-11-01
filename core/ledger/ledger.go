@@ -23,7 +23,6 @@ type Options struct {
 // Ledger — headless-ядро реестра (сеть — этап 4, финализация — этап 5).
 type Ledger struct {
 	State        *State
-	Clock        EpochSource
 	Finalizer    Finalizer
 	TrustedRoots []*x509.Certificate
 	TxIndex      map[string]*wire.Transaction // txid -> tx (принятые)
@@ -37,10 +36,24 @@ type Ledger struct {
 	conflictTxs []*wire.Transaction
 	Opts        Options
 	SeedSunset  *wire.SeedSunset // из манифеста (для settleEpoch)
+	// tt — время текущей применяемой транзакции (txNow, v9.13):
+	// now = timestamp_claim, epoch/period — арифметически от genesis.
+	// Вердикт не зависит от часов узла: live и replay применяют tx
+	// от одного и того же txNow.
+	tt txTime
+}
+
+// txTime — точка времени валидации применяемой транзакции.
+type txTime struct {
+	now    uint64 // txNow = tx.TimestampClaim
+	epoch  uint64 // epochAt(txNow)
+	period uint64 // periodAt(txNow)
 }
 
 // New создаёт ядро из genesis-пакета (проверка genesis — spec/02 2.6).
-func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, error) {
+// Часы узла ядро не читает: время валидации — txNow = timestamp_claim
+// самой транзакции (v9.13); эпохи/периоды — арифметически от genesis.
+func New(gp *wire.GenesisPackage, opts Options) (*Ledger, error) {
 	if gp == nil || gp.Manifest == nil || gp.Genesis == nil || gp.Manifest.Profile == nil {
 		return nil, errors.New("ledger: неполный genesis-пакет")
 	}
@@ -94,6 +107,8 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 	st.Epoch = gp.Genesis.EpochZero
 	st.CurrentPeriod = 0
 	st.GenesisTime = gp.Genesis.GenesisTime
+	// сетевое время стартует с genesis; дальше — max(txNow) по журналу
+	st.NetTime = gp.Genesis.GenesisTime
 	// стартовая ставка комиссии = rate_min (10.2); дальше — адаптивный
 	// пересчёт на границах эпох (settleEpoch)
 	st.FeeRate = p.RateMin
@@ -103,7 +118,6 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 
 	l := &Ledger{
 		State:      st,
-		Clock:      clock,
 		Finalizer:  FirstWins{},
 		TxIndex:    make(map[string]*wire.Transaction),
 		Opts:       opts,
@@ -131,20 +145,45 @@ func hashThree(addr []byte, period uint64) uint64 {
 	return out
 }
 
-// SettleNow — доведение сеттлемента до текущего времени источника без
-// транзакции-триггера (PENDING №2 отчёта 11.2): replay журнала пинирует
-// часы на timestamp_claim, поэтому после рестарта зрелые отложенные
-// операции (переводы D, миграции, смены гардианов, порог P) не применяются
-// до ближайшей живой транзакции. Вызывается сетевым узлом на старте и
-// периодически; повторный вызов после применения — без эффекта
-// (Executed/Effective флаги).
-func (l *Ledger) SettleNow() { l.syncTime() }
+// epochSecsOrDefault — длина эпохи (genesis-поле; 0 — сутки).
+func (l *Ledger) epochSecsOrDefault() uint64 {
+	if l.State.Net.EpochSeconds == 0 {
+		return 24 * 3600
+	}
+	return l.State.Net.EpochSeconds
+}
 
-// syncTime — детерминированный сеттлемент к текущему времени источника.
-func (l *Ledger) syncTime() {
-	now := l.Clock.NetTime()
-	epoch := l.Clock.Epoch()
-	period := l.Clock.Period()
+// epochAt — номер эпохи на момент t (арифметически от genesis, 9.2;
+// та же конвенция, что net.RealClock и replay: детерминизм от txNow).
+func (l *Ledger) epochAt(t uint64) uint64 {
+	if t <= l.State.GenesisTime {
+		return 0
+	}
+	return (t - l.State.GenesisTime) / l.epochSecsOrDefault()
+}
+
+// periodAt — номер периода выпуска на момент t (арифметически от
+// genesis; конвенция headless-ядра — 30 сут, genesis-поле 61
+// period_seconds задаёт длину: масштабирует слот челленджа, часы узла
+// и replay одинаково).
+func (l *Ledger) periodAt(t uint64) uint64 {
+	if t <= l.State.GenesisTime {
+		return 0
+	}
+	return (t - l.State.GenesisTime) / l.State.Net.Profile.PeriodSecsOrDefault()
+}
+
+// settleTo — детерминированный сеттлемент к моменту txNow (v9.13):
+// демередж, сгорание, границы периодов/эпох и сроки отложенных
+// операций — от max(txNow) по журналу. Монотонно: сеттлемент не
+// откатывается (границы пройдены — пройдены), повторные вызовы
+// идемпотентны (Executed/Effective-флаги, границы не повторяются).
+// Вызывается только из Apply принятых/конфликтных транзакций:
+// отклонённая tx не двигает сеттлемент, иначе live (видит отклонённые
+// tx) и replay (видит только журнал) расходились бы.
+func (l *Ledger) settleTo(now uint64) {
+	epoch := l.epochAt(now)
+	period := l.periodAt(now)
 
 	for l.State.Epoch < epoch {
 		l.State.Epoch++
@@ -159,7 +198,7 @@ func (l *Ledger) syncTime() {
 	if now > l.State.NetTime {
 		l.State.NetTime = now
 	}
-	l.flushPending(now)
+	l.flushPending(l.State.NetTime)
 }
 
 // AcceptedTxs возвращает все принятые транзакции в каузальном порядке

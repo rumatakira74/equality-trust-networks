@@ -22,6 +22,7 @@ type moduleEnv struct {
 func newModuleEnv(t *testing.T) *moduleEnv {
 	t.Helper()
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 30*86400 // период 1 при T0 (v9.13)
 	p := gp.Manifest.Profile
 	p.Modules = []uint32{wire.ModuleRedeem, wire.ModulePool, wire.ModuleContribution}
 	p.ResourceID = "water"
@@ -37,18 +38,17 @@ func newModuleEnv(t *testing.T) *moduleEnv {
 	p.Providers = [][]byte{crypto.Fingerprint(v1pub)}
 
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	e := &e2eEnv{t: t, ledger: l, clock: clock,
+	e := &e2eEnv{t: t, ledger: l, now: e2eT0,
 		keys: make(map[string]*ecdsa.PrivateKey), addrs: make(map[string][]byte)}
 	for _, id := range []string{"V1", "V2", "V3", "ALICE", "BOB", "CAROL"} {
 		e.preStateWallet(id)
 	}
 	// фонд участников — реальные выпуски (INV-8): период 11 при текущем 12
-	e.clock.P = 12
+	e.now = e.ledger.State.GenesisTime + 12*30*86400 + 86400
 	for _, id := range []string{"V1", "V2", "V3", "ALICE", "BOB", "CAROL"} {
 		mint := e.tx(id, wire.Mint, &wire.MintPayload{Period: 11, Amount: 1000}, true)
 		e.requireAccepted(e.ledger.Apply(mint), "mint "+id)
@@ -66,8 +66,8 @@ func (e *e2eEnv) preStateWallet(id string) *Wallet {
 	w := &Wallet{
 		Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 		Status: wire.StatusActive, Seed: true,
-		RegisteredAt:    e.clock.NetTime() - 400*86400,
-		ActivatedAt:     e.clock.NetTime() - 400*86400,
+		RegisteredAt:    e.now - 400*86400,
+		ActivatedAt:     e.now - 400*86400,
 		ActivatedPeriod: 1, LastClaimedPeriod: 10,
 		LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 	}
@@ -87,7 +87,7 @@ func (e *e2eEnv) preStateRegistered(id string) *Wallet {
 	w := &Wallet{
 		Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 		Status:         wire.StatusRegistered,
-		RegisteredAt:   e.clock.NetTime() - 400*86400,
+		RegisteredAt:   e.now - 400*86400,
 		LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 	}
 	w.TipTxID = make([]byte, 32)
@@ -111,7 +111,7 @@ func TestPoolLifecycle(t *testing.T) {
 	e := m.e2eEnv
 	// P1: create {получатель V1, цель 300, дедлайн, режимы}
 	create := e.tx("ALICE", wire.PoolCreate, &wire.PoolCreatePayload{
-		Recipient: e.addr("V1"), GoalAmount: 300, DeadlineEpoch: e.clock.Epoch() + 10,
+		Recipient: e.addr("V1"), GoalAmount: 300, DeadlineEpoch: e.epoch() + 10,
 		ReleaseMode: wire.PoolReleaseOnGoal, RefundMode: wire.PoolRefundIfUnmet,
 	}, false)
 	e.requireAccepted(e.ledger.Apply(create), "pool_create")
@@ -155,7 +155,7 @@ func TestPoolDeadlineAndRefund(t *testing.T) {
 	m := newModuleEnv(t)
 	e := m.e2eEnv
 	create := e.tx("ALICE", wire.PoolCreate, &wire.PoolCreatePayload{
-		Recipient: e.addr("V1"), GoalAmount: 1_000_000, DeadlineEpoch: e.clock.Epoch() + 1,
+		Recipient: e.addr("V1"), GoalAmount: 1_000_000, DeadlineEpoch: e.epoch() + 1,
 		ReleaseMode: wire.PoolReleaseOnDeadline, RefundMode: wire.PoolRefundIfUnmet,
 	}, false)
 	e.requireAccepted(e.ledger.Apply(create), "pool_create")
@@ -165,9 +165,8 @@ func TestPoolDeadlineAndRefund(t *testing.T) {
 	e.requireAccepted(e.ledger.Apply(donate), "donate")
 
 	// граница эпохи: дедлайн прошёл — выпуск открыт, доля = 50/5 = 10
-	e.clock.E += 2
-	e.clock.T += 2 * 86400
-	e.ledger.syncTimeForTest()
+	e.now += 2 * 86400
+	e.settle()
 	pool := e.ledger.State.Pools[string(poolID[:])]
 	if !pool.Released || pool.Share != 8 {
 		t.Fatalf("deadline release: released=%v share=%d", pool.Released, pool.Share)
@@ -177,7 +176,7 @@ func TestPoolDeadlineAndRefund(t *testing.T) {
 
 	// отдельный пул с возвратом: цель не достигнута, close — донатам
 	create2 := e.tx("BOB", wire.PoolCreate, &wire.PoolCreatePayload{
-		Recipient: e.addr("V1"), GoalAmount: 1_000_000, DeadlineEpoch: e.clock.Epoch() + 10,
+		Recipient: e.addr("V1"), GoalAmount: 1_000_000, DeadlineEpoch: e.epoch() + 10,
 		ReleaseMode: wire.PoolReleaseOnGoal, RefundMode: wire.PoolRefundIfUnmet,
 	}, false)
 	e.requireAccepted(e.ledger.Apply(create2), "pool_create 2")
@@ -216,7 +215,7 @@ func TestRedeemReceipt(t *testing.T) {
 	// D4: слот в прошлом
 	bad3 := e.tx("ALICE", wire.Redeem, &wire.RedeemPayload{
 		Provider: e.addr("V1"), ResourceID: "water", Amount: 10,
-		Slot: &wire.TimeSlot{Start: e.clock.NetTime() - 7200, End: e.clock.NetTime() - 3600},
+		Slot: &wire.TimeSlot{Start: e.now - 7200, End: e.now - 3600},
 	}, false)
 	m.rejected(e.ledger.Apply(bad3), "E_REDEEM_SLOT", "слот в прошлом")
 
@@ -261,7 +260,7 @@ func TestContributionFlow(t *testing.T) {
 	e := m.e2eEnv
 	// пул программы: получатель V1, release_continuous
 	poolCreate := e.tx("V1", wire.PoolCreate, &wire.PoolCreatePayload{
-		Recipient: e.addr("V1"), GoalAmount: 0, DeadlineEpoch: e.clock.Epoch() + 100,
+		Recipient: e.addr("V1"), GoalAmount: 0, DeadlineEpoch: e.epoch() + 100,
 		ReleaseMode: wire.PoolReleaseContinuous, RefundMode: wire.PoolRefundNone,
 	}, false)
 	e.requireAccepted(e.ledger.Apply(poolCreate), "pool_create")
@@ -273,13 +272,13 @@ func TestContributionFlow(t *testing.T) {
 	// K1: заявка за пределами окна (период +2) отклоняется
 	early := e.tx("ALICE", wire.ContributionClaim, &wire.ContributionClaimPayload{
 		PoolID: poolID[:], DescriptionHash: []byte("desc-1"), Size: 100,
-		Period: e.clock.Period() + 2,
+		Period: e.period() + 2,
 	}, false)
 	m.rejected(e.ledger.Apply(early), "E_CONTRIBUTION_PERIOD", "период вне окна")
 
 	claim := e.tx("ALICE", wire.ContributionClaim, &wire.ContributionClaimPayload{
 		PoolID: poolID[:], DescriptionHash: []byte("desc-1"), Size: 100,
-		Period: e.clock.Period(),
+		Period: e.period(),
 	}, false)
 	e.requireAccepted(e.ledger.Apply(claim), "contribution_claim")
 	claimID := claim.TxID()
@@ -313,13 +312,13 @@ func TestContributionFlow(t *testing.T) {
 	e.preStateRegistered("DORA")
 	for _, v := range []string{"V1", "V2", "V3"} {
 		vouch := e.tx(v, wire.Vouch, &wire.VouchPayload{
-			Candidate: e.addr("DORA"), Epoch: e.clock.Epoch(),
+			Candidate: e.addr("DORA"), Epoch: e.epoch(),
 		}, false)
 		e.requireAccepted(e.ledger.Apply(vouch), "vouch "+v+"→DORA")
 	}
 	claim2 := e.tx("DORA", wire.ContributionClaim, &wire.ContributionClaimPayload{
 		PoolID: poolID[:], DescriptionHash: []byte("desc-2"), Size: 50,
-		Period: e.clock.Period(),
+		Period: e.period(),
 	}, false)
 	e.requireAccepted(e.ledger.Apply(claim2), "claim 2")
 	claim2ID := claim2.TxID()
@@ -334,7 +333,7 @@ func TestContributionFlow(t *testing.T) {
 	for i := 0; i < ContributionConfirmLimit-1; i++ {
 		c := e.tx("ALICE", wire.ContributionClaim, &wire.ContributionClaimPayload{
 			PoolID: poolID[:], DescriptionHash: []byte("many"), Size: 1,
-			Period: e.clock.Period(),
+			Period: e.period(),
 		}, false)
 		e.requireAccepted(e.ledger.Apply(c), "claim filler")
 		cID := c.TxID()
@@ -344,7 +343,7 @@ func TestContributionFlow(t *testing.T) {
 	}
 	last := e.tx("ALICE", wire.ContributionClaim, &wire.ContributionClaimPayload{
 		PoolID: poolID[:], DescriptionHash: []byte("over"), Size: 1,
-		Period: e.clock.Period(),
+		Period: e.period(),
 	}, false)
 	e.requireAccepted(e.ledger.Apply(last), "claim over")
 	lastID := last.TxID()
@@ -357,6 +356,7 @@ func TestContributionFlow(t *testing.T) {
 // периода, неиспользованная когорта сжигается на границе.
 func TestQuotaReset(t *testing.T) {
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 2*30*86400 // период 2 при T0 (v9.13)
 	p := gp.Manifest.Profile
 	p.IssuanceMode = wire.IssuanceQuotaReset
 	p.AccrualWindowPeriods = 0
@@ -365,12 +365,11 @@ func TestQuotaReset(t *testing.T) {
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 2}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	e := &e2eEnv{t: t, ledger: l, clock: clock,
+	e := &e2eEnv{t: t, ledger: l, now: e2eT0,
 		keys: make(map[string]*ecdsa.PrivateKey), addrs: make(map[string][]byte)}
 	w := e.preStateWallet("ALICE")
 	w.ActivatedPeriod = 1
@@ -388,9 +387,8 @@ func TestQuotaReset(t *testing.T) {
 		t.Fatalf("квота не начислена: %d", w.TotalBalance())
 	}
 	// накопления нет: пропуск периода и заявка двух сразу — отказ
-	clock.P = 5
-	clock.T += 3 * 31 * 86400
-	l.syncTimeForTest()
+	e.now = l.State.GenesisTime + 5*30*86400 + 86400
+	e.settle()
 	multi := e.tx("ALICE", wire.Mint, &wire.MintPayload{Period: 4, Amount: 2000}, true)
 	mrej(l.Apply(multi), "E_ACCRUAL_WINDOW", "мульти-периодная квота")
 	// граница периода: неиспользованная квота сгорела (период 1 < 5)
@@ -405,17 +403,17 @@ func TestQuotaReset(t *testing.T) {
 // TestModuleGating — операции выключенного модуля отклоняются (E_MODULE).
 func TestModuleGating(t *testing.T) {
 	gp := params.TestGenesis()
+	gp.Genesis.GenesisTime = e2eT0 - 30*86400 // период 1 при T0 (v9.13)
 	gp.Manifest.Profile.Pow = &wire.PowParams{
 		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8, Argon2Iterations: 1,
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	e := &e2eEnv{t: t, ledger: l, clock: clock,
+	e := &e2eEnv{t: t, ledger: l, now: e2eT0,
 		keys: make(map[string]*ecdsa.PrivateKey), addrs: make(map[string][]byte)}
 	e.preStateWallet("ALICE")
 	create := e.tx("ALICE", wire.PoolCreate, &wire.PoolCreatePayload{

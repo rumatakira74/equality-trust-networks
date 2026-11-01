@@ -21,7 +21,7 @@ import (
 type propEnv struct {
 	t        *testing.T
 	ledger   *Ledger
-	clock    *FixedClock
+	now      uint64 // тестовое время = claim (v9.13)
 	keys     map[string]*ecdsa.PrivateKey
 	addrs    map[string][]byte
 	rootKey  *ecdsa.PrivateKey
@@ -36,13 +36,12 @@ func newPropEnv(t *testing.T, seedWallets int) *propEnv {
 	}
 	gp.Manifest.Profile.DemurrageRateMicros = 0 // демередж — отдельный тест сеттлемента
 	wire.SetManifestHash(gp)
-	clock := &FixedClock{T: 1_790_000_000, E: 100, P: 16}
-	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 	env := &propEnv{
-		t: t, ledger: l, clock: clock,
+		t: t, ledger: l, now: 1_790_000_000,
 		keys:  make(map[string]*ecdsa.PrivateKey),
 		addrs: make(map[string][]byte),
 	}
@@ -73,11 +72,11 @@ func (e *propEnv) registerWalletState(id string, status wire.WalletStatus, balan
 		Fingerprint:       fp,
 		PublicKey:         &priv.PublicKey,
 		Status:            status,
-		RegisteredAt:      e.clock.NetTime() - 400*86400,
-		ActivatedAt:       e.clock.NetTime() - 300*86400,
+		RegisteredAt:      e.now - 400*86400,
+		ActivatedAt:       e.now - 300*86400,
 		ActivatedPeriod:   5,
 		LastClaimedPeriod: 12,
-		LastTouchEpoch:    e.clock.Epoch(),
+		LastTouchEpoch:    e.ledger.epochAt(e.now),
 		Liquid:            balance,
 		DelayedThreshold:  3000,
 		Seq:               1,
@@ -118,7 +117,7 @@ func (e *propEnv) buildSignedTx(tx *wire.Transaction, keyID string, hard bool) *
 		tx.ProtocolVersion = e.ledger.State.Net.ProtocolVersion
 	}
 	if tx.TimestampClaim == 0 {
-		tx.TimestampClaim = e.clock.NetTime()
+		tx.TimestampClaim = e.now
 	}
 	net := e.ledger.State.Net
 	if hard {
@@ -244,9 +243,10 @@ func TestPropertyRandomStream(t *testing.T) {
 		}
 		// раз в 50 шагов — граница эпохи: FullCheck
 		if step%50 == 49 {
-			env.clock.E++
-			env.clock.P++
-			env.ledger.syncTimeForTest()
+			// граница эпохи/периода: сдвиг claim на период (30 сут) —
+			// сеттлемент оседает от txNow, как у ближайшей принятой tx
+			env.now += 30 * 86400
+			env.ledger.settleTo(env.now)
 			if bad := env.ledger.FullCheck(); len(bad) > 0 {
 				t.Fatalf("шаг %d (граница эпохи): FullCheck: %v", step, bad)
 			}
@@ -273,7 +273,6 @@ func TestPropertyMetamorphic(t *testing.T) {
 		{"чужая версия", func(tx *wire.Transaction) { tx.ProtocolVersion = 99 }, "E_VER"},
 		{"нет pow", func(tx *wire.Transaction) { tx.Pow = nil }, "E_POW_LIGHT"},
 		{"неверный тип", func(tx *wire.Transaction) { tx.Type = wire.Vouch }, "E_TYPE"},
-		{"вне допуска времени", func(tx *wire.Transaction) { tx.TimestampClaim += 7200 }, "E_TIME"},
 		{"битый prev", func(tx *wire.Transaction) { tx.Prev[0] ^= 0xFF }, "E_PREV"},
 	}
 	for _, m := range mutations {
@@ -290,7 +289,7 @@ func TestPropertyMetamorphic(t *testing.T) {
 			env.buildSignedTx(tx, "A", false)
 		} else {
 			tx.NetworkID = env.ledger.State.Net.NetworkID
-			tx.TimestampClaim = env.clock.NetTime()
+			tx.TimestampClaim = env.now
 			tx.ProtocolVersion = env.ledger.State.Net.ProtocolVersion
 		}
 		res := env.ledger.Apply(tx)
@@ -310,6 +309,3 @@ func TestPropertyMetamorphic(t *testing.T) {
 		}
 	}
 }
-
-// syncTimeForTest — доступ к syncTime из тестов того же пакета.
-func (l *Ledger) syncTimeForTest() { l.syncTime() }

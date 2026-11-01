@@ -24,8 +24,8 @@ func (e *e2eEnv) seedVouchers() {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -40,23 +40,24 @@ func (e *e2eEnv) seedVouchers() {
 func (e *e2eEnv) activate(id string) {
 	for _, v := range []string{"V1", "V2", "V3"} {
 		res := e.ledger.Apply(e.tx(v, wire.Vouch, &wire.VouchPayload{
-			Candidate: e.addr(id), Epoch: e.clock.Epoch(),
+			Candidate: e.addr(id), Epoch: e.epoch(),
 		}, false))
 		e.requireAccepted(res, "vouch "+v)
 	}
 }
 
-// mintFor — выпуск следующего завершённого периода (часы сдвигаются,
-// чтобы заявляемый период был завершён; M3–M6).
+// mintFor — выпуск следующего завершённого периода (claim сдвигается,
+// чтобы заявляемый период был завершён; M3–M6; v9.13 — время валидации
+// это claim).
 func (e *e2eEnv) mintFor(id string) *wire.Transaction {
 	w := e.ledger.State.Wallet(e.addr(id))
 	period := w.LastClaimedPeriod + 1
 	if period < w.ActivatedPeriod {
 		period = w.ActivatedPeriod
 	}
-	if e.clock.P <= period {
-		e.clock.P = period + 1
-		e.clock.T += 31 * 86400
+	if e.period() <= period {
+		// claim в периоде period+1: граница period завершена
+		e.now = e.ledger.State.GenesisTime + (period+1)*30*86400 + 86400
 	}
 	return e.tx(id, wire.Mint, &wire.MintPayload{
 		Period: period, Amount: e.ledger.State.Net.Profile.IssuanceAmount,
@@ -65,9 +66,8 @@ func (e *e2eEnv) mintFor(id string) *wire.Transaction {
 
 // mature — созревание когорт: окно переводимости 3 периода (T8).
 func (e *e2eEnv) mature() {
-	e.clock.P += 3
-	e.clock.T += 3 * 31 * 86400
-	e.ledger.syncTimeForTest()
+	e.now += 3 * 31 * 86400
+	e.settle()
 }
 
 func (e *e2eEnv) transferFor(from, to string, amount uint64) *wire.Transaction {
@@ -107,7 +107,7 @@ func TestDecision12RepeatEvidenceForever(t *testing.T) {
 	}, false)
 	e.requireAccepted(e.ledger.Apply(ev), "evidence 1")
 	w := e.ledger.State.Wallet(e.addr("ALICE"))
-	period := e.clock.Period()
+	period := e.period()
 	if w.MintSuspendedUntilPeriod != period+3 {
 		t.Fatalf("первое evidence: приостановка до %d, ожидается %d",
 			w.MintSuspendedUntilPeriod, period+3)
@@ -147,7 +147,7 @@ func TestDecision14VouchFromFlagged(t *testing.T) {
 
 	// vouch от V1 (flagged) — отклоняется (решение №14)
 	res := e.ledger.Apply(e.tx("V1", wire.Vouch, &wire.VouchPayload{
-		Candidate: e.addr("ALICE"), Epoch: e.clock.Epoch(),
+		Candidate: e.addr("ALICE"), Epoch: e.epoch(),
 	}, false))
 	if res.Outcome != Rejected || res.Code != "E_VOUCH_FLAGGED" {
 		t.Fatalf("vouch от flagged: %v/%s, ожидается reject/E_VOUCH_FLAGGED", res.Outcome, res.Code)
@@ -180,7 +180,7 @@ func TestDecision29GuardianReward(t *testing.T) {
 		stmt := &wire.MigrateStatement{
 			NetworkID:  e.ledger.State.Net.NetworkID,
 			OldAddress: e.addr("ALICE"), NewAddress: e.addr("NEW"),
-			Nonce: 1, Epoch: e.clock.Epoch(),
+			Nonce: 1, Epoch: e.epoch(),
 		}
 		sh := stmt.Hash()
 		sig, err := crypto.SignDER(e.key(g), sh[:])
@@ -193,8 +193,8 @@ func TestDecision29GuardianReward(t *testing.T) {
 	}
 	e.requireAccepted(e.ledger.Apply(e.tx("NEW", wire.Migrate,
 		&wire.MigratePayload{Propose: pro}, false)), "migrate propose")
-	e.clock.T += 15 * 86400
-	e.ledger.syncTimeForTest()
+	e.now += 15 * 86400
+	e.settle()
 
 	// награда: 5% × issuance (1000) = 50 каждому из трёх публичных
 	want := e.ledger.State.Net.Profile.IssuanceAmount *

@@ -29,9 +29,6 @@ func TestRealClockPeriodLength(t *testing.T) {
 	if c2.Period() < 68_400 { // 95 сут / 120 с
 		t.Fatalf("период 120 с при genesis 95 сут назад: %d (< 68400 — не короткие периоды?)", c2.Period())
 	}
-	// replay-часы — та же длина периода
-	rc := NewReplayClock(genesis, 75, 120)
-	if rc.PeriodSecs != 120 {
-		t.Fatalf("replay period_secs: %d != 120", rc.PeriodSecs)
-	}
+	// v9.13: replay-часы удалены — ядро применяет tx от txNow = claim,
+	// длина периода у узла и ядра одна (поле 61)
 }

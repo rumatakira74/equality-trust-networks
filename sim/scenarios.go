@@ -218,9 +218,10 @@ func RunEquivocation(seed int64, n int) ScenarioResult {
 // границах эпох (9.2), поэтому сценарий прогоняет ~2 календарных месяца.
 func RunDoubleMint(seed int64, n int) ScenarioResult {
 	net := New(seed, n)
-	// ждём period >= 2 (две границы «1-го числа» после genesis):
-	// genesis 2024-01-15 -> Feb 1 (period 1) -> Mar 1 (period 2)
-	net.Run(200)
+	// ждём period >= 2 (v9.13: периоды — арифметически от genesis,
+	// 30 сут; раунд = epoch/4 = 6 ч): 250 раундов = 62,5 сут —
+	// mint периода 1 валиден (завершённые периоды, M4)
+	net.Run(250)
 	// mint периода 1 двумя ветками (один seq)
 	a := net.buildTx(5, wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000})
 	b := net.buildTx(5, wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000})

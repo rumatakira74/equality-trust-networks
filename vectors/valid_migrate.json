@@ -3,7 +3,7 @@
   "id": "valid-migrate-01",
   "title": "Предложение миграции: 2 из 3 личных гардианов, задержка 14 дней",
   "source": "KNOWLEDGE.md 11; spec/03 3.6.1",
-  "network": { "params": { "issuance_amount": 1000, "vouch_k": 3, "guardian_personal_threshold": 2, "guardian_personal_count": 3, "migrate_delay_days": 14, "transfer_moratorium_days": 7, "fee_mode": "NONE", "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "network": { "params": { "issuance_amount": 1000, "vouch_k": 3, "guardian_personal_threshold": 2, "guardian_personal_count": 3, "migrate_delay_days": 14, "transfer_moratorium_days": 7, "fee_mode": "NONE", "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800 } },
   "pre_state": {
     "epoch": 100, "network_time": 1790000000, "current_period": 16,
     "wallets": {
@@ -22,7 +22,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_NEW", "seq": 2, "prev": "txid:W_NEW:1", "type": "MIGRATE",
-      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "timestamp_claim": 1790000100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "migrate": {
@@ -43,7 +43,7 @@
     {
       "tx": "T1", "outcome": "accept", "reason": "OK",
       "effects": {
-        "migration": { "old": "W_OLD", "new": "W_NEW", "state": "PENDING", "execute_not_before": 1791209600, "nonce": 77 },
+        "migration": { "old": "W_OLD", "new": "W_NEW", "state": "PENDING", "execute_not_before": 1791209700, "nonce": 77 },
         "W_NEW.seq": 2
       }
     }

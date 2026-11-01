@@ -13,7 +13,8 @@ import (
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
-// Clock — консенсусные часы узла (ledger.EpochSource). Потокобезопасен
+// Clock — консенсусные часы узла (закрытие эпох, v9.13: валидацию
+// реестра не двигают — ядро применяет tx от txNow). Потокобезопасен
 // сам по себе (race-аудит этапа 9): OnCheckpoint пишет из горутины
 // чекпоинтов, EpochDue/NetTime читают из cpLoop/voteLoop параллельно.
 type Clock struct {

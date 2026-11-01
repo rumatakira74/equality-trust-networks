@@ -50,7 +50,9 @@ func Build(l *ledger.Ledger, addr []byte, priv *ecdsa.PrivateKey,
 	if w == nil {
 		return nil, errors.New("present: кошелёк не найден")
 	}
-	now := l.Clock.NetTime()
+	// сетевое время реестра — max(txNow) по журналу (v9.13: часы узла
+	// ядро не читает; возраст — от детерминированного времени сети)
+	now := l.State.NetTime
 	leafHash, leaf, siblings, ok := cons.StateProof(l, addr)
 	if !ok {
 		return nil, errors.New("present: не удалось построить доказательство")

@@ -3,7 +3,7 @@
   "id": "flow-delayed-cancel-01",
   "title": "Отложенный крупный перевод: pending на 48 ч, отмена владельцем в окне",
   "source": "KNOWLEDGE.md 8.3; spec/03 3.5.1 (T6), 3.5.2; spec/04 INV-5",
-  "network": { "params": { "transfer_mode": "FREE", "sandbox": false, "transfer_delay_hours": 48, "delayed_threshold_default": 1000, "delayed_threshold_max": 100000, "transfer_moratorium_days": 7, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "epoch_seconds": 86400, "timestamp_tolerance_seconds": 1800 } },
+  "network": { "params": { "transfer_mode": "FREE", "sandbox": false, "transfer_delay_hours": 48, "delayed_threshold_default": 1000, "delayed_threshold_max": 100000, "transfer_moratorium_days": 7, "fee_mode": "BURN", "fee_min": 1, "rate_micros": 10000, "epoch_seconds": 414721, "genesis_time": 1748528000, "period_seconds": 2592000, "timestamp_tolerance_seconds": 1800 } },
   "pre_state": {
     "epoch": 100, "network_time": 1790000000, "current_period": 16,
     "wallets": {
@@ -19,14 +19,14 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_ALICE", "seq": 21, "prev": "txid:W_ALICE:20", "type": "TRANSFER",
-      "timestamp_claim": 1790000100, "protocol_version": 1,
+      "timestamp_claim": 1790000100, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "transfer": { "send": { "recipient": "W_BOB", "amount": 5000 } } },
       "signature": "SIG_PLACEHOLDER"
     },
     {
       "id": "T2", "wallet": "W_ALICE", "seq": 22, "prev": "txid:W_ALICE:21", "type": "TRANSFER",
-      "timestamp_claim": 1790036600, "protocol_version": 1,
+      "timestamp_claim": 1790036600, "protocol_version": 2,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": { "transfer": { "cancel": { "pending_seq": 21 } } },
       "signature": "SIG_PLACEHOLDER"

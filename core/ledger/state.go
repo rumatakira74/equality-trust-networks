@@ -166,6 +166,151 @@ type SupplySnapshot struct {
 
 func key(b []byte) string { return string(b) }
 
+// cloneWallet — полная копия кошелька (срезы и карты — новые; ключ
+// ECDSA общий: иммутабелен). Для отката сеттлемента отклонённой tx.
+func cloneWallet(w *Wallet) *Wallet {
+	c := *w
+	c.Address = append([]byte(nil), w.Address...)
+	c.Fingerprint = append([]byte(nil), w.Fingerprint...)
+	c.Cohorts = append([]Cohort(nil), w.Cohorts...)
+	c.OccupiedSlots = make([]Slot, len(w.OccupiedSlots))
+	for i, s := range w.OccupiedSlots {
+		c.OccupiedSlots[i] = Slot{
+			Candidate:    append([]byte(nil), s.Candidate...),
+			SinceNetTime: s.SinceNetTime, MintsBase: s.MintsBase,
+			CandidateActive: s.CandidateActive,
+		}
+	}
+	c.VouchesReceived = make([]VouchReceipt, len(w.VouchesReceived))
+	for i, r := range w.VouchesReceived {
+		c.VouchesReceived[i] = VouchReceipt{Voucher: append([]byte(nil), r.Voucher...), Epoch: r.Epoch}
+	}
+	c.Activators = make([][]byte, len(w.Activators))
+	for i, a := range w.Activators {
+		c.Activators[i] = append([]byte(nil), a...)
+	}
+	c.PersonalGuardians = make([][]byte, len(w.PersonalGuardians))
+	for i, g := range w.PersonalGuardians {
+		c.PersonalGuardians[i] = append([]byte(nil), g...)
+	}
+	c.TipTxID = append([]byte(nil), w.TipTxID...)
+	return &c
+}
+
+// Clone — полная копия состояния (v9.13): сеттлемент к txNow в Apply
+// подтверждается только принятием tx, отклонённая tx откатывает
+// состояние снапшотом. Копируются все изменяемые сеттлементом данные
+// (кошельки, pending-операции, пулы, счётчики); params.Network и
+// публичные ключи — общие (иммутабельны).
+func (s *State) Clone() *State {
+	c := *s
+	c.Wallets = make(map[string]*Wallet, len(s.Wallets))
+	for k, w := range s.Wallets {
+		c.Wallets[k] = cloneWallet(w)
+	}
+	c.FingerprintIndex = make(map[string][]byte, len(s.FingerprintIndex))
+	for k, v := range s.FingerprintIndex {
+		c.FingerprintIndex[k] = append([]byte(nil), v...)
+	}
+	c.FingerprintBlacklist = make(map[string]bool, len(s.FingerprintBlacklist))
+	for k, v := range s.FingerprintBlacklist {
+		c.FingerprintBlacklist[k] = v
+	}
+	c.PendingTransfers = make(map[string]*PendingTransfer, len(s.PendingTransfers))
+	for k, v := range s.PendingTransfers {
+		pv := *v
+		pv.Recipient = append([]byte(nil), v.Recipient...)
+		c.PendingTransfers[k] = &pv
+	}
+	c.PendingMigrations = make([]*PendingMigration, len(s.PendingMigrations))
+	for i, v := range s.PendingMigrations {
+		pm := *v
+		pm.NewAddress = append([]byte(nil), v.NewAddress...)
+		pm.OldAddress = append([]byte(nil), v.OldAddress...)
+		pm.Approvals = append([]wire.GuardianApproval(nil), v.Approvals...)
+		c.PendingMigrations[i] = &pm
+	}
+	c.PendingGuardianUpdates = make([]*PendingGuardianUpdate, len(s.PendingGuardianUpdates))
+	for i, v := range s.PendingGuardianUpdates {
+		pu := *v
+		pu.Wallet = append([]byte(nil), v.Wallet...)
+		pu.NewGuardians = make([][]byte, len(v.NewGuardians))
+		for j, g := range v.NewGuardians {
+			pu.NewGuardians[j] = append([]byte(nil), g...)
+		}
+		pu.Approvals = append([]wire.GuardianApproval(nil), v.Approvals...)
+		c.PendingGuardianUpdates[i] = &pu
+	}
+	c.EvidenceFacts = make(map[string]bool, len(s.EvidenceFacts))
+	for k, v := range s.EvidenceFacts {
+		c.EvidenceFacts[k] = v
+	}
+	c.GuardianLastReward = make(map[string]uint64, len(s.GuardianLastReward))
+	for k, v := range s.GuardianLastReward {
+		c.GuardianLastReward[k] = v
+	}
+	c.AndroidIDSeen = make(map[string]int, len(s.AndroidIDSeen))
+	for k, v := range s.AndroidIDSeen {
+		c.AndroidIDSeen[k] = v
+	}
+	c.SupplySnapshots = append([]SupplySnapshot(nil), s.SupplySnapshots...)
+	c.Pools = make(map[string]*Pool, len(s.Pools))
+	for k, v := range s.Pools {
+		p := *v
+		p.ID = append([]byte(nil), v.ID...)
+		p.Creator = append([]byte(nil), v.Creator...)
+		p.Recipient = append([]byte(nil), v.Recipient...)
+		p.Donations = make(map[string]uint64, len(v.Donations))
+		for dk, dv := range v.Donations {
+			p.Donations[dk] = dv
+		}
+		p.Claimed = make(map[string]bool, len(v.Claimed))
+		for ck, cv := range v.Claimed {
+			p.Claimed[ck] = cv
+		}
+		c.Pools[k] = &p
+	}
+	c.Claims = make(map[string]*ContributionClaim, len(s.Claims))
+	for k, v := range s.Claims {
+		cl := *v
+		cl.Claimant = append([]byte(nil), v.Claimant...)
+		cl.PoolID = append([]byte(nil), v.PoolID...)
+		cl.DescriptionHash = append([]byte(nil), v.DescriptionHash...)
+		cl.Confirmers = make([][]byte, len(v.Confirmers))
+		for j, cf := range v.Confirmers {
+			cl.Confirmers[j] = append([]byte(nil), cf...)
+		}
+		c.Claims[k] = &cl
+	}
+	c.Redeems = make(map[string]*RedeemInfo, len(s.Redeems))
+	for k, v := range s.Redeems {
+		r := *v
+		r.Provider = append([]byte(nil), v.Provider...)
+		if v.Slot != nil {
+			sl := *v.Slot
+			r.Slot = &sl
+		}
+		c.Redeems[k] = &r
+	}
+	c.Receipts = make(map[string]bool, len(s.Receipts))
+	for k, v := range s.Receipts {
+		c.Receipts[k] = v
+	}
+	c.ConfirmsPerPeriod = make(map[string]uint64, len(s.ConfirmsPerPeriod))
+	for k, v := range s.ConfirmsPerPeriod {
+		c.ConfirmsPerPeriod[k] = v
+	}
+	c.ContributionPaidPerPeriod = make(map[uint64]uint64, len(s.ContributionPaidPerPeriod))
+	for k, v := range s.ContributionPaidPerPeriod {
+		c.ContributionPaidPerPeriod[k] = v
+	}
+	c.ContributionPaidPerson = make(map[string]uint64, len(s.ContributionPaidPerson))
+	for k, v := range s.ContributionPaidPerson {
+		c.ContributionPaidPerson[k] = v
+	}
+	return &c
+}
+
 func ptKey(addr []byte, seq uint64) string {
 	return string(addr) + "|" + u64str(seq)
 }

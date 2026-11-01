@@ -21,7 +21,6 @@ type consEnv struct {
 	keys    map[string]*ecdsa.PrivateKey
 	addrs   map[string][]byte
 	ledger  *ledger.Ledger
-	clock   *ledger.FixedClock
 	rootKey *ecdsa.PrivateKey
 }
 
@@ -51,13 +50,11 @@ func newConsEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *consEnv {
 	gp.Manifest.SeedCircle = circle
 	gp.Genesis.GenesisTime = 1_700_000_000
 	wire.SetManifestHash(gp)
-	clock := &ledger.FixedClock{T: 1_700_000_000, E: 1, P: 1}
-	l, err := ledger.New(gp, clock, ledger.Options{SkipMintChallengeWindow: true})
+	l, err := ledger.New(gp, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 	e.ledger = l
-	e.clock = clock
 	return e
 }
 

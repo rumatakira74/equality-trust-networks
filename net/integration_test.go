@@ -367,13 +367,12 @@ func TestJournalTxGossipDedup(t *testing.T) {
 	}
 }
 
-// TestImportJournalPinnedVouch — восстановление журнала пинированным
-// путём (блокер 8.1-2, №40): vouch, чья эпоха уже прошла, отклоняется
-// при живом apply (V8: эпоха транзакции != текущая), но применяется
-// ImportJournal-ом с пинированием часов на timestamp_claim (семантика
-// сетевой сверки). Рестарт из БД (cons.Replay) покрыт отдельно —
-// net/replay_restart_test.go (№40 закрыт в этапе 9).
-func TestImportJournalPinnedVouch(t *testing.T) {
+// TestImportJournalSameVerdictAsLive — v9.13 (этап фикса времени):
+// вердикт зависит только от txNow = timestamp_claim, не от часов узла.
+// vouch, чья эпоха давно прошла по часам узла, применяется ОДИНАКОВО
+// и живым apply, и ImportJournal-ом (live = replay по построению;
+// прежний блокер 8.1-2/№40 закрыт сменой самой семантики).
+func TestImportJournalSameVerdictAsLive(t *testing.T) {
 	// короткие эпохи (2 с): эпоха vouch-а «протухает» за секунды;
 	// возраст/периоды поручителя в тесте сняты (посевной 65 дн. < 90)
 	e := newTestEnv(t, func(p *wire.ProfileParams) {
@@ -392,19 +391,19 @@ func TestImportJournalPinnedVouch(t *testing.T) {
 		Candidate: e.addr("CAND"), Epoch: n1.Clock.Epoch(),
 	}, false)
 
-	// эпоха уходит: живой apply отклоняет vouch (V8) — replay из БД
-	// (cons.Replay, №40 закрыт в этапе 9) больше так не делает: эпоха
-	// пинируется на timestamp_claim
+	// эпоха claim-а давно прошла по часам узла: живой apply всё равно
+	// принимает vouch — эпоха валидации считается от txNow = claim
 	time.Sleep(3 * time.Second)
 	n1.applyMu.Lock()
-	res := n1.applyWithClock(vouch, n1.Clock)
+	res := n1.Ledger.Apply(vouch)
+	n1.postApply(vouch, res)
 	n1.applyMu.Unlock()
-	if res.Outcome != ledger.Rejected || res.Code != "E_VOUCH_EPOCH" {
-		t.Fatalf("живой apply past-epoch vouch: %v/%s, хочу E_VOUCH_EPOCH",
+	if res.Outcome != ledger.Accepted {
+		t.Fatalf("живой apply past-epoch vouch: %v/%s, хочу accept (эпоха от claim)",
 			res.Outcome, res.Code)
 	}
 
-	// свежий узел: импорт журнала пинированным путём — vouch применяется
+	// свежий узел: импорт журнала — тот же вердикт (live = replay)
 	n2 := e.newNode(nodeOpts{level: LevelFull})
 	if applied := n2.ImportJournal([]*wire.Transaction{mint, reg, vouch}); applied != 3 {
 		t.Fatalf("импорт: применено %d из 3", applied)

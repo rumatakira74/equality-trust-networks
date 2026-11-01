@@ -73,7 +73,11 @@ INV-3  ∀ w: reconstruct(genesis, L, checkpoints) = σ
 детерминирован; тест — сравнение состояния полного узла и перестроенного
 с нуля (этап 3/5). С правкой этапа 5 (INV-1c): `checkpoints` включает
 `finalized_txid_list` — выбор ветки при конфликте восстанавливается из
-чекпоинта, а не из порядка прихода транзакций.
+чекпоинта, а не из порядка прихода транзакций. v9.13 (этап фикса времени):
+детерминизм полный — ядро применяет каждую tx от txNow = `timestamp_claim`
+(отдельного режима часов replay нет), сеттлемент оседает от max(txNow)
+по журналу; live-узел и свежий пересчёт сходятся по построению, strict-replay
+отклонённая tx — ошибка пересчёта (диагностика: tx, периоды, вердикт).
 
 ### INV-4. Манифест и уровень гарантий
 
@@ -149,7 +153,8 @@ INV-9c  ∀ tx (MINT): claimed(tx) ⊆ [max(activated_period, last+1), current�
 
 ```
 INV-10  ∀ tx ∈ L (TRANSFER/send, REDEEM, POOL_DONATE — расходующие):
-          net_time(tx) − register_time(tx.wallet) ≥ transfer_moratorium_days
+          txNow(tx) − register_time(tx.wallet) ≥ transfer_moratorium_days
+          (v9.13: txNow = timestamp_claim применяемой tx)
 ```
 
 `transfer` с молодого кошелька доступен через 7–30 дней после `register`

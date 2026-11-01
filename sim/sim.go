@@ -203,7 +203,7 @@ func New(seed int64, n int, opts ...Option) *Network {
 func (net *Network) addNode(i int) {
 	id := fmt.Sprintf("node-%d", i)
 	addr := net.Addrs[id]
-	l, err := ledger.New(net.GP, &netClock{net: net}, ledger.Options{SkipMintChallengeWindow: true})
+	l, err := ledger.New(net.GP, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		panic(err)
 	}
@@ -250,33 +250,6 @@ func (net *Network) prestateInto(l *ledger.Ledger) {
 		l.State.FingerprintIndex[string(w.Fingerprint)] = n.Wallet
 	}
 	l.State.TotalMinted = uint64(len(net.Nodes)) * 10000
-}
-
-// netClock — консенсусные часы (ledger.EpochSource): время виртуальное,
-// эпоха/период — по последнему финализированному чекпоинту сети.
-type netClock struct {
-	net *Network
-}
-
-func (c *netClock) NetTime() uint64 { return c.net.Time }
-
-func (c *netClock) Epoch() uint64 {
-	for _, n := range c.net.Nodes {
-		if len(n.Chain) > 0 {
-			return n.Chain[len(n.Chain)-1].Epoch
-		}
-	}
-	return 0
-}
-
-func (c *netClock) Period() uint64 {
-	for _, n := range c.net.Nodes {
-		if len(n.Chain) > 0 {
-			cp := n.Chain[len(n.Chain)-1]
-			return cons.PeriodOfEpoch(c.net.GP.Genesis.GenesisTime, cp.NetworkTime)
-		}
-	}
-	return cons.PeriodOfEpoch(c.net.GP.Genesis.GenesisTime, c.net.GP.Genesis.GenesisTime)
 }
 
 // pubOf — ключ подписанта (узел или посевной круг).

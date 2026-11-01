@@ -27,8 +27,8 @@ func newUG(t *testing.T) *ugEnv {
 		w := &Wallet{
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
-			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:     e.clock.NetTime() - 400*86400,
+			RegisteredAt:    e.now - 400*86400,
+			ActivatedAt:     e.now - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -40,7 +40,7 @@ func newUG(t *testing.T) *ugEnv {
 	e.requireAccepted(e.register("W", "V1", "V2", "V3"), "register W")
 	for _, v := range []string{"V1", "V2", "V3"} {
 		res := e.ledger.Apply(e.tx(v, wire.Vouch, &wire.VouchPayload{
-			Candidate: e.addr("W"), Epoch: e.clock.Epoch(),
+			Candidate: e.addr("W"), Epoch: e.epoch(),
 		}, false))
 		e.requireAccepted(res, "vouch "+v)
 	}
@@ -165,7 +165,7 @@ func TestUpdateGuardiansPublishValidations(t *testing.T) {
 // отмена в окне, вступление в силу, отмена после вступления невозможна.
 func TestUpdateGuardiansWindowCancelEffect(t *testing.T) {
 	u := newUG(t)
-	t0 := u.clock.NetTime()
+	t0 := u.now
 
 	// публикация; окно 48 ч
 	res := u.ledger.Apply(u.propose(1, "V2", "V3"))
@@ -182,7 +182,7 @@ func TestUpdateGuardiansWindowCancelEffect(t *testing.T) {
 	}
 
 	// отмена в окне (подпись владельца — текущим ключом, C8)
-	u.clock.T = t0 + 24*3600
+	u.now = t0 + 24*3600
 	res = u.ledger.Apply(u.tx("W", wire.UpdateGuardians, &wire.UpdateGuardiansPayload{
 		Cancel: &wire.UpdateGuardiansCancel{ProposeSeq: pu.ProposeSeq},
 	}, false))
@@ -200,8 +200,8 @@ func TestUpdateGuardiansWindowCancelEffect(t *testing.T) {
 	u.requireAccepted(res, "повторная смена после отмены")
 
 	// вступление через 48 ч: новый список, счётчик 1, wards
-	u.clock.T += 49 * 3600
-	u.ledger.syncTimeForTest()
+	u.now += 49 * 3600
+	u.settle()
 	w = u.ledger.State.Wallet(u.addr("W"))
 	if len(w.PersonalGuardians) != 2 ||
 		!equalAddr(w.PersonalGuardians[0], u.addr("V2")) ||
@@ -242,9 +242,9 @@ func TestUpdateGuardiansExpiryByWardLimit(t *testing.T) {
 	res := u.ledger.Apply(u.propose(1, "V2"))
 	u.requireAccepted(res, "публикация на границе лимита")
 
-	u.clock.T += 49 * 3600
+	u.now += 49 * 3600
 	v2.Wards = prof.GuardianPersonalMaxWards // превышен к вступлению
-	u.ledger.syncTimeForTest()
+	u.settle()
 
 	pu := u.ledger.State.PendingGuardianUpdates[0]
 	if !pu.Expired || pu.Effective {
@@ -282,8 +282,8 @@ func TestUpdateGuardiansLimit150(t *testing.T) {
 	res = u.ledger.Apply(u.propose(2, "V1"))
 	u.requireAccepted(res, "смена к истечению")
 	v1.Wards = prof.GuardianPersonalMaxWards // превышен к вступлению
-	u.clock.T += 49 * 3600
-	u.ledger.syncTimeForTest()
+	u.now += 49 * 3600
+	u.settle()
 	if w := u.ledger.State.Wallet(u.addr("W")); w.GuardianChanges != 0 {
 		t.Fatalf("лимит потреблён до вступивших смен: %d", w.GuardianChanges)
 	}
@@ -296,8 +296,8 @@ func TestUpdateGuardiansLimit150(t *testing.T) {
 			t.Fatalf("смена %d: %v/%s", i, res.Outcome, res.Code)
 		}
 		nonce++
-		u.clock.T += 49 * 3600
-		u.ledger.syncTimeForTest()
+		u.now += 49 * 3600
+		u.settle()
 	}
 	w := u.ledger.State.Wallet(u.addr("W"))
 	if w.GuardianChanges != GuardianChangeLimit {
@@ -313,7 +313,7 @@ func TestUpdateGuardiansLimit150(t *testing.T) {
 // валидны по старому списку в окне смены и по новому после вступления.
 func TestMigrationGuardianListOldAndNew(t *testing.T) {
 	u := newUG(t)
-	t0 := u.clock.NetTime()
+	t0 := u.now
 
 	// смена: V1,V2,V3 -> V2,V3
 	res := u.ledger.Apply(u.propose(1, "V2", "V3"))
@@ -328,7 +328,7 @@ func TestMigrationGuardianListOldAndNew(t *testing.T) {
 			stmt := &wire.MigrateStatement{
 				NetworkID:  u.ledger.State.Net.NetworkID,
 				OldAddress: u.addr("W"), NewAddress: u.addr("NEW"),
-				Nonce: nonce, Epoch: u.clock.Epoch(),
+				Nonce: nonce, Epoch: u.epoch(),
 			}
 			sh := stmt.Hash()
 			sig, err := crypto.SignDER(u.key(g), sh[:])
@@ -349,8 +349,8 @@ func TestMigrationGuardianListOldAndNew(t *testing.T) {
 	u.requireAccepted(res, "миграция по старому списку в окне")
 
 	// вступление смены
-	u.clock.T = t0 + 49*3600
-	u.ledger.syncTimeForTest()
+	u.now = t0 + 49*3600
+	u.settle()
 
 	// после вступления: подписи по старому списку (V1, V2) не проходят —
 	// V1 больше не гардиан (ни личный, ни публичный)

@@ -30,7 +30,7 @@ func (e *e2eEnv) registerWithChain(id string, pub []byte, chain []byte) Result {
 		Type:            wire.Register,
 		Payload:         rp,
 		ProtocolVersion: e.ledger.State.Net.ProtocolVersion,
-		TimestampClaim:  e.clock.NetTime(),
+		TimestampClaim:  e.now,
 	}
 	e.solveAndSign(tx, id, true)
 	return e.ledger.Apply(tx)
@@ -132,7 +132,7 @@ func TestGenesisZeroPowTarget(t *testing.T) {
 		gp := params.TestGenesis()
 		mutate(gp.Manifest.Profile)
 		wire.SetManifestHash(gp)
-		_, err := New(gp, &FixedClock{T: 1_700_000_000, E: 1, P: 1}, Options{})
+		_, err := New(gp, Options{})
 		return err
 	}
 	if err := mk(func(p *wire.ProfileParams) { p.Pow.TargetLight = 0 }); err == nil {

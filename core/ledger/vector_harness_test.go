@@ -115,7 +115,6 @@ type harness struct {
 	t        *testing.T
 	vec      *vector
 	ledger   *Ledger
-	clock    *FixedClock
 	keys     map[string]*ecdsa.PrivateKey
 	addrs    map[string][]byte
 	rootKey  *ecdsa.PrivateKey
@@ -201,6 +200,16 @@ func (h *harness) buildGenesis() *wire.GenesisPackage {
 	prof.MigrateDelayDays = num(p, "migrate_delay_days", prof.MigrateDelayDays)
 	prof.TimestampToleranceSeconds = num(p, "timestamp_tolerance_seconds", prof.TimestampToleranceSeconds)
 	prof.MintChallengeWindowHours = num(p, "mint_challenge_window_hours", prof.MintChallengeWindowHours)
+	// v9.13 (этап фикса времени): genesis-время и длины эпохи/периода
+	// задаются вектором — periodAt/epochAt вычисляются от claim
+	// арифметически от genesis (конвенция ядра, поле 61)
+	gp.Genesis.GenesisTime = num(p, "genesis_time", 0)
+	if v, ok := p["epoch_seconds"]; ok {
+		json.Unmarshal(v, &prof.EpochSeconds)
+	}
+	if v, ok := p["period_seconds"]; ok {
+		json.Unmarshal(v, &prof.PeriodSeconds)
+	}
 
 	// Таргеты PoW для тестов: малые (вопрос №9 — значения продакшена не выбраны)
 	prof.Pow = &wire.PowParams{
@@ -251,8 +260,9 @@ func newHarness(t *testing.T, vec *vector) *harness {
 		builtTxs: make(map[string]*wire.Transaction),
 	}
 	gp := h.buildGenesis()
-	h.clock = &FixedClock{T: vec.PreState.NetworkTime, E: vec.PreState.Epoch, P: vec.PreState.CurrentPeriod}
-	l, err := New(gp, h.clock, Options{SkipMintChallengeWindow: true})
+	// v9.13: часы не задаются — ядро валидирует от txNow = claim;
+	// genesis подобран так, что periodAt/epochAt(claim) = pre_state
+	l, err := New(gp, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -359,7 +369,7 @@ func (h *harness) buildAttestChain(id string) (pubKey, chain, challenge []byte) 
 	challenge = attest.ChallengeFormula(pub, crypto.ProtocolID, h.ledger.State.Net.NetworkID)
 	// №43 (этап 9): дата патча — в прошлом относительно сетевого
 	// времени вектора (future-patch отклоняется Verify)
-	patch := time.Unix(int64(h.clock.NetTime()), 0).UTC().AddDate(0, -2, 0)
+	patch := time.Unix(int64(h.vec.PreState.NetworkTime), 0).UTC().AddDate(0, -2, 0)
 	ext := attest.Extension{
 		SecurityLevel:     attest.LevelTEE,
 		VerifiedBootState: attest.BootVerified,
@@ -395,14 +405,7 @@ func (h *harness) resolvePrev(ref string) []byte {
 
 // buildTx — материализация транзакции вектора.
 func (h *harness) buildTx(vt *vecTx, known map[string]*wire.Transaction) *wire.Transaction {
-	now := h.clock.NetTime()
-	// правило часов: tx в допуске не двигает сетевое время; иначе — сдвиг
-	tol := h.ledger.State.Net.Profile.TimestampToleranceSeconds
-	if vt.TimestampClaim+tol < now || now+tol < vt.TimestampClaim {
-		h.clock.T = vt.TimestampClaim
-	}
-	h.ledger.Clock = h.clock
-
+	// v9.13: часы не нужны — ядро валидирует от txNow = claim самой tx
 	tx := &wire.Transaction{
 		NetworkID:       h.ledger.State.Net.NetworkID,
 		Wallet:          h.addr(vt.Wallet),
