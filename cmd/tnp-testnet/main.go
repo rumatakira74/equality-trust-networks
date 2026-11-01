@@ -913,6 +913,7 @@ func transferCmd(args []string) error {
 	fs := flag.NewFlagSet("transfer", flag.ContinueOnError)
 	addCommonFlags(fs, &c)
 	seed := fs.String("seed", "", "метка отправителя")
+	keyDomain := fs.String("key-domain", "seed", "домен деривации ключа: seed | wallet")
 	to := fs.String("to", "", "адрес получателя (hex)")
 	amount := fs.Uint64("amount", 0, "сумма")
 	if err := fs.Parse(args); err != nil {
@@ -926,11 +927,14 @@ func transferCmd(args []string) error {
 		return err
 	}
 	defer cleanup()
+	key := seedKey(*seed)
+	if *keyDomain == "wallet" {
+		key = walletKey(*seed)
+	}
 	rcpt, err := hexAddr(*to)
 	if err != nil {
 		return err
 	}
-	key := seedKey(*seed)
 	addr := senderAddr(env, key)
 	fee := env.node.Ledger.State.Net.Fee(*amount, env.node.Ledger.State.FeeRate)
 	payload := &wire.TransferPayload{Send: &wire.TransferSend{Recipient: rcpt, Amount: *amount}}
@@ -1117,6 +1121,7 @@ func redeemCmd(args []string) error {
 	fs := flag.NewFlagSet("redeem", flag.ContinueOnError)
 	addCommonFlags(fs, &c)
 	seed := fs.String("seed", "", "метка отправителя")
+	keyDomain := fs.String("key-domain", "seed", "домен деривации ключа: seed | wallet")
 	provider := fs.String("provider", "", "адрес поставщика (hex)")
 	resource := fs.String("resource-id", "", "resource_id сети")
 	amount := fs.Uint64("amount", 0, "сумма")
@@ -1139,6 +1144,9 @@ func redeemCmd(args []string) error {
 		*resource = env.gp.Manifest.Profile.ResourceID
 	}
 	key := seedKey(*seed)
+	if *keyDomain == "wallet" {
+		key = walletKey(*seed)
+	}
 	addr := senderAddr(env, key)
 	payload := &wire.RedeemPayload{Provider: prov, ResourceID: *resource, Amount: *amount}
 	tx, err := buildTx(env, key, addr, wire.Redeem, payload, false)

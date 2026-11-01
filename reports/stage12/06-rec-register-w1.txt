@@ -1,0 +1,7 @@
+2026/10/01 10:11:13 failed to sufficiently increase receive buffer size (was: 224 kiB, wanted: 7168 kiB, got: 512 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+узел: sync <peer.ID Qm*JUVCZf>: применено транзакций: 1
+узел: отклонена 000000000000: E_DUP
+узел: QmUNmUMua9pB9EbRJWeZ3SMYcTusZP6srbCGgTfhkmzb7A
+register: кошелёк 0c31ff2e2527c2d13e39db91f1e7a126eeb56986fa5ff3e3b44d79e2f9624916
+tx 620c434c02c96985: accept/OK seq=1
+узел: gossipLoop: выход: context canceled

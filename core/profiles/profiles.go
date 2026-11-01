@@ -195,6 +195,11 @@ func All() []*Template {
 				p.ResourceID = "resource" // организатор задаёт свой resource_id
 				p.IssuanceMode = wire.IssuanceQuotaReset
 				p.AccrualWindowPeriods = 0
+				// квота переводима сразу: окно свежести 3 (унаследованное
+				// от base) дольше жизни квоты — в std-режиме единица
+				// сгорала бы на границе периода, не созрев (находка
+				// прогона этапа 12; то же верно для шаблона 3 — в отчёт)
+				p.FreshTransferWindowPeriods = 0
 				p.Recurring = true // периодная метка + сгорание (v9.10, раздел 4)
 				p.TransferMode = wire.TransferModePeerRedeem
 				p.EntryMode = wire.EntryInviteOnlyVouch

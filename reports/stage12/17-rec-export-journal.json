@@ -1,0 +1,95 @@
+{
+  "epoch": 60,
+  "metrics": {
+    "common_fund": 0,
+    "gini_balance": 0.2,
+    "supply_burned": 0,
+    "supply_minted": 1000,
+    "supply_net": 1000,
+    "turnover": {
+      "transfer": 400
+    },
+    "tx_count": {
+      "MINT": 1,
+      "REGISTER": 2,
+      "TRANSFER": 1
+    },
+    "wallets_active": 3,
+    "wallets_synthetic": 0,
+    "wallets_total": 5
+  },
+  "period": 2,
+  "pools": [],
+  "wallets": [
+    {
+      "address": "0c31ff2e2527c2d13e39db91f1e7a126eeb56986fa5ff3e3b44d79e2f9624916",
+      "status": "REGISTERED",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 400,
+      "liquid": 0,
+      "cohorts": 400,
+      "registered_at": 1790849476,
+      "activated_at": 0,
+      "last_claimed_period": 0,
+      "seq": 1
+    },
+    {
+      "address": "86395b5fdc2f0fb46d6e041c832f4e6b67b97048fd92b939acd29b1379829527",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 600,
+      "liquid": 0,
+      "cohorts": 600,
+      "registered_at": 1785660000,
+      "activated_at": 1785660000,
+      "last_claimed_period": 1,
+      "seq": 2
+    },
+    {
+      "address": "87b9e34bb0ca4164dc55f555d65db085c92b46b0c31d88a554b8ecaafec4b229",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1785660000,
+      "activated_at": 1785660000,
+      "last_claimed_period": 0,
+      "seq": 0
+    },
+    {
+      "address": "924fc46506ad1a2ddf45f6f7a0d0d52dc5d9789bc482248ee2619bd299d5d482",
+      "status": "REGISTERED",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1790853189,
+      "activated_at": 0,
+      "last_claimed_period": 0,
+      "seq": 1
+    },
+    {
+      "address": "a8eb76a27f2038f46da652e5db090067924dc4ca1d9c02f4e6fb2ddf4461225b",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1785660000,
+      "activated_at": 1785660000,
+      "last_claimed_period": 0,
+      "seq": 0
+    }
+  ]
+}

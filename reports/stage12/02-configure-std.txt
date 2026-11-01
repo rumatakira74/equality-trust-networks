@@ -1,13 +1,13 @@
-сеть omega по шаблону 8 (Абонентский ресурс (коммерческий))
- network_id: 0f83d13b7e8fae0f27775aa90b346a120a6f66d4a61c8567a220bbb48e610a07
- manifest_hash: 65077b13de909ca640e857eee91393acb0aa63e8445cd35d2c7982a157aeabf6
- genesis_time: 1780000000 (2026-05-28T20:26:40Z)
+сеть rho по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 10480fb43ff4644d70105e1b3e9d662bc8a718e702472039bba65fc2aa277c93
+ manifest_hash: f307dcddf707587ac9d45b3ea4024ec4b5a2ca2b819213123daf0d052885d157
+ genesis_time: 1785660000 (2026-08-02T08:40:00Z)
  уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
  единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
  модули: [redeem]
  посевной круг: 3
  артефакты: /tmp/stage12/net-std
- APK: equality-omega-std-v1.0.0.apk
- applicationId: io.equality.omega
- label: Eq-977b977d
- display_name: "Monte Cloud" · Eq-977b977d
+ APK: equality-rho-std-v1.0.0.apk
+ applicationId: io.equality.rho
+ label: Eq-1a2b9c21
+ display_name: "Monte Cloud" · Eq-1a2b9c21
