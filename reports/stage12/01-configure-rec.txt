@@ -1,0 +1,14 @@
+сеть subscriber по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: bcc981726eba85999460dda305e711ac8f128ca98dc318535d3b03aba42d1a61
+ manifest_hash: b111ef6915e07266aef83b1ba2cb1c6d43a845f8c21d4b791916b8aefc83e6c5
+ genesis_time: 1780000000 (2026-05-28T20:26:40Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/stage12/net-rec
+ APK: equality-subscriber-rec-v1.0.0.apk
+ applicationId: io.equality.subscriber
+ label: Eq-af3ad8dd
+ display_name: "Monte Cloud" · Eq-af3ad8dd

@@ -39,6 +39,8 @@ func configureCmd(args []string) error {
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds (0 — из шаблона)")
 	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
 	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4, 8)")
+	providers := fs.String("providers", "", "адреса поставщиков (hex, через запятую; 6.2 — для restricted/peer-redeem и redeem)")
+	providerSeed := fs.String("provider-seed", "", "поставщик — кошелёк посевного круга по метке (например V1; адрес из манифеста)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -98,6 +100,22 @@ func configureCmd(args []string) error {
 	if *resourceID != "" {
 		prof.ResourceID = *resourceID
 	}
+	// поставщики (6.2): обычные кошельки, адреса — в параметрах сети;
+	// нужны для restricted/peer-redeem и погашения через redeem
+	if *providers != "" {
+		prof.Providers = nil
+		for _, h := range strings.Split(*providers, ",") {
+			h = strings.TrimSpace(h)
+			if h == "" {
+				continue
+			}
+			a, err := hex.DecodeString(h)
+			if err != nil || len(a) != 32 {
+				return fmt.Errorf("-providers: %q не 32-байтный hex-адрес", h)
+			}
+			prof.Providers = append(prof.Providers, a)
+		}
+	}
 	// валидация параметров (раздел 4 + защиты)
 	if bad := profiles.Validate(&prof); len(bad) > 0 {
 		return fmt.Errorf("профиль не проходит валидацию:\n  - %s", strings.Join(bad, "\n  - "))
@@ -155,6 +173,22 @@ func configureCmd(args []string) error {
 		})
 	}
 	gp.Manifest.SeedCircle = circle
+	// поставщик — кошелёк посевного круга (адрес уже в манифесте,
+	// согласован с генезисом); добавляется до деривации network_id
+	if *providerSeed != "" {
+		idx := -1
+		for i, lbl := range seedLabels {
+			if strings.TrimSpace(lbl) == *providerSeed {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 || idx >= len(circle) {
+			return fmt.Errorf("-provider-seed %q: нет такой метки в посевном круге", *providerSeed)
+		}
+		prof.Providers = [][]byte{append([]byte(nil), circle[idx].Address...)}
+		gp.Manifest.Profile = &prof
+	}
 	inviteKey := []byte(*inviteHex)
 	if *inviteHex == "" {
 		h := sha256.Sum256([]byte("tnp-testnet-invite:" + *name))
@@ -374,6 +408,8 @@ func transferModeName(v wire.TransferMode) string {
 		return "restricted"
 	case wire.TransferModeSoulbound:
 		return "soulbound"
+	case wire.TransferModePeerRedeem:
+		return "peer-redeem"
 	default:
 		return "unspecified"
 	}
