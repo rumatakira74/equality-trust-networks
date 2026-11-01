@@ -40,6 +40,7 @@ func configureCmd(args []string) error {
 	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
 	periodSeconds := fs.Uint64("period-seconds", 0, "period_seconds — длина периода выпуска, genesis-поле 61 (0 — конвенция 30 сут; тестовые сети живого прогона: границы периода на реальном времени)")
 	moratoriumDays := fs.Int64("transfer-moratorium-days", -1, "transfer_moratorium_days — мораторий переводов от register, сут (-1 — из шаблона, 14; 0 — нет моратория)")
+	windowHours := fs.Uint64("mint-challenge-window-hours", 0, "mint_challenge_window_hours — окно слота челленджа ±N часов (0 — из шаблона, 48; тестовые сети с period_seconds: окно, накрывающее слоты первых периодов при genesis в прошлом)")
 	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4, 8)")
 	providers := fs.String("providers", "", "fingerprint'ы поставщиков (hex 32 байта, через запятую; 6.2 — для restricted/peer-redeem и redeem; v9.11 — fingerprint, адрес выводится из network_id)")
 	providerSeed := fs.String("provider-seed", "", "поставщик — кошелёк посевного круга по метке (например V1; адрес из манифеста)")
@@ -109,6 +110,14 @@ func configureCmd(args []string) error {
 	// (перевод сгоревшей единицы из UI — пункт чек-листа приложения)
 	if *moratoriumDays >= 0 {
 		prof.TransferMoratoriumDays = uint64(*moratoriumDays)
+	}
+	// mint_challenge_window_hours: при period_seconds слоты первых
+	// заявляемых периодов (квоты посевного круга с периода 1, quota_reset)
+	// лежат у genesis — окно из шаблона (±48 ч) их не накрывает,
+	// выпуск посевного круга и vouch×3 недостижимы (расхождение №10
+	// этапа 12 в живом прогоне); тестовая сеть задаёт окно явно
+	if *windowHours > 0 {
+		prof.MintChallengeWindowHours = *windowHours
 	}
 	if *resourceID != "" {
 		prof.ResourceID = *resourceID

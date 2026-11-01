@@ -7,10 +7,12 @@ package main
 import "testing"
 
 // TestConfigureShortPeriod — -period-seconds попадает в genesis и
-// декодируется; -transfer-moratorium-days 0 убирает мораторий.
+// декодируется; -transfer-moratorium-days 0 убирает мораторий;
+// -mint-challenge-window-hours задаёт окно слота челленджа.
 func TestConfigureShortPeriod(t *testing.T) {
 	gp, _, _ := configureRun(t, "-slug", "cirrus-t",
-		"-period-seconds", "120", "-transfer-moratorium-days", "0")
+		"-period-seconds", "120", "-transfer-moratorium-days", "0",
+		"-mint-challenge-window-hours", "2400")
 	prof := gp.Manifest.Profile
 	if prof.PeriodSeconds != 120 {
 		t.Fatalf("period_seconds: %d != 120", prof.PeriodSeconds)
@@ -20,6 +22,9 @@ func TestConfigureShortPeriod(t *testing.T) {
 	}
 	if prof.TransferMoratoriumDays != 0 {
 		t.Fatalf("мораторий: %d != 0", prof.TransferMoratoriumDays)
+	}
+	if prof.MintChallengeWindowHours != 2400 {
+		t.Fatalf("окно челленджа: %d != 2400", prof.MintChallengeWindowHours)
 	}
 }
 
