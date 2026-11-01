@@ -29,7 +29,7 @@ func settleRestartEnv(t *testing.T, delayHours uint64) (*testEnv, *Node, string,
 	e := newTestEnv(t, func(p *wire.ProfileParams) {
 		p.TransferDelayHours = delayHours
 		p.TransferMoratoriumDays = 0
-		p.DelayedThresholdDefault = 1000 // перевод 1500 > P — отложенный
+		p.DelayedThresholdDefault = 500 // перевод 800 > P — отложенный
 	})
 	db := dbPath(t, "settle-restart.db")
 	n1 := e.newNode(nodeOpts{level: LevelFull, db: db})
@@ -47,7 +47,7 @@ func settleRestartEnv(t *testing.T, delayHours uint64) (*testEnv, *Node, string,
 		seq = w.Seq + 1
 	}
 	n1.applyMu.RUnlock()
-	apply(e.transferTx(n1, "V1", "R", 1500))
+	apply(e.transferTx(n1, "V1", "R", 800))
 	return e, n1, db, seq
 }
 
@@ -98,7 +98,7 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 	v2 := n2.Ledger.State.Wallet(e.addr("V1"))
 	pt2 := n2.Ledger.State.PendingTransfers[ptKeyNet(e.addr("V1"), seq)]
 	n2.applyMu.RUnlock()
-	if r2 == nil || r2.Liquid != 1500 {
+	if r2 == nil || r2.Liquid != 800 {
 		t.Fatalf("зрелый перевод не применён после рестарта: R=%v", r2)
 	}
 	if v2 == nil || v2.Locked != 0 {
@@ -113,7 +113,7 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 	n2.applyMu.RLock()
 	got := n2.Ledger.State.Wallet(e.addr("R")).Liquid
 	n2.applyMu.RUnlock()
-	if got != 1500 {
+	if got != 800 {
 		t.Fatalf("повторный flush применил перевод повторно: %d", got)
 	}
 
@@ -126,8 +126,8 @@ func TestSettleAfterRestartMatured(t *testing.T) {
 	got = n3.Ledger.State.Wallet(e.addr("R")).Liquid
 	locked := n3.Ledger.State.Wallet(e.addr("V1")).Locked
 	n3.applyMu.RUnlock()
-	if got != 1500 || locked != 0 {
-		t.Fatalf("повторный рестарт: R=%d (ожидается 1500), locked=%d", got, locked)
+	if got != 800 || locked != 0 {
+		t.Fatalf("повторный рестарт: R=%d (ожидается 800), locked=%d", got, locked)
 	}
 }
 

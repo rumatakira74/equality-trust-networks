@@ -32,6 +32,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
@@ -156,6 +157,26 @@ func addrOf(key *ecdsa.PrivateKey, networkID []byte) []byte {
 	pub := crypto.MarshalPubKey(&key.PublicKey)
 	fp := crypto.Fingerprint(pub)
 	return crypto.DeriveAddress(fp, networkID)
+}
+
+// senderAddr — адрес отправителя транзакции. Для посевного круга — адрес
+// из манифеста: при само-сертифицирующейся деривации network_id (v9.10)
+// адреса посева фиксируются в манифесте ДО финального network_id (иначе
+// круг: network_id зависит от манифеста с посевом, адреса — от network_id);
+// ищем члена посевного круга по публичному ключу. Обычные кошельки —
+// addrOf(key, network_id).
+func senderAddr(env *txEnv, key *ecdsa.PrivateKey) []byte {
+	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	if env.node.Ledger.State.Wallet(addr) != nil {
+		return addr
+	}
+	pub := crypto.MarshalPubKey(&key.PublicKey)
+	for _, m := range env.gp.Manifest.SeedCircle {
+		if bytes.Equal(m.PublicKey, pub) {
+			return m.Address
+		}
+	}
+	return addr
 }
 
 func hexAddr(s string) ([]byte, error) {
@@ -791,7 +812,7 @@ func vouchCmd(args []string) error {
 	}
 	defer cleanup()
 	key := seedKey(*seed)
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	payload := &wire.VouchPayload{Candidate: cand, Epoch: env.node.Clock.Epoch()}
 	tx, err := buildTx(env, key, addr, wire.Vouch, payload, false)
 	if err != nil {
@@ -813,7 +834,15 @@ func mintCmd(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	if *seed == "" || *period == 0 {
+	// период 0 валиден (первая квота посевного круга при quota_reset) —
+	// отличаем явный -period 0 от незаданного флага
+	periodGiven := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "period" {
+			periodGiven = true
+		}
+	})
+	if *seed == "" || !periodGiven {
 		return fmt.Errorf("нужны -seed и -period")
 	}
 	env, cleanup, err := startEnv(&c)
@@ -826,7 +855,7 @@ func mintCmd(args []string) error {
 	if *keyDomain == "wallet" {
 		key = walletKey(*seed)
 	}
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	w := env.node.Ledger.State.Wallet(addr)
 	if w == nil {
 		return fmt.Errorf("кошелёк %s не в реестре", *seed)
@@ -902,7 +931,7 @@ func transferCmd(args []string) error {
 		return err
 	}
 	key := seedKey(*seed)
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	fee := env.node.Ledger.State.Net.Fee(*amount, env.node.Ledger.State.FeeRate)
 	payload := &wire.TransferPayload{Send: &wire.TransferSend{Recipient: rcpt, Amount: *amount}}
 	tx, err := buildTx(env, key, addr, wire.Transfer, payload, false)
@@ -931,7 +960,7 @@ func cancelCmd(args []string) error {
 	}
 	defer cleanup()
 	key := seedKey(*seed)
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	payload := &wire.TransferPayload{Cancel: &wire.TransferCancel{PendingSeq: *pendingSeq}}
 	tx, err := buildTx(env, key, addr, wire.Transfer, payload, false)
 	if err != nil {
@@ -970,7 +999,7 @@ func migrateCmd(args []string) error {
 			return err
 		}
 		key := walletKey(*newW)
-		newAddr := addrOf(key, env.gp.Genesis.NetworkID)
+		newAddr := senderAddr(env, key)
 		if *nonce == 0 {
 			*nonce = uint64(time.Now().Unix())
 		}
@@ -1017,7 +1046,7 @@ func migrateCmd(args []string) error {
 			return err
 		}
 		key := walletKey(*old)
-		oldAddr := addrOf(key, env.gp.Genesis.NetworkID)
+		oldAddr := senderAddr(env, key)
 		payload := &wire.MigratePayload{Cancel: &wire.MigrateCancel{
 			NewAddress: newAddr, ProposeSeq: *proposeSeq,
 		}}
@@ -1057,7 +1086,7 @@ func evidenceCmd(args []string) error {
 		return err
 	}
 	key := seedKey(*seed)
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	payload := &wire.EvidencePayload{TxA: ta, TxB: tb, Kind: wire.EvidenceEquivocation}
 	tx, err := buildTx(env, key, addr, wire.Evidence, payload, false)
 	if err != nil {
@@ -1110,7 +1139,7 @@ func redeemCmd(args []string) error {
 		*resource = env.gp.Manifest.Profile.ResourceID
 	}
 	key := seedKey(*seed)
-	addr := addrOf(key, env.gp.Genesis.NetworkID)
+	addr := senderAddr(env, key)
 	payload := &wire.RedeemPayload{Provider: prov, ResourceID: *resource, Amount: *amount}
 	tx, err := buildTx(env, key, addr, wire.Redeem, payload, false)
 	if err != nil {

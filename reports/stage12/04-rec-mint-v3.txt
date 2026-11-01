@@ -1,0 +1,5 @@
+2026/06/27 20:59:25 failed to sufficiently increase receive buffer size (was: 224 kiB, wanted: 7168 kiB, got: 512 kiB). See https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes for details.
+узел: QmZVCCLcr6CMeh9qgpeLVosJrUDCKC5BNrTtL7sv7haUKm
+tx 2e26daa8162fe48c: reject/E_MINT_DOUBLE seq=1
+узел: gossipLoop: выход: context canceled
+tnp-testnet: отклонён: E_MINT_DOUBLE

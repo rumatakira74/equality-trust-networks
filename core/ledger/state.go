@@ -223,7 +223,14 @@ func (s *State) SeedMembers(members []wire.SeedMember, epoch, netTime uint64) {
 			RegisteredEpoch:  epoch,
 			ActivatedAt:      netTime,
 			ActivatedEpoch:   epoch,
-			LastTouchEpoch:   epoch,
+			// ActivatedPeriod = 1: посевной круг активен с genesis, но
+			// первый заявляемый период выпуска — 1 (период 0 не заявляем:
+			// last_claimed_period = 0 — сентинел «ничего не заявлено»,
+			// повторная заявка периода 0 неотличима от первой, M3).
+			// Без этого при quota_reset (diff = 1) посевной круг не может
+			// выпустить ни одной квоты (этап 12: полный путь профиля 8).
+			ActivatedPeriod: 1,
+			LastTouchEpoch:  epoch,
 			DelayedThreshold: s.Net.Profile.DelayedThresholdDefault,
 		}
 		if len(m.PublicKey) > 0 {

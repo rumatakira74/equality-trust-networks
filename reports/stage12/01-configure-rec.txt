@@ -1,6 +1,6 @@
-сеть subscriber по шаблону 8 (Абонентский ресурс (коммерческий))
- network_id: bcc981726eba85999460dda305e711ac8f128ca98dc318535d3b03aba42d1a61
- manifest_hash: b111ef6915e07266aef83b1ba2cb1c6d43a845f8c21d4b791916b8aefc83e6c5
+сеть omega по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 8aa3e72f543ba703aa151d40d2df3675518df0243280202ad998f7557e1c1176
+ manifest_hash: 455ff83758e6cd794bd12371788e65726d3b3ae7bdd0a2d8a82e22e062374c34
  genesis_time: 1780000000 (2026-05-28T20:26:40Z)
  уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
  единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
@@ -8,7 +8,7 @@
  модули: [redeem]
  посевной круг: 3
  артефакты: /tmp/stage12/net-rec
- APK: equality-subscriber-rec-v1.0.0.apk
- applicationId: io.equality.subscriber
- label: Eq-af3ad8dd
- display_name: "Monte Cloud" · Eq-af3ad8dd
+ APK: equality-omega-rec-v1.0.0.apk
+ applicationId: io.equality.omega
+ label: Eq-6f1a8af2
+ display_name: "Monte Cloud" · Eq-6f1a8af2

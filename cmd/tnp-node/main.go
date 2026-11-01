@@ -253,7 +253,7 @@ func (d *demoEnv) addr(id string) []byte {
 
 // mintTx — выпуск завершённого периода 1 посевным кошельком V1.
 func (d *demoEnv) mintTx(node *net.Node) *wire.Transaction {
-	return d.build(node, "V1", wire.Mint, &wire.MintPayload{Period: 1, Amount: 2000}, true)
+	return d.build(node, "V1", wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true)
 }
 
 // transferTx — перевод V1 -> V2.

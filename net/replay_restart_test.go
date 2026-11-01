@@ -146,11 +146,11 @@ func TestStoreReplayConvergesWithColdSync(t *testing.T) {
 			t.Fatalf("не применён tx типа %d (seq %d)", tx.Type, tx.Seq)
 		}
 	}
-	apply(e.txAt(n1, "V1", wire.Mint, &wire.MintPayload{Period: 1, Amount: 2000}, true, e.genesisT+61*day))
+	apply(e.txAt(n1, "V1", wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true, e.genesisT+61*day))
 	apply(e.txAt(n1, "V1", wire.Transfer, &wire.TransferPayload{
 		Send: &wire.TransferSend{Recipient: e.addr("V2"), Amount: 500},
 	}, false, e.genesisT+62*day))
-	apply(e.txAt(n1, "V2", wire.Mint, &wire.MintPayload{Period: 1, Amount: 2000}, true, e.genesisT+62*day+3600))
+	apply(e.txAt(n1, "V2", wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true, e.genesisT+62*day+3600))
 	apply(e.txAt(n1, "V1", wire.Mint, &wire.MintPayload{Period: 2, Amount: 1000}, true, e.genesisT+121*day))
 
 	// B — состояние n1 (пинированное применение, семантика сверки);

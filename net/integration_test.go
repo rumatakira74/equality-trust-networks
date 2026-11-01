@@ -328,7 +328,7 @@ func TestLightNode(t *testing.T) {
 	}
 	// баланс из листа доказательства (D7: StateLeaf, 9 полей)
 	leaf, err := wire.DecodeStateLeaf(proof.LeafData)
-	if err != nil || leaf.Balance != 2100 {
+	if err != nil || leaf.Balance != 1100 {
 		t.Fatalf("баланс в листе: %+v (%v)", leaf, err)
 	}
 	if leaf.Seq != 1 {

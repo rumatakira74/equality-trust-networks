@@ -366,9 +366,10 @@ func (e *testEnv) solveAndSign(tx *wire.Transaction, id string, hard bool) {
 	tx.Signature = sig
 }
 
-// mintTx — выпуск завершённого периода 1 (для посевного круга; M3–M6).
+// mintTx — выпуск завершённого периода 1 (для посевного круга; M3–M6;
+// activated_period посева = 1, diff = 1, amount = эмиссия × 1).
 func (e *testEnv) mintTx(n *Node, id string) *wire.Transaction {
-	return e.tx(n, id, wire.Mint, &wire.MintPayload{Period: 1, Amount: 2000}, true)
+	return e.tx(n, id, wire.Mint, &wire.MintPayload{Period: 1, Amount: 1000}, true)
 }
 
 // transferTx — немедленный перевод (сумма ≤ P; 8.3).
