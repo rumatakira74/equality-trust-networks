@@ -151,13 +151,20 @@ replay-изоляция сетей и векторы (`vectors/`) не пада�
 - После прогона: Gradle-демоны остановлены (`gradlew --stop` — «No Gradle daemons are
   running»), `pgrep` по gradle/tnp-node/tnp-testnet/qemu — пусто.
 
-## CI (ветка stage14-attestation)
+## CI (ветка stage14-attestation, коммит c9fcdbf)
 
-- core.yml (go test + -race), net.yml, cons.yml, flutter.yml (analyze + test),
-  android.yml (AAR gomobile bind + :app:testDebugUnitTest + assembleDebug/Release).
-- Статусы: см. актуальные runs на ветке `stage14-attestation` в GitHub Actions.
-  Локальные эквиваленты всех проверок зелёные (раздел выше); AAR в CI собирается из исходников
-  (в git не коммитится), поэтому проверки A1/A2 попадают в сборку CI автоматически.
+Все 8 jobs пяти workflows зелёные (GitHub Actions, прогон от 01.11.2026):
+
+| Workflow | Run | Статус | Время |
+| --- | --- | --- | --- |
+| core.yml (go test + -race) | core #30 | success | 2m 46s |
+| net.yml | net #39 | success | 3m 47s |
+| cons.yml | cons #39 | success | 3m 2s |
+| flutter.yml (analyze + test) | flutter #38 | success | 11m 8s |
+| android.yml (AAR gomobile bind + :app:testDebugUnitTest + assembleDebug/Release) | android #38 | success | 7m 25s |
+
+AAR в CI собирается из исходников (в git не коммитится), поэтому проверки A1/A2
+попадают в сборку CI автоматически.
 
 ## Изменённые файлы
 
