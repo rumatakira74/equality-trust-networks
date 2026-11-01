@@ -12,11 +12,11 @@ jobs:
   aar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: "1.27"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
           distribution: temurin
           java-version: "17"
@@ -24,12 +24,13 @@ jobs:
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.1.0" > /dev/null
       - name: gomobile tools
-        run: go install golang.org/x/mobile/cmd/gomobile@latest && go install golang.org/x/mobile/cmd/gobind@latest
+        run: go install golang.org/x/mobile/cmd/gomobile@v0.0.0-20261011034528-197770444867 && go install golang.org/x/mobile/cmd/gobind@v0.0.0-20261011034528-197770444867
       - name: gomobile bind (AAR)
         run: |
-          gomobile bind -target=android -androidapi 26 -o android/libs/tnp.aar ./mobile
+          mkdir -p android/libs
+          gomobile bind -target=android -androidapi 26 -ldflags "-checklinkname=0" -o android/libs/tnp.aar ./mobile
           ls -la android/libs/tnp.aar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: tnp-aar
           path: android/libs/tnp.aar
@@ -37,41 +38,41 @@ jobs:
     runs-on: ubuntu-latest
     needs: aar
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: "1.27"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
           distribution: temurin
           java-version: "17"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: tnp-aar
           path: android/libs/
       - name: Gradle wrapper
-        run: android/gradlew --version
+        run: ./gradlew --version
         working-directory: android/
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
       - name: Unit-тесты приложения (JVM)
-        run: android/gradlew :app:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
         working-directory: android/
       - name: Сборка APK (debug + release)
-        run: android/gradlew :app:assembleDebug :app:assembleRelease --no-daemon
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon
         working-directory: android/
       - name: Размер APK (12.1)
         run: |
           ls -la android/app/build/outputs/apk/debug/ android/app/build/outputs/apk/release/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: tnp-apk
           path: android/app/build/outputs/apk/**/**.apk
   mobile-go:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: "1.27"
       - name: gofmt
@@ -79,4 +80,4 @@ jobs:
       - name: go vet
         run: go vet ./mobile/...
       - name: go test (мост)
-        run: go test ./mobile/... -timeout 300s
+        run: go test -race ./mobile/... -timeout 300s

@@ -447,10 +447,10 @@ func (g *Genesis) ManifestJSON() string {
 		// EqLabel — label приложения (v9.10, решение 7): "Eq-" + первые
 		// 8 символов SHA-256(network_id); display_name в UI всегда в паре
 		// с ним, никогда отдельно
-		EqLabel  string `json:"eq_label"`
-		Recurring bool  `json:"recurring"`
-		Unit        string `json:"unit"`
-		ResourceID  string `json:"resource_id,omitempty"`
+		EqLabel    string `json:"eq_label"`
+		Recurring  bool   `json:"recurring"`
+		Unit       string `json:"unit"`
+		ResourceID string `json:"resource_id,omitempty"`
 
 		TransferMode string `json:"transfer_mode"`
 		IssuanceMode string `json:"issuance_mode"`

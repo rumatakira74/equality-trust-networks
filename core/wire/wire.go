@@ -234,30 +234,30 @@ type UpdateGuardiansPayload struct {
 
 // Идентификаторы модулей (раздел 6; поле профиля modules).
 const (
-	ModuleAttest      uint32 = 1 // 6.1
-	ModuleRedeem      uint32 = 2 // 6.2
-	ModulePool        uint32 = 3 // 6.3
+	ModuleAttest       uint32 = 1 // 6.1
+	ModuleRedeem       uint32 = 2 // 6.2
+	ModulePool         uint32 = 3 // 6.3
 	ModuleContribution uint32 = 4 // 6.4
-	ModuleSandbox     uint32 = 5 // 6.5
+	ModuleSandbox      uint32 = 5 // 6.5
 )
 
 // Режимы выпуска пула (6.3).
 type PoolReleaseMode uint32
 
 const (
-	PoolReleaseUnspecified   PoolReleaseMode = 0
-	PoolReleaseOnDeadline    PoolReleaseMode = 1
-	PoolReleaseOnGoal        PoolReleaseMode = 2
-	PoolReleaseContinuous    PoolReleaseMode = 3
+	PoolReleaseUnspecified PoolReleaseMode = 0
+	PoolReleaseOnDeadline  PoolReleaseMode = 1
+	PoolReleaseOnGoal      PoolReleaseMode = 2
+	PoolReleaseContinuous  PoolReleaseMode = 3
 )
 
 // Режимы возврата пула (6.3).
 type PoolRefundMode uint32
 
 const (
-	PoolRefundUnspecified  PoolRefundMode = 0
-	PoolRefundIfUnmet      PoolRefundMode = 1
-	PoolRefundNone         PoolRefundMode = 2
+	PoolRefundUnspecified PoolRefundMode = 0
+	PoolRefundIfUnmet     PoolRefundMode = 1
+	PoolRefundNone        PoolRefundMode = 2
 )
 
 // PoolCreatePayload — pool_create {получатель, цель, дедлайн, режимы} (6.3).
@@ -319,22 +319,22 @@ type ContributionConfirmPayload struct {
 // Payload — интерфейс маркировки payload-ветвей oneof.
 type Payload interface{ payloadTag() uint32 }
 
-func (*RegisterPayload) payloadTag() uint32      { return 10 }
-func (*VouchPayload) payloadTag() uint32         { return 11 }
-func (*MintPayload) payloadTag() uint32          { return 12 }
-func (*TransferPayload) payloadTag() uint32      { return 13 }
-func (*MigratePayload) payloadTag() uint32       { return 14 }
-func (*EvidencePayload) payloadTag() uint32      { return 15 }
-func (*GuardianOfferPayload) payloadTag() uint32 { return 16 }
-func (*PoolCreatePayload) payloadTag() uint32    { return 17 }
-func (*PoolDonatePayload) payloadTag() uint32    { return 18 }
-func (*PoolClosePayload) payloadTag() uint32     { return 19 }
-func (*PoolClaimPayload) payloadTag() uint32     { return 20 }
-func (*RedeemPayload) payloadTag() uint32        { return 21 }
-func (*ReceiptPayload) payloadTag() uint32       { return 22 }
+func (*RegisterPayload) payloadTag() uint32            { return 10 }
+func (*VouchPayload) payloadTag() uint32               { return 11 }
+func (*MintPayload) payloadTag() uint32                { return 12 }
+func (*TransferPayload) payloadTag() uint32            { return 13 }
+func (*MigratePayload) payloadTag() uint32             { return 14 }
+func (*EvidencePayload) payloadTag() uint32            { return 15 }
+func (*GuardianOfferPayload) payloadTag() uint32       { return 16 }
+func (*PoolCreatePayload) payloadTag() uint32          { return 17 }
+func (*PoolDonatePayload) payloadTag() uint32          { return 18 }
+func (*PoolClosePayload) payloadTag() uint32           { return 19 }
+func (*PoolClaimPayload) payloadTag() uint32           { return 20 }
+func (*RedeemPayload) payloadTag() uint32              { return 21 }
+func (*ReceiptPayload) payloadTag() uint32             { return 22 }
 func (*ContributionClaimPayload) payloadTag() uint32   { return 23 }
 func (*ContributionConfirmPayload) payloadTag() uint32 { return 24 }
-func (*UpdateGuardiansPayload) payloadTag() uint32      { return 25 }
+func (*UpdateGuardiansPayload) payloadTag() uint32     { return 25 }
 
 // ---------------------------------------------------------------------------
 // Transaction (конверт, proto/transactions.proto)

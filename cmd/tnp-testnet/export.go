@@ -49,18 +49,18 @@ func exportCmd(args []string) error {
 
 // walletRow — строка реестра кошелька.
 type walletRow struct {
-	Address     string `json:"address"`
-	Status      string `json:"status"`
-	Synthetic   bool   `json:"synthetic"`
-	Seed        bool   `json:"seed"`
-	Flagged     bool   `json:"flagged"`
-	Balance     uint64 `json:"balance"`
-	Liquid      uint64 `json:"liquid"`
-	Cohorts     uint64 `json:"cohorts"` // незрелые
-	Registered  uint64 `json:"registered_at"`
-	Activated   uint64 `json:"activated_at"`
-	LastPeriod  uint64 `json:"last_claimed_period"`
-	Seq         uint64 `json:"seq"`
+	Address    string `json:"address"`
+	Status     string `json:"status"`
+	Synthetic  bool   `json:"synthetic"`
+	Seed       bool   `json:"seed"`
+	Flagged    bool   `json:"flagged"`
+	Balance    uint64 `json:"balance"`
+	Liquid     uint64 `json:"liquid"`
+	Cohorts    uint64 `json:"cohorts"` // незрелые
+	Registered uint64 `json:"registered_at"`
+	Activated  uint64 `json:"activated_at"`
+	LastPeriod uint64 `json:"last_claimed_period"`
+	Seq        uint64 `json:"seq"`
 }
 
 func exportJSON(w *os.File, env *txEnv) error {

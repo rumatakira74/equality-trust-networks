@@ -26,12 +26,15 @@ func waitFor(t *testing.T, d time.Duration, what string, cond func() bool) {
 }
 
 // anchorOf — сохранённый позиционный якорь пира (для проверок).
+// Возвращается копия под RLock: поля якоря пишет SyncFromPeer под n.mu,
+// чтение указателя вне лока — гонка (поймана -race, этап 13).
 func (n *Node) anchorOf(p string) *syncAnchor {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	for k, a := range n.syncAnchors {
 		if k.String() == p {
-			return a
+			cp := *a
+			return &cp
 		}
 	}
 	return nil
@@ -51,9 +54,16 @@ func TestSyncAnchorContinuation(t *testing.T) {
 	n2 := e.newNode(nodeOpts{level: LevelFull, manual: manualAddrs(t, n1)})
 	e.start(n2)
 
-	// первая сверка (фон после identify или явная) — полный проход
-	waitFor(t, 10*time.Second, "журнал после первой сверки", func() bool {
-		return len(n2.journalSnapshot()) == 3
+	// первая сверка (фон после identify или явная) — полный проход;
+	// ждём само утверждение (якорь на границе), а не прокси-условие
+	// длины журнала: транзакции приходят и gossip'ом, якорь двигает
+	// только сверка (под -race на медленном раннере она позже gossip)
+	waitFor(t, 30*time.Second, "якорь после первой сверки", func() bool {
+		if len(n2.journalSnapshot()) != 3 {
+			return false
+		}
+		a := n2.anchorOf(n1.Host.ID().String())
+		return a != nil && a.pos == 3 && a.txid != nil
 	})
 	a := n2.anchorOf(n1.Host.ID().String())
 	if a == nil || a.pos != 3 || a.txid == nil {

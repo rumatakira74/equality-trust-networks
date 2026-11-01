@@ -28,7 +28,7 @@ func newUG(t *testing.T) *ugEnv {
 			Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
 			Status: wire.StatusActive, Seed: true,
 			RegisteredAt:    e.clock.NetTime() - 400*86400,
-			ActivatedAt:    e.clock.NetTime() - 400*86400,
+			ActivatedAt:     e.clock.NetTime() - 400*86400,
 			ActivatedPeriod: 1, LastClaimedPeriod: 10,
 			LastTouchEpoch: 1, DelayedThreshold: 3000, Seq: 1,
 		}
@@ -182,7 +182,7 @@ func TestUpdateGuardiansWindowCancelEffect(t *testing.T) {
 	}
 
 	// отмена в окне (подпись владельца — текущим ключом, C8)
-	u.clock.T = t0 + 24 * 3600
+	u.clock.T = t0 + 24*3600
 	res = u.ledger.Apply(u.tx("W", wire.UpdateGuardians, &wire.UpdateGuardiansPayload{
 		Cancel: &wire.UpdateGuardiansCancel{ProposeSeq: pu.ProposeSeq},
 	}, false))

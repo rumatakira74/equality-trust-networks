@@ -57,17 +57,17 @@ func Build(l *ledger.Ledger, addr []byte, priv *ecdsa.PrivateKey,
 	}
 	_ = leafHash
 	stmt := &wire.AttestStatement{
-		NetworkID:   append([]byte(nil), l.State.Net.NetworkID...),
-		Address:     append([]byte(nil), addr...),
-		Status:      w.Status,
-		AgeDays:     w.AgeDays(now),
-		VouchDepth:  VouchDepth(l, addr),
-		Flagged:     w.Flagged,
+		NetworkID:    append([]byte(nil), l.State.Net.NetworkID...),
+		Address:      append([]byte(nil), addr...),
+		Status:       w.Status,
+		AgeDays:      w.AgeDays(now),
+		VouchDepth:   VouchDepth(l, addr),
+		Flagged:      w.Flagged,
 		ManifestHash: append([]byte(nil), manifestHash...),
-		Epoch:       epoch,
-		Challenge:   append([]byte(nil), challenge...),
-		ExpiresAt:   expiresAt,
-		AppID:       append([]byte(nil), appID...),
+		Epoch:        epoch,
+		Challenge:    append([]byte(nil), challenge...),
+		ExpiresAt:    expiresAt,
+		AppID:        append([]byte(nil), appID...),
 	}
 	h := stmt.Hash()
 	sig, err := crypto.SignDER(priv, h[:])

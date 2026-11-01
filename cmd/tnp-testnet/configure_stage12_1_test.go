@@ -21,7 +21,7 @@ import (
 // равные slug разных организаторов не коллизируют (network_id уникален).
 func TestApplicationIDSlugHash(t *testing.T) {
 	nid := sha256.Sum256([]byte("manifest-genesis")) // детерминированный network_id
-	h := sha256.Sum256(nid[:])                        // hash8 = SHA-256(network_id)
+	h := sha256.Sum256(nid[:])                       // hash8 = SHA-256(network_id)
 	hash8 := hex.EncodeToString(h[:4])
 	if got, want := ApplicationID(nid[:], "monte-cloud"), "io.equality.monte_cloud.x"+hash8; got != want {
 		t.Fatalf("application_id: %q (want %q)", got, want)
