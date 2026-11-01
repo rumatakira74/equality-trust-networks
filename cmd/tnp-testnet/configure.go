@@ -38,6 +38,8 @@ func configureCmd(args []string) error {
 	vouchK := fs.Uint64("vouch-k", 0, "vouch_k (0 — из шаблона)")
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds (0 — из шаблона)")
 	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
+	periodSeconds := fs.Uint64("period-seconds", 0, "period_seconds — длина периода выпуска, genesis-поле 61 (0 — конвенция 30 сут; тестовые сети живого прогона: границы периода на реальном времени)")
+	moratoriumDays := fs.Int64("transfer-moratorium-days", -1, "transfer_moratorium_days — мораторий переводов от register, сут (-1 — из шаблона, 14; 0 — нет моратория)")
 	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4, 8)")
 	providers := fs.String("providers", "", "fingerprint'ы поставщиков (hex 32 байта, через запятую; 6.2 — для restricted/peer-redeem и redeem; v9.11 — fingerprint, адрес выводится из network_id)")
 	providerSeed := fs.String("provider-seed", "", "поставщик — кошелёк посевного круга по метке (например V1; адрес из манифеста)")
@@ -96,6 +98,17 @@ func configureCmd(args []string) error {
 	// stage11-prep поле выставлялось пост-обработкой хелпером)
 	if *migrateDelayDays > 0 {
 		prof.MigrateDelayDays = *migrateDelayDays
+	}
+	// period_seconds (поле 61): длина периода выпуска тестовой сети
+	// (живой прогон — границы периода на реальном времени за минуты)
+	if *periodSeconds > 0 {
+		prof.PeriodSeconds = *periodSeconds
+	}
+	// transfer_moratorium_days: тестовой сети живого прогона мораторий
+	// 14 сут не даёт свежему кошельку приложения дойти до E_BURNED
+	// (перевод сгоревшей единицы из UI — пункт чек-листа приложения)
+	if *moratoriumDays >= 0 {
+		prof.TransferMoratoriumDays = uint64(*moratoriumDays)
 	}
 	if *resourceID != "" {
 		prof.ResourceID = *resourceID
@@ -315,6 +328,9 @@ func configureCmd(args []string) error {
 		transferModeName(prof.TransferMode), entryName(prof.EntryMode), prof.VouchK)
 	if prof.Recurring {
 		fmt.Printf(" recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)\n")
+	}
+	if prof.PeriodSeconds > 0 {
+		fmt.Printf(" period_seconds: %d — период заданной длины (тестовая сеть, границы на реальном времени)\n", prof.PeriodSeconds)
 	}
 	fmt.Printf(" модули: %v\n посевной круг: %d\n артефакты: %s\n",
 		moduleNames(prof.Modules), len(circle), outDir)

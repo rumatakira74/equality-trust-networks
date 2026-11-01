@@ -621,13 +621,14 @@ func appendBlob(b, v []byte) []byte {
 // ---------------------------------------------------------------------------
 
 // challengeSlot — слот челленджа (7.6). Дублирует mintChallengeSlot
-// (core/ledger, не экспортирован — правило 3): genesis_time + period×30 сут +
-// SHA-256(addr‖period) mod 30 сут.
-func challengeSlot(genesisTime uint64, addr []byte, period uint64) uint64 {
+// (core/ledger, не экспортирован — правило 3): genesis_time + period×период
+// сети + SHA-256(addr‖period) mod период сети (конвенция 30 сут; genesis-поле
+// 61 задаёт длину — тестовые сети живого прогона).
+func challengeSlot(genesisTime uint64, addr []byte, period, periodSecs uint64) uint64 {
 	var pb [8]byte
 	binary.BigEndian.PutUint64(pb[:], period)
 	h := sha256.Sum256(append(append([]byte{}, addr...), pb[:]...))
-	return genesisTime + period*30*86400 + binary.BigEndian.Uint64(h[:8])%(30*86400)
+	return genesisTime + period*periodSecs + binary.BigEndian.Uint64(h[:8])%periodSecs
 }
 
 func slotsCmd(args []string) error {
@@ -658,8 +659,9 @@ func slotsCmd(args []string) error {
 func printSlots(gp *wire.GenesisPackage, seedLabels []string, extraAddr string, periodsStr string) {
 	periods := parsePeriods(periodsStr)
 	win := gp.Manifest.Profile.MintChallengeWindowHours * 3600
-	fmt.Printf("слоты челленджа (окно ±%d ч; достижимо из периода P+1 только для поздних слотов, №39):\n",
-		gp.Manifest.Profile.MintChallengeWindowHours)
+	periodSecs := gp.Manifest.Profile.PeriodSecsOrDefault()
+	fmt.Printf("слоты челленджа (окно ±%d ч; период %d с; достижимо из периода P+1 только для поздних слотов, №39):\n",
+		gp.Manifest.Profile.MintChallengeWindowHours, periodSecs)
 	type row struct {
 		label string
 		addr  []byte
@@ -681,8 +683,8 @@ func printSlots(gp *wire.GenesisPackage, seedLabels []string, extraAddr string, 
 	}
 	for _, r := range rows {
 		for _, p := range periods {
-			slot := challengeSlot(gp.Genesis.GenesisTime, r.addr, p)
-			start := gp.Genesis.GenesisTime + (p+1)*30*86400
+			slot := challengeSlot(gp.Genesis.GenesisTime, r.addr, p, periodSecs)
+			start := gp.Genesis.GenesisTime + (p+1)*periodSecs
 			reach := ""
 			if win > 0 && slot+win >= start {
 				lo := slot - win

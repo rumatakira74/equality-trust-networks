@@ -106,8 +106,8 @@ type pinClock struct {
 }
 
 // newPinClock — параметры genesis берутся из состояния реестра; конвенция
-// периода — 30 суток от genesis (headless-ядро: net.RealClock,
-// mintChallengeSlot).
+// периода — от genesis (headless-ядро: net.RealClock, mintChallengeSlot;
+// 0 — 30 сут, genesis-поле 61 задаёт длину).
 func newPinClock(l *ledger.Ledger) *pinClock {
 	epochSecs := l.State.Net.EpochSeconds
 	if epochSecs == 0 {
@@ -116,7 +116,7 @@ func newPinClock(l *ledger.Ledger) *pinClock {
 	return &pinClock{
 		genesis:    l.State.GenesisTime,
 		epochSecs:  epochSecs,
-		periodSecs: 30 * 86400,
+		periodSecs: l.State.Net.Profile.PeriodSecsOrDefault(),
 	}
 }
 

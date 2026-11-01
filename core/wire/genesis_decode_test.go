@@ -171,6 +171,33 @@ func TestRecurringSlugRoundTrip(t *testing.T) {
 	}
 }
 
+// TestPeriodSecondsRoundTrip — поле 61 (period_seconds, блокер живого
+// прогона мини-тестнета этапа 12): длина периода выпуска кодируется и
+// восстанавливается; 0 — конвенция 30 сут (PeriodSecsOrDefault).
+func TestPeriodSecondsRoundTrip(t *testing.T) {
+	for _, secs := range []uint64{0, 60, 120, 30 * 86400} {
+		m := &Manifest{
+			NetworkID:   []byte("net"),
+			DisplayName: "Имя",
+			Profile:     &ProfileParams{Unit: UnitQuota, ResourceID: "r", PeriodSeconds: secs},
+		}
+		back, err := DecodeManifest(m.Encode())
+		if err != nil {
+			t.Fatalf("decode manifest: %v", err)
+		}
+		if back.Profile.PeriodSeconds != secs {
+			t.Fatalf("period_seconds: %d != %d", back.Profile.PeriodSeconds, secs)
+		}
+	}
+	def := &ProfileParams{}
+	if def.PeriodSecsOrDefault() != 30*86400 {
+		t.Fatalf("default period: %d", def.PeriodSecsOrDefault())
+	}
+	if p := (&ProfileParams{PeriodSeconds: 120}); p.PeriodSecsOrDefault() != 120 {
+		t.Fatalf("period 120: %d", p.PeriodSecsOrDefault())
+	}
+}
+
 // TestDeriveNetworkID — само-сертификация (v9.10): network_id =
 // H(manifest ‖ genesis) детерминирован, меняется от любого поля
 // манифеста/genesis, совпадает в манифесте и записи после FinalizeGenesis.

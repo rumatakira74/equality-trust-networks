@@ -13,11 +13,28 @@ func TestMintChallengeSlotFromGenesis(t *testing.T) {
 	genesisTime := uint64(1_760_000_000)
 	addr := make([]byte, 32)
 	for _, period := range []uint64{0, 1, 2, 7} {
-		slot := mintChallengeSlot(genesisTime, addr, period)
+		slot := mintChallengeSlot(genesisTime, addr, period, 30*86400)
 		start := genesisTime + period*30*86400
 		if slot < start || slot >= start+30*86400 {
 			t.Fatalf("период %d: слот %d вне периода [%d, %d)",
 				period, slot, start, start+30*86400)
+		}
+	}
+}
+
+// период заданной длины (genesis-поле 61, тестовые сети живого прогона):
+// слот масштабируется длиной периода, окно ±48 ч всегда накрывает
+// заявляемый завершённый период
+func TestMintChallengeSlotShortPeriod(t *testing.T) {
+	genesisTime := uint64(1_760_000_000)
+	addr := make([]byte, 32)
+	const periodSecs = 120
+	for _, period := range []uint64{0, 1, 2, 1000} {
+		slot := mintChallengeSlot(genesisTime, addr, period, periodSecs)
+		start := genesisTime + period*periodSecs
+		if slot < start || slot >= start+periodSecs {
+			t.Fatalf("период %d: слот %d вне периода [%d, %d)",
+				period, slot, start, start+periodSecs)
 		}
 	}
 }
@@ -31,7 +48,7 @@ func TestCheckMintChallengeWindowFromGenesis(t *testing.T) {
 	}
 	addr := []byte{1, 2, 3}
 	period := uint64(2)
-	slot := mintChallengeSlot(gp.Genesis.GenesisTime, addr, period)
+	slot := mintChallengeSlot(gp.Genesis.GenesisTime, addr, period, 30*86400)
 	if !l.CheckMintChallengeWindow(addr, period, slot) {
 		t.Fatal("окно должно быть открыто в слоте")
 	}

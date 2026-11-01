@@ -326,6 +326,8 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.FeeStepMicros = v
 	case 60:
 		p.Recurring = v != 0
+	case 61:
+		p.PeriodSeconds = v
 	default:
 		return errUnknownField
 	}

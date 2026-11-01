@@ -275,6 +275,13 @@ type ProfileParams struct {
 	// остаётся проверяемой). Допустим только при unit = quota(resource_id),
 	// не-глобальном network_id и transfer_mode ∈ {restricted, peer-redeem}.
 	Recurring bool
+	// PeriodSeconds — длина периода выпуска в секундах (поле 61; блокер
+	// живого прогона мини-тестнета этапа 12): 0 — конвенция headless-ядра
+	// (30 сут); иначе — период сети заданной длины (тестовые сети:
+	// границы периода на реальном времени за минуты, без сдвига часов).
+	// Слот челленджа (7.6) и часы узла (net.RealClock) масштабируются
+	// той же длиной.
+	PeriodSeconds uint64
 }
 
 func (p *ProfileParams) Encode() []byte {
@@ -324,6 +331,7 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 58, p.FeeTargetGrowthMicros)
 	b = appendU64Field(b, 59, p.FeeStepMicros)
 	b = appendBoolField(b, 60, p.Recurring)
+	b = appendU64Field(b, 61, p.PeriodSeconds)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)
@@ -351,6 +359,15 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 22, p.VoucherRewardMicros)
 	b = appendU32Field(b, 23, p.VoucherRewardPeriods)
 	return b
+}
+
+// PeriodSecsOrDefault — эффективная длина периода выпуска: 0 — конвенция
+// headless-ядра (30 сут), иначе заданное значение (поле 61).
+func (p *ProfileParams) PeriodSecsOrDefault() uint64 {
+	if p.PeriodSeconds == 0 {
+		return 30 * 86400
+	}
+	return p.PeriodSeconds
 }
 
 // Manifest — манифест сети (3.3, 4).

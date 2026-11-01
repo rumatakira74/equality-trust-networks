@@ -56,6 +56,7 @@ func findlabelsCmd(args []string) error {
 	bandHours := fs.Uint64("band-hours", 24, "полоса: слот в последних N часах периода")
 	networkIDName := fs.String("network-id", "", "имя сети (как в generate)")
 	genesisTime := fs.Int64("genesis-time", 0, "genesis-время, unix (как в generate)")
+	periodSeconds := fs.Uint64("period-seconds", 0, "длина периода, с (0 — конвенция 30 сут; как в configure -period-seconds)")
 	prefix := fs.String("prefix", "", "префикс меток (по умолчанию: seed→S, wallet→P)")
 	from := fs.Int("from", 1, "начальный номер метки")
 	if err := fs.Parse(args); err != nil {
@@ -78,13 +79,17 @@ func findlabelsCmd(args []string) error {
 		}
 		return seedKey(label)
 	}
-	periodEnd := uint64(*genesisTime) + (*period+1)*30*86400
+	periodSecs := *periodSeconds
+	if periodSecs == 0 {
+		periodSecs = 30 * 86400
+	}
+	periodEnd := uint64(*genesisTime) + (*period+1)*periodSecs
 	lo := periodEnd - *bandHours*3600
 	found := 0
 	for n := *from; found < *count; n++ {
 		label := fmt.Sprintf("%s%02d", pfx, n)
 		addr := addrOf(keyOf(label), networkID)
-		slot := challengeSlot(uint64(*genesisTime), addr, *period)
+		slot := challengeSlot(uint64(*genesisTime), addr, *period, periodSecs)
 		if slot >= lo && slot < periodEnd {
 			found++
 			fmt.Printf("%s slot=%d (%s) до-конца-периода=%dс\n",

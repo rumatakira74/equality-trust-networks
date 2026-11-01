@@ -211,7 +211,7 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 // initLedger — ядро из genesis + replay журнала из store (INV-3).
 func (n *Node) initLedger() error {
 	gp := n.Cfg.Genesis
-	clock := NewClock(gp.Genesis.GenesisTime, gp.Manifest.Profile.EpochSeconds)
+	clock := NewClock(gp.Genesis.GenesisTime, gp.Manifest.Profile.EpochSeconds, gp.Manifest.Profile.PeriodSeconds)
 	n.Clock = clock
 	// Окно челленджа выпуска (M7, 7.6) проверяется при apply: долг этапа 7
 	// закрыт (раньше SkipMintChallengeWindow=true — сетевой узёл не проверял
@@ -611,7 +611,7 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 // Возвращает число применённых (accepted) транзакций.
 func (n *Node) ImportJournal(txs []*wire.Transaction) int {
 	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime,
-		n.Cfg.Genesis.Manifest.Profile.EpochSeconds)
+		n.Cfg.Genesis.Manifest.Profile.EpochSeconds, n.Cfg.Genesis.Manifest.Profile.PeriodSeconds)
 	applied := 0
 	for _, tx := range txs {
 		n.applyMu.Lock()
