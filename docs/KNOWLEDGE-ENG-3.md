@@ -13,7 +13,7 @@
 - A network rule, not an identity rule: the wallet is bound to a device, not to a person.
 - It is technically impossible to prove "this specific phone" without an external anchor. Known bypasses:
   - `androidId` is unique to the combination "app signing key + user + device": a second Android user, Secure Folder, a work profile, and clones give a separate `androidId` on the same phone; a factory reset changes it;
-  - hardware attestation confirms "a real device with protected hardware and an unmodified boot chain", but not the uniqueness of the device;
+  - hardware attestation confirms "a real device with protected hardware and an unmodified boot chain", but not the uniqueness of the device: after leaf binding (v9.12) the registered key must match the key of the attested leaf, yet one device can produce several attested keys — several wallets on a single device remain possible even after the fix;
   - ID attestation (the serial number, IMEI) is unavailable to an ordinary application.
 - Therefore "one wallet per phone" is a **cost barrier**, not an absolute ban. The target criterion: creating an extra wallet must cost more than it brings in. The main protection layer is vouching; attestation and PoW complement it.
 
@@ -22,6 +22,8 @@
 - The wallet creates a key pair in Android Keystore with a hardware-attestation request (`setAttestationChallenge`). The private key is non-exportable.
 - `walletFingerprint = SHA256(attestedPublicKey ‖ protocolId)`, where the public key is confirmed by the attestation chain.
 - The attestation chain is verified **locally by every node** against the Google root certificates embedded in the APK. What is checked: the hardware level (StrongBox/TEE), `verifiedBootState = Verified`, `deviceLocked = true`, a non-expired patch level.
+- ✅ Both Google roots are embedded (v9.12): the current RSA root and the new ECDSA P-384 root (Remote Key Provisioning); a chain is valid if it reaches any of them. Synthetic roots are allowed only in the sandbox (`sandbox = true`): a non-sandbox network with a synthetic root does not start (genesis validation).
+- ✅ Leaf binding (v9.12): the SPKI of the leaf certificate equals the registered `attestedPublicKey` — the chain was issued for exactly this key, reusing someone else's chain is impossible (`E_ATTEST_KEY_MISMATCH`). The leaf's validity period is checked at the registration's `timestamp_claim` (leaves are short-lived; replay gives the same verdict as the live check). Honestly: attestation confirms a real device with protected hardware, but not the uniqueness of the device, and no measurement on live devices has been performed — the DISCLAIMER remains.
 - The list of revoked attestation certificates is distributed as signed data through the network (not through a server).
 - `androidId` is only a weak additional signal (it raises the registration threshold for repeated values), not a ground for rejection.
 - One fingerprint = one address within a network: `address = SHA-256(fingerprint ‖ network_id)` — a single derivation point from the final `network_id` (v9.11). Addresses are not stored in the manifest or genesis: the seed circle and providers are defined by fingerprints (Sections 3.3, 6.2), so the self-certification `network_id = H(manifest ‖ genesis)` is not circular. A repeated `register` with the same fingerprint is rejected. Node index: `fingerprint → address`.
@@ -103,7 +105,7 @@ Everything else ("looks like a farm", "suspicious activity") is not evidence. A 
 
 Relevant for the profiles where units acquire external value (3, 5, 7).
 
-- **Devices:** hardware attestation; root on such devices burns Knox, so a farm = a farm of expensive devices.
+- **Devices:** hardware attestation up to the embedded Google roots with leaf binding to the registered key (v9.12): software farms and emulators are cut off, root on such devices burns Knox. But one device can produce several attested keys, so "a farm = a farm of expensive devices" does not hold automatically: several wallets per device remain possible, and the barrier is held by vouching and cost (7.1).
 - **The issuance challenge:** reinforced PoW in a random slot within the month with a ±48 h window. The slot `H(address ‖ period ‖ hash(previous epoch's checkpoint))` is unpredictable in advance. The PoW is memory-hard (Argon2id-like, parameters tuned for an average phone): it limits the GPU/ASIC advantage, but does not give full parity.
 - A missed challenge: the accrual moves within the `accrual_window`, the funds are not blocked.
 - **PoW** is reinforced on `register` and on every issuance; light on `transfer`.

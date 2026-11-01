@@ -35,9 +35,10 @@
 | # | Условие | Принять/отклонить |
 | --- | --- | --- |
 | R1 | `walletFingerprint = SHA-256(attested_public_key ‖ protocol_id)` отсутствует в индексе `фингерпринт → адрес` и в чёрном списке (миграция, 11) | иначе `E_FINGERPRINT` |
-| R2 | Цепочка аттестации верифицируется до корня Google (в APK): аппаратный уровень StrongBox/TEE, `verifiedBootState = Verified`, `deviceLocked = true`, уровень патча не просрочен | иначе `E_ATTEST` |
+| R2 | Цепочка аттестации верифицируется до корня Google (в APK): аппаратный уровень StrongBox/TEE, `verifiedBootState = Verified`, `deviceLocked = true`, уровень патча не просрочен. Срок действия сертификатов — на момент `timestamp_claim` (этап 14: листы короткоживущие, replay = live) | иначе `E_ATTEST` |
 | R3 | `device_policy = STRICT` ⇒ аттестация аппаратная; `RELAXED` допускает устройства без неё (7.2) | иначе `E_ATTEST_POLICY` |
 | R4 | `attestation_challenge` соответствует формуле связки | иначе `E_ATTEST` (PENDING: вопрос №23) |
+| R4c | SPKI сертификата-листа = `attested_public_key` (привязка листа, этап 14 — A1) | иначе `E_ATTEST_KEY_MISMATCH` |
 | R5 | `synthetic = true` ⇒ `sandbox = true` (6.5) | иначе `E_SBOX` |
 | R6 | `personal_guardians` ≤ 3 (`guardian_personal_count`), адреса известны | иначе `E_MIGRATE_GUARDIANS` |
 | R7 | Повторяющийся `android_id` ⇒ повышенный таргет PoW (`repeat_android_id_target`); НЕ основание отказа (7.2) | принять с повышенным таргетом |

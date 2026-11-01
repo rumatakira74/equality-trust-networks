@@ -265,7 +265,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 - A network rule, not an identity rule: the wallet is bound to a device, not to a person.
 - It is technically impossible to prove "this specific phone" without an external anchor. Known bypasses:
   - `androidId` is unique to the combination "app signing key + user + device": a second Android user, Secure Folder, a work profile, and clones give a separate `androidId` on the same phone; a factory reset changes it;
-  - hardware attestation confirms "a real device with protected hardware and an unmodified boot chain", but not the uniqueness of the device;
+  - hardware attestation confirms "a real device with protected hardware and an unmodified boot chain", but not the uniqueness of the device: after leaf binding (v9.12) the registered key must match the key of the attested leaf, yet one device can produce several attested keys — several wallets on a single device remain possible even after the fix;
   - ID attestation (the serial number, IMEI) is unavailable to an ordinary application.
 - Therefore "one wallet per phone" is a **cost barrier**, not an absolute ban. The target criterion: creating an extra wallet must cost more than it brings in. The main protection layer is vouching; attestation and PoW complement it.
 
@@ -274,6 +274,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 - The wallet creates a key pair in Android Keystore with a hardware-attestation request (`setAttestationChallenge`). The private key is non-exportable.
 - `walletFingerprint = SHA256(attestedPublicKey ‖ protocolId)`, where the public key is confirmed by the attestation chain.
 - The attestation chain is verified **locally by every node** against the Google root certificates embedded in the APK. What is checked: the hardware level (StrongBox/TEE), `verifiedBootState = Verified`, `deviceLocked = true`, a non-expired patch level.
+- ✅ Both Google roots are embedded (v9.12): the current RSA root and the new ECDSA P-384 root (Remote Key Provisioning); synthetic roots — sandbox only. Leaf binding: the SPKI of the leaf certificate equals the registered key (`E_ATTEST_KEY_MISMATCH` on mismatch), the leaf's validity is checked at `timestamp_claim`. Attestation confirms a real device, but not uniqueness; no measurement on live devices has been performed — the DISCLAIMER remains.
 - The list of revoked attestation certificates is distributed as signed data through the network (not through a server).
 - `androidId` is only a weak additional signal (it raises the registration threshold for repeated values), not a ground for rejection.
 - One fingerprint = one address; a repeated `register` with the same fingerprint and a different address is rejected. Node index: `fingerprint → address`.
