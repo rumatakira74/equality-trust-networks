@@ -51,15 +51,15 @@ jobs:
           name: tnp-aar
           path: android/libs/
       - name: Gradle wrapper
-        run: android/gradlew --version
+        run: ./gradlew --version
         working-directory: android/
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
       - name: Unit-тесты приложения (JVM)
-        run: android/gradlew :app:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
         working-directory: android/
       - name: Сборка APK (debug + release)
-        run: android/gradlew :app:assembleDebug :app:assembleRelease --no-daemon
+        run: ./gradlew :app:assembleDebug :app:assembleRelease --no-daemon
         working-directory: android/
       - name: Размер APK (12.1)
         run: |
