@@ -301,15 +301,37 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 	return &Genesis{gp: gp}
 }
 
-// TrustedRootsDER — корни аттестации genesis (синтетические; для эмулятора).
+// TrustedRootsDER — корни аттестации genesis: синтетический корень
+// ТОЛЬКО для песочницы (этап 14, A2: не-sandbox сеть с синтетическим
+// корнем невалидна; прод-путь — корни Google, attest.GoogleRoots).
+// Для не-sandbox genesis возвращает nil.
 func (g *Genesis) TrustedRootsDER() []byte {
+	if g.gp.Manifest == nil || g.gp.Manifest.Profile == nil || !g.gp.Manifest.Profile.Sandbox {
+		return nil
+	}
 	// синтетический корень детерминирован от network_id — одинаков у всех
+	// узлов песочницы (эмулятор)
 	key := crypto.DeterministicKey("tnp-android-root:" + string(g.gp.Genesis.NetworkID))
 	_, der, err := attest.SyntheticRoot("android", key)
 	if err != nil {
 		return nil
 	}
 	return der
+}
+
+// attestRoots — доверенные корни узла: песочница — синтетический корень
+// genesis, не-sandbox (прод) — встроенные корни Google (A2, этап 14).
+func attestRoots(gen *Genesis) []*x509.Certificate {
+	if der := gen.TrustedRootsDER(); len(der) > 0 {
+		if root, err := x509.ParseCertificate(der); err == nil {
+			return []*x509.Certificate{root}
+		}
+	}
+	roots, err := attest.GoogleRoots()
+	if err != nil {
+		return nil
+	}
+	return roots
 }
 
 // Параметры сети для приложения (Kotlin читает через мост).
@@ -372,15 +394,11 @@ func StartNode(gen *Genesis, level, dbPath string, ownWallet []byte,
 		// несвязанность eclipse-пиров по подсетям (№35): включена
 		LinkGroups: true,
 	}
-	// корни аттестации из genesis (правка этапа 7 — латентный баг этапа 6:
-	// без TrustedRoots узел отвергает любую цепочку, E_ATTEST). Песочница —
-	// синтетический корень (детерминирован от network_id); реальные сети —
-	// корни Google в APK (этап 8, чек-лист).
-	if der := gen.TrustedRootsDER(); len(der) > 0 {
-		if root, err := x509.ParseCertificate(der); err == nil {
-			cfg.TrustedRoots = []*x509.Certificate{root}
-		}
-	}
+	// корни аттестации (правка этапа 7 — латентный баг этапа 6: без
+	// TrustedRoots узел отвергает любую цепочку, E_ATTEST). Песочница —
+	// синтетический корень genesis; реальные сети — встроенные корни
+	// Google (A2, этап 14).
+	cfg.TrustedRoots = attestRoots(gen)
 	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
 	if err != nil {
 		return nil, err
@@ -405,11 +423,7 @@ func StartNodeAddrs(gen *Genesis, level, dbPath string, ownWallet []byte,
 	if listenAddrs != "" {
 		cfg.ListenAddrs = strings.Split(listenAddrs, ",")
 	}
-	if der := gen.TrustedRootsDER(); len(der) > 0 {
-		if root, err := x509.ParseCertificate(der); err == nil {
-			cfg.TrustedRoots = []*x509.Certificate{root}
-		}
-	}
+	cfg.TrustedRoots = attestRoots(gen)
 	nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
 	if err != nil {
 		return nil, err
@@ -434,11 +448,7 @@ func StartNodeAddrsKey(gen *Genesis, level, dbPath string, ownWallet []byte,
 			LinkGroups:  true,
 			NodeKey:     key,
 		}
-		if der := gen.TrustedRootsDER(); len(der) > 0 {
-			if root, err := x509.ParseCertificate(der); err == nil {
-				cfg.TrustedRoots = []*x509.Certificate{root}
-			}
-		}
+		cfg.TrustedRoots = attestRoots(gen)
 		nd, err := startNodeCfg(cfg, level, ownWallet, manualAddrs, logger)
 		if err != nil {
 			return nil, err

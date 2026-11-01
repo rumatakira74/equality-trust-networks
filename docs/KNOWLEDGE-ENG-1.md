@@ -146,7 +146,7 @@ State as of October 2026 from open sources (the list is at the end of the sectio
 ### 3.3 The network manifest and the guarantee level ✅
 
 - The **manifest** is public, its hash is written into genesis, and after launch it is immutable (except via the procedure in Section 13): `network_id`, all profile parameters, `sandbox`, `device_policy`, `checkpoint_mode`, the seed circle. The seed circle is defined in the manifest by public keys (fingerprints, Section 7.2); seed members' addresses are not stored in the manifest — they are derived from the final `network_id` (v9.11).
-- The **guarantee level is computed from the manifest, not declared.** High — `strict` + `decentralized` + `open_vouch`; medium — `relaxed` or `members_quorum`; educational — `sandbox`.
+- The **guarantee level is computed from the manifest, not declared.** High — `strict` + `decentralized` + `open_vouch`; medium — `relaxed` or `members_quorum`; educational — `sandbox`. As of v9.12, strict attestation (`strict`) is backed by mechanics: verification up to the real Google roots (both roots) and leaf binding to the registered key; however, no measurement on live devices has been performed — the level describes the verified mechanics, not a measured result (the DISCLAIMER remains).
 - An attestation (Section 6) carries the manifest hash, so the consumer sees from which network and with which guarantees a "person" arrives. A school class must not pass itself off as global identity proof.
 - The partner itself chooses which networks to trust: this continues the "reputation without verdicts" principle.
 

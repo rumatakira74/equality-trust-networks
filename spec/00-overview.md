@@ -76,7 +76,8 @@ property-тестах этапа 3.
 
 ### По типам (см. spec/03)
 
-`E_ATTEST`, `E_ATTEST_POLICY`, `E_FINGERPRINT`, `E_SBOX` (register);
+`E_ATTEST`, `E_ATTEST_POLICY`, `E_ATTEST_KEY_MISMATCH`, `E_FINGERPRINT`,
+`E_SBOX` (register);
 `E_VOUCH_*` (vouch); `E_STATUS`, `E_FLAGGED_MINT`, `E_MINT_AMOUNT`,
 `E_ACCRUAL_WINDOW`, `E_MINT_DOUBLE` (mint); `E_TRANSFER_MODE`,
 `E_TRANSFER_RECIPIENT`, `E_MORATORIUM`, `E_BALANCE`, `E_BURNED`,

@@ -79,6 +79,15 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 	if p.Sandbox && p.ParamsMutable {
 		return nil, errors.New("ledger: sandbox с params_mutable = true")
 	}
+	// 2.6 (7) (этап 14, A12): вне песочницы PoW не отключается молча —
+	// нулевой таргет («выключено», core/crypto HashBelowTarget) или
+	// отсутствующие параметры PoW в не-sandbox genesis — невалидный
+	// genesis. В песочнице допустимо (симуляции).
+	if !p.Sandbox {
+		if p.Pow == nil || p.Pow.TargetLight == 0 || p.Pow.TargetHard == 0 {
+			return nil, errors.New("ledger: нулевой PoW-таргет вне песочницы")
+		}
+	}
 
 	net := params.FromManifest(m, gp.Genesis.ProtocolVersion)
 	st := NewState(net)

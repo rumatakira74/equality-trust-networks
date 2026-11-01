@@ -227,18 +227,18 @@ func startEnv(c *txFlags) (*txEnv, func(), error) {
 	if nodeSeed == "" {
 		nodeSeed = "tnp-testnet-node:" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	}
-	// корни аттестации — та же деривация, что у приложения (mobile):
-	// синтетический корень детерминирован от network_id
-	mgen, err := tnp.LoadGenesis(gp.EncodeGenesisPackage())
+	// корни аттестации: тестовая сеть регистрирует кошельки
+	// синтетическими цепочками (SandboxAttestationChain) — тот же
+	// синтетический корень, детерминированный от network_id, что
+	// деривация приложения (mobile.TrustedRootsDER для песочницы).
+	// Закрытая сеть — sandbox = false, поэтому A2-обход — флаг
+	// AllowSyntheticRoots ниже (тестовая утилита, не прод).
+	rootKey := crypto.DeterministicKey("tnp-android-root:" + string(gp.Genesis.NetworkID))
+	rootCert, _, err := attest.SyntheticRoot("android", rootKey)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("synthetic root: %w", err)
 	}
-	var roots []*x509.Certificate
-	if der := mgen.TrustedRootsDER(); len(der) > 0 {
-		if root, err := x509.ParseCertificate(der); err == nil {
-			roots = []*x509.Certificate{root}
-		}
-	}
+	roots := []*x509.Certificate{rootCert}
 	cfg := &net.NodeConfig{
 		Genesis:      gp,
 		NodeKey:      crypto.DeterministicKey(nodeSeed),
@@ -247,6 +247,11 @@ func startEnv(c *txFlags) (*txEnv, func(), error) {
 		ListenAddrs:  strings.Split(c.listen, ","),
 		ManualAddrs:  c.peers,
 		TrustedRoots: roots,
+		// Этап 14, A2: закрытая тестовая сеть регистрирует кошельки
+		// синтетическими цепочками (SandboxAttestationChain) при
+		// sandbox = false — тестовый обход запрета синтетических корней
+		// вне песочницы. Прод-путь (мост mobile) флаг не выставляет.
+		AllowSyntheticRoots: true,
 		// localhost: /24-классификатор (№35) схлопывает все узлы флота
 		// в одну группу связи — несвязанность = уникальные Peer ID (8.1)
 		LinkGroups: c.linkGroups,

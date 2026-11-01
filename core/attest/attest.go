@@ -223,6 +223,16 @@ func SyntheticRoot(seed string, key *ecdsa.PrivateKey) (*x509.Certificate, []byt
 // подписанный промежуточным (или корневым) ключом.
 func BuildLeaf(subjectKey *ecdsa.PublicKey, challenge []byte, ext Extension,
 	signer *ecdsa.PrivateKey, signerCert *x509.Certificate, serial int64) ([]byte, error) {
+	return BuildLeafValidity(subjectKey, challenge, ext, signer, signerCert, serial,
+		time.Unix(0, 0), time.Unix(4102444800, 0))
+}
+
+// BuildLeafValidity — как BuildLeaf, но с настраиваемым сроком действия
+// листа (этап 14: реальные листы KeyMint короткоживущие ~2 мес; тесты
+// срока цепочки по timestamp_claim). Только тесты/синтетика.
+func BuildLeafValidity(subjectKey *ecdsa.PublicKey, challenge []byte, ext Extension,
+	signer *ecdsa.PrivateKey, signerCert *x509.Certificate, serial int64,
+	notBefore, notAfter time.Time) ([]byte, error) {
 	extDER, err := ext.marshal()
 	if err != nil {
 		return nil, err
@@ -230,8 +240,8 @@ func BuildLeaf(subjectKey *ecdsa.PublicKey, challenge []byte, ext Extension,
 	tpl := &x509.Certificate{
 		SerialNumber: big.NewInt(serial),
 		Subject:      pkix.Name{CommonName: "TNP Synthetic Attestation"},
-		NotBefore:    time.Unix(0, 0),
-		NotAfter:     time.Unix(4102444800, 0),
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 		ExtraExtensions: []pkix.Extension{
 			{Id: oidAttestation, Value: extDER},
 			{Id: asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 1, 18}, Value: challenge},

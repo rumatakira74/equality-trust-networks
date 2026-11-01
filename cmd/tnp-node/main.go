@@ -78,8 +78,9 @@ func main() {
 	var rootsDER []byte
 	if *genesisFile != "" {
 		// закрытая тестовая сеть (этап 8): genesis-пакет из файла утилиты
-		// cmd/tnp-testnet; корни аттестации — та же синтетическая деривация
-		// от network_id, что у приложения (mobile.TrustedRootsDER)
+		// cmd/tnp-testnet. Корни аттестации: sandbox-генезис — та же
+		// синтетическая деривация от network_id, что у приложения
+		// (mobile.TrustedRootsDER); не-sandbox — корни Google (A2).
 		b, err := os.ReadFile(*genesisFile)
 		if err != nil {
 			fatal("genesis-файл: %v", err)
@@ -89,11 +90,13 @@ func main() {
 			fatal("genesis-файл: %v", err)
 		}
 		gp = decoded
-		mgen, err := tnp.LoadGenesis(b)
-		if err != nil {
-			fatal("genesis-файл: %v", err)
+		if decoded.Manifest.Profile.Sandbox {
+			mgen, err := tnp.LoadGenesis(b)
+			if err != nil {
+				fatal("genesis-файл: %v", err)
+			}
+			rootsDER = mgen.TrustedRootsDER()
 		}
-		rootsDER = mgen.TrustedRootsDER()
 		*networkID = string(gp.Genesis.NetworkID)
 	}
 	if *nodeKey == "" {
@@ -142,19 +145,26 @@ func main() {
 		cfg.WalletKey = key
 		cfg.WalletAddr = crypto.DeriveAddress(fp, []byte(*networkID))
 	}
-	// корни аттестации: синтетический корень (распространение реальных — этап 6);
-	// для genesis-файла — деривация приложения (mobile), общая с cmd/tnp-testnet
+	// корни аттестации (этап 14, A2): песочница — синтетический корень
+	// (демо-эмулятор; для genesis-файла — деривация приложения, общая с
+	// cmd/tnp-testnet); не-sandbox genesis — встроенные корни Google.
 	if rootsDER != nil {
 		if cert, err := x509.ParseCertificate(rootsDER); err == nil {
 			cfg.TrustedRoots = []*x509.Certificate{cert}
 		}
-	} else {
+	} else if gp.Manifest.Profile.Sandbox {
 		rootKey := crypto.DeterministicKey("tnp-node-root:" + *networkID)
 		cert, _, err := attest.SyntheticRoot("tnp-node", rootKey)
 		if err != nil {
 			fatal("synthetic root: %v", err)
 		}
 		cfg.TrustedRoots = []*x509.Certificate{cert}
+	} else {
+		roots, err := attest.GoogleRoots()
+		if err != nil {
+			fatal("корни Google: %v", err)
+		}
+		cfg.TrustedRoots = roots
 	}
 	cfg.Log = log
 
@@ -286,12 +296,16 @@ func (d *demoEnv) build(node *net.Node, id string, typ wire.TxType, payload wire
 }
 
 // testGenesis — детерминированный тестовый genesis (одинаков на всех машинах):
-// посевной круг V1..V3, genesis за 65 суток (текущий период 2).
+// посевной круг V1..V3, genesis за 65 суток (текущий период 2). Песочница
+// (этап 14, A2): демо-сеть эмулятора — sandbox, как у приложения
+// (mobile.SandboxGenesis); синтетические корни аттестации допустимы
+// только в песочнице.
 func testGenesis(networkID string) *wire.GenesisPackage {
 	gp := params.TestGenesis()
 	gp.Genesis.NetworkID = []byte(networkID)
 	gp.Manifest.NetworkID = []byte(networkID)
 	prof := gp.Manifest.Profile
+	prof.Sandbox = true
 	prof.Pow = &wire.PowParams{
 		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8,
 		Argon2Iterations: 1, Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
