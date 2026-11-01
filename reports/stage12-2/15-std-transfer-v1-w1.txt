@@ -1,0 +1,5 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: Qmf446D69YfPagYPb2Qfi27zJdfdBoTZCtsxdzU1n7FzcQ
+transfer: 300 → 15a561e1c870e731bd82ec6623958ba31986bca0e172269d9bd3eb5751c8797e, комиссия 0 (сжигается)
+tx 7a67e762ffbc533c: accept/OK seq=2
+узел: gossipLoop: выход: context canceled

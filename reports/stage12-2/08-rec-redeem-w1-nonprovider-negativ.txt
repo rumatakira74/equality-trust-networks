@@ -1,0 +1,6 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: QmbSXgyYraCBwPgXK9YG9yDxhntPZisCtekpVA2DSDuLqd
+redeem: 100 → 784e104f66aad552c0ce3aad10e69f0b2ba349ddb8a278996ff8337a1ce9ec66 (resource)
+tx 6af5aea043a8ae99: reject/E_REDEEM_PROVIDER seq=2
+узел: gossipLoop: выход: context canceled
+tnp-testnet: отклонён: E_REDEEM_PROVIDER

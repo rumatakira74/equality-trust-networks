@@ -1,0 +1,5 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: QmP6vFDbijzygKBZEjVvu2v3cUvB8TrFG5ALofjF6X2zd1
+redeem: 100 → 1ac2749ab9ddd86213a5098f826b81463c7a1c4af5791e90286196c853e8f7bd (resource)
+tx e6d2af0f49163a78: accept/OK seq=2
+узел: gossipLoop: выход: context canceled

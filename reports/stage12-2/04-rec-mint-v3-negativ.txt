@@ -1,0 +1,5 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: QmPiyHFL5QN35mTMd71jpLgariJCG96vh6itY5pLaH4wch
+tx b0eda65c86b7105b: reject/E_POW_HARD seq=1
+узел: gossipLoop: выход: context canceled
+tnp-testnet: отклонён: E_POW_HARD

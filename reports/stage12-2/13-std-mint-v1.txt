@@ -1,0 +1,4 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: QmeKFRz7ZxGnr1BQA19oeEYZ4MLspvqLvgizBGzAKXFARe
+tx 1bb0d79fe62133ef: accept/OK seq=1
+узел: gossipLoop: выход: context canceled
