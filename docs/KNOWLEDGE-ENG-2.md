@@ -73,7 +73,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 ### 6.2 `redeem` — redemption
 
 - A transfer of a unit to a provider wallet with a `resource_id` and an optional time slot. The provider publishes a signed `receipt`.
-- The provider is an ordinary wallet whose address is listed in the network parameters; it has no special governance rights. For physical access it must wait for network confirmation (Section 12.4).
+- The provider is an ordinary wallet defined in the network parameters by its public key (a fingerprint; v9.11): the address is derived from the final `network_id` (Section 7.2) and is not listed separately. It has no special governance rights; a provider need not be a seed-circle member. Ownership of a provider wallet is proven by a signature; membership in the provider list is by fingerprint. For physical access it must wait for network confirmation (Section 12.4).
 - A quota (`quota_reset`) does not accumulate and burns at the end of the period.
 - With `recurring = true`, every unit carries a period mark, and transferring a unit of period P is rejected after the boundary of period P+1; there is no balance reset — the history stays verifiable (decision of October 27, 2026).
 

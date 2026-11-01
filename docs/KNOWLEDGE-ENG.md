@@ -8,8 +8,8 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 > **Unofficial English translation.** In case of any discrepancy, the Russian
 > original (`KNOWLEDGE.md`) prevails.
 
-Document version: 9.10. Working title — Equality Project.  
-Document date: October 27, 2026.  
+Document version: 9.11. Working title — Equality Project.  
+Document date: November 1, 2026.  
 Author: Kirill Lapchinsky  
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Kirill Lapchinsky. Terms of use are defined by the license (Section 16).
@@ -29,6 +29,8 @@ Version 9.8 (owner's decisions, October 21, 2026): guardian re-election (Section
 Version 9.9 (the owner's decisions of October 22, 2026, following the block-3 simulation): the adaptive-fee target (10.2) is **15% per window** (was 6%); the mechanics are unchanged (K = 6, a 0.05 pp step, the bounds [0.5; 2]%, fee_min = 0.01, burn); the demurrage floor of profile template 5 is **30** (was 3000; 3 monthly issuances), profile 7 is unchanged (3000); the 14-day moratorium is confirmed unchanged.
 
 Version 9.10 (the owner's decisions of October 27, 2026): profile 8 "Subscription resource" — `recurring` units (Section 4: each unit carries a period mark `period`; transferring a unit of period P is rejected after the boundary of period P+1; not a balance reset — the history stays verifiable; default `recurring = off`); network identification: a self-certifying `network_id = H(manifest ‖ genesis)` plus a human-readable `slug` (a label, not identity); the reserved constant `network_id = "global"` for the global network (there is no empty identifier — cross-network replay protection works in the global network too); a new transfer mode `peer-redeem` (member → member and member → provider) for the flow of recurring quotas between members; genesis validation of combinations: `recurring = on` only with a non-global `network_id`, `unit = quota(resource_id)`, and `transfer_mode ∈ {restricted, peer-redeem}`; APK file names: `equality-{global|slug}-{std|rec}-v{version}.apk` (ergonomics and license transparency, not identity); `recurring = on` is the technical marker of commercial use (Section 16.2).
+
+Version 9.11 (the owner's decisions of November 1, 2026, mini-stages 12.2–12.3): the manifest consists of public keys — the seed circle (3.3) and providers (6.2) are defined in the manifest and genesis by fingerprints (public keys; fingerprint = SHA-256(attestedPublicKey ‖ protocolId), Section 7.2), not addresses; addresses are not stored in the manifest and are derived from the final network_id: `address = SHA-256(fingerprint ‖ network_id)` — a single derivation point (Section 7.2), so the self-certification `network_id = H(manifest ‖ genesis)` is not circular; wire-genesis: SeedMember has a single public_key field (the address field is removed; v9.10 genesis binaries are incompatible); a provider need not be a seed-circle member; at network assembly duplicate fingerprints and empty keys are rejected; the configurator: applicationId = `io.equality.<sanitized-slug>.x<hash8>`, the global network — `io.equality.global.x<hash8>` (hash8 is the first 8 hex of SHA-256(network_id), as in the `Eq-<hash8>` label; the `x` prefix is Android's requirement on the first character of a package segment; a configurator artifact, not a protocol one).
 
 ## Table of contents
 
