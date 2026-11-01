@@ -6,6 +6,7 @@ package ledger
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/x509"
 	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
@@ -302,15 +303,36 @@ func (l *Ledger) applyRegister(tx *wire.Transaction) Result {
 	if l.State.FingerprintBlacklist[string(fp)] {
 		return reject("E_FINGERPRINT")
 	}
-	// R2/R3: цепочка аттестации (7.2)
+	// R2/R3: цепочка аттестации (7.2). Срок действия сертификатов
+	// проверяется на момент tx.TimestampClaim (этап 14, A2-срок): листы
+	// короткоживущие (~2 мес), replay старых регистраций обязан давать
+	// тот же вердикт, что и live-apply, — поэтому не часы узла, а
+	// timestamp_claim (он же пинирует replay, C9). Более широкий
+	// txNow-рефакторинг — этап фикса времени (A7), не здесь.
 	chain, err := attest.Verify(p.AttestationChain, l.TrustedRoots,
 		l.State.Net.MinSecurityLevel, l.State.Net.MaxPatchAgeMonths,
-		time.Unix(int64(now), 0).UTC())
+		time.Unix(int64(tx.TimestampClaim), 0).UTC())
 	if err != nil {
 		if l.State.Net.Profile.DevicePolicy == wire.DevicePolicyStrict {
 			return reject("E_ATTEST")
 		}
 		return reject("E_ATTEST_POLICY")
+	}
+	// R4c (этап 14, A1 — привязка листа): SPKI сертификата-листа равен
+	// регистрируемому AttestedPublicKey (сравнение байтов SPKI).
+	// Без этого цепочка, полученная для одного ключа, регистрирует
+	// другой: фингерпринт и адрес считались бы от неподтверждённого
+	// ключа («один человек ≈ один кошелёк» не работает). Идентичность
+	// адресов не меняется: fingerprint остаётся от ключа, совпадающего
+	// с листом. Проверка у каждого узла, replay даёт тот же вердикт.
+	leafSPKI, err := x509.MarshalPKIXPublicKey(chain.Leaf.PublicKey)
+	regPub, perr := crypto.ParsePubKey(p.AttestedPublicKey)
+	if err != nil || perr != nil {
+		return reject("E_ATTEST_KEY_MISMATCH")
+	}
+	regSPKI, err := x509.MarshalPKIXPublicKey(regPub)
+	if err != nil || !bytes.Equal(leafSPKI, regSPKI) {
+		return reject("E_ATTEST_KEY_MISMATCH")
 	}
 	// R4: challenge по формуле (вопрос №23, параметризуемая)
 	want := attest.ChallengeFormula(p.AttestedPublicKey, crypto.ProtocolID, l.State.Net.NetworkID)
