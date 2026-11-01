@@ -1,0 +1,11 @@
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: отклонена 000000000000: E_DUP
+узел: QmfCbSg3GrCMSrpE1gCPiZinuG8gYytEiRSy1wqxkhb2tX
+transfer: 200 → 650fc9b6d7daaf3b8cf234ce15ad0271d1d94691ac468bf54feddb3c730d6ac8, комиссия 0 (сжигается)
+tx 1abac3b53583b8d2: accept/OK seq=5
+узел: gossipLoop: выход: context canceled

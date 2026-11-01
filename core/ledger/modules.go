@@ -12,6 +12,7 @@ package ledger
 import (
 	"bytes"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
@@ -160,9 +161,13 @@ func (l *Ledger) applyPoolCreate(tx *wire.Transaction) Result {
 	return accept(txid)
 }
 
+// inProviders — членство поставщика по fingerprint (v9.11): параметры
+// сети хранят fingerprint'ы, адрес выводится из финального network_id —
+// SHA-256(fingerprint ‖ network_id); кошелёк поставщика не обязан
+// существовать в момент проверки.
 func (l *Ledger) inProviders(addr []byte) bool {
-	for _, pr := range l.State.Net.Profile.Providers {
-		if bytes.Equal(pr, addr) {
+	for _, fp := range l.State.Net.Profile.Providers {
+		if bytes.Equal(crypto.DeriveAddress(fp, l.State.Net.NetworkID), addr) {
 			return true
 		}
 	}

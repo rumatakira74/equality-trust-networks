@@ -153,15 +153,18 @@ func (p *MutableBound) Encode() []byte {
 	return b
 }
 
-// SeedMember — участник посевного круга.
+// SeedMember — участник посевного круга: публичный ключ (fingerprint =
+// SHA-256(pub ‖ protocol_id), 7.2). Адрес НЕ хранится (v9.11,
+// fingerprint-манифест): выводится каждым устройством из финального
+// network_id — SHA-256(fingerprint ‖ network_id); цикл само-сертификации
+// (адреса не выводимы из network_id, зависящего от манифеста с адресами)
+// устранён — манифест адресов посевного круга не содержит.
 type SeedMember struct {
-	Address   []byte
 	PublicKey []byte
 }
 
 func (p *SeedMember) Encode() []byte {
 	var b []byte
-	b = appendBytesField(b, 1, p.Address)
 	b = appendBytesField(b, 2, p.PublicKey)
 	return b
 }
@@ -223,6 +226,8 @@ type ProfileParams struct {
 	ParamsMutable              bool
 	MutableBounds              []MutableBound
 	Modules                    []uint32
+	// Providers — поставщики: fingerprint'ы (SHA-256(pub ‖ protocol_id),
+	// v9.11); адреса не хранятся — выводятся из финального network_id
 	Providers                  [][]byte
 	TransferMoratoriumDays     uint64
 	TransferDelayHours         uint64

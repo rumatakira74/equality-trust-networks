@@ -1,0 +1,83 @@
+{
+  "epoch": 60,
+  "metrics": {
+    "common_fund": 0,
+    "gini_balance": 0.25,
+    "supply_burned": 0,
+    "supply_minted": 1000,
+    "supply_net": 1000,
+    "turnover": {
+      "redeem": 200,
+      "transfer": 500
+    },
+    "tx_count": {
+      "MINT": 1,
+      "REDEEM": 2,
+      "REGISTER": 1,
+      "TRANSFER": 2
+    },
+    "wallets_active": 3,
+    "wallets_synthetic": 0,
+    "wallets_total": 4
+  },
+  "period": 2,
+  "pools": [],
+  "wallets": [
+    {
+      "address": "1ac2749ab9ddd86213a5098f826b81463c7a1c4af5791e90286196c853e8f7bd",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 300,
+      "liquid": 0,
+      "cohorts": 300,
+      "registered_at": 1788326486,
+      "activated_at": 1788326486,
+      "last_claimed_period": 0,
+      "seq": 0
+    },
+    {
+      "address": "32264c01f2260dfa9bb7613611ade0874aff6b28cf67683070f1a3764f5a6680",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 0,
+      "liquid": 0,
+      "cohorts": 0,
+      "registered_at": 1788326486,
+      "activated_at": 1788326486,
+      "last_claimed_period": 0,
+      "seq": 0
+    },
+    {
+      "address": "784e104f66aad552c0ce3aad10e69f0b2ba349ddb8a278996ff8337a1ce9ec66",
+      "status": "ACTIVE",
+      "synthetic": false,
+      "seed": true,
+      "flagged": false,
+      "balance": 400,
+      "liquid": 0,
+      "cohorts": 400,
+      "registered_at": 1788326486,
+      "activated_at": 1788326486,
+      "last_claimed_period": 1,
+      "seq": 4
+    },
+    {
+      "address": "f6364ee765408d817919de798dc8226625fea324af1df3789b6abda339743e1a",
+      "status": "REGISTERED",
+      "synthetic": false,
+      "seed": false,
+      "flagged": false,
+      "balance": 300,
+      "liquid": 0,
+      "cohorts": 300,
+      "registered_at": 1793517247,
+      "activated_at": 0,
+      "last_claimed_period": 0,
+      "seq": 2
+    }
+  ]
+}

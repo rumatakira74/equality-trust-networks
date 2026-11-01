@@ -107,7 +107,9 @@ func DecodeMutableBound(b []byte) (*MutableBound, error) {
 	return p, nil
 }
 
-// DecodeSeedMember — участник посевного круга.
+// DecodeSeedMember — участник посевного круга: публичный ключ
+// (fingerprint-манифест v9.11; адреса в манифесте нет — поле 1
+// удалено, старые genesis-бинарники не декодируются, живых сетей нет).
 func DecodeSeedMember(b []byte) (*SeedMember, error) {
 	d := &decoder{b: b}
 	p := &SeedMember{}
@@ -117,10 +119,6 @@ func DecodeSeedMember(b []byte) (*SeedMember, error) {
 			return nil, err
 		}
 		switch {
-		case f == 1 && wt == 2:
-			if p.Address, err = d.bytes(); err != nil {
-				return nil, err
-			}
 		case f == 2 && wt == 2:
 			if p.PublicKey, err = d.bytes(); err != nil {
 				return nil, err

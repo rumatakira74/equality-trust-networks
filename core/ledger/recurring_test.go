@@ -51,10 +51,10 @@ func newRecurringEnv(t *testing.T) *e2eEnv {
 	p.FeeMode = wire.FeeModeNone
 	p.DemurrageRateMicros = 0
 	p.Modules = []uint32{wire.ModuleRedeem}
-	// поставщик — V1 (та же деривация, что в тестах модулей)
+	// поставщик — V1: fingerprint, адрес выводится из network_id
+	// (fingerprint-манифест v9.11)
 	v1pub := crypto.MarshalPubKey(&e.key("V1").PublicKey)
-	v1addr := crypto.DeriveAddress(crypto.Fingerprint(v1pub), e.ledger.State.Net.NetworkID)
-	p.Providers = [][]byte{v1addr}
+	p.Providers = [][]byte{crypto.Fingerprint(v1pub)}
 
 	e.clock.P = 11
 	for _, id := range []string{"V1", "ALICE", "BOB"} {

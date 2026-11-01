@@ -552,16 +552,10 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		}
 		// T2: restricted — только поставщику из списка (раздел 4);
 		// peer-redeem — участник → участнику (погашение поставщику —
-		// через redeem, 6.2; v9.10)
+		// через redeem, 6.2; v9.10); членство поставщика — по
+		// fingerprint (v9.11)
 		if prof.TransferMode == wire.TransferModeRestricted {
-			found := false
-			for _, pr := range prof.Providers {
-				if bytes.Equal(pr, tp.Send.Recipient) {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !l.inProviders(tp.Send.Recipient) {
 				return reject("E_TRANSFER_RECIPIENT")
 			}
 		}

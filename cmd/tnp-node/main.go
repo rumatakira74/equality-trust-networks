@@ -306,10 +306,8 @@ func testGenesis(networkID string) *wire.GenesisPackage {
 	var circle []wire.SeedMember
 	for _, id := range []string{"V1", "V2", "V3"} {
 		priv := crypto.DeterministicKey("tnp-node-seed:" + id)
-		pub := crypto.MarshalPubKey(&priv.PublicKey)
-		fp := crypto.Fingerprint(pub)
 		circle = append(circle, wire.SeedMember{
-			Address: crypto.DeriveAddress(fp, []byte(networkID)), PublicKey: pub,
+			PublicKey: crypto.MarshalPubKey(&priv.PublicKey),
 		})
 	}
 	gp.Manifest.SeedCircle = circle

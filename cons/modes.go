@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
@@ -55,13 +56,15 @@ func Participants(mode wire.CheckpointMode, l *ledger.Ledger, gp *wire.GenesisPa
 }
 
 // seedCircle — посевной круг из genesis: M = состав круга, N = max(2, 2/3 M).
+// Манифест хранит публичные ключи (fingerprint-манифест v9.11) — адреса
+// выводятся из финального network_id.
 func seedCircle(gp *wire.GenesisPackage) ([][]byte, uint64, error) {
 	if len(gp.Manifest.SeedCircle) == 0 {
 		return nil, 0, fmt.Errorf("cons: посевной круг пуст")
 	}
 	out := make([][]byte, 0, len(gp.Manifest.SeedCircle))
 	for _, m := range gp.Manifest.SeedCircle {
-		out = append(out, m.Address)
+		out = append(out, crypto.AddressOfKey(m.PublicKey, gp.Genesis.NetworkID))
 	}
 	n := twoThirds(len(out))
 	if n < 2 {

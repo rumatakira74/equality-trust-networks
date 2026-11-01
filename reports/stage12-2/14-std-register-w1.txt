@@ -1,0 +1,5 @@
+узел: bootstrap: нет источников пиров — ожидаю входящих
+узел: QmNRHTPFHv2EaAMHq1MJXBrs8i2KUX7VDg2m8LYYESVbAo
+register: кошелёк 15a561e1c870e731bd82ec6623958ba31986bca0e172269d9bd3eb5751c8797e
+tx 044d30aac2ccc079: accept/OK seq=1
+узел: gossipLoop: выход: context canceled

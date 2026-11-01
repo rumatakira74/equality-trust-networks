@@ -19,3 +19,13 @@ var DeriveAddress = func(fingerprint, networkID []byte) []byte {
 	h.Write(networkID)
 	return h.Sum(nil)
 }
+
+// AddressOfKey — адрес кошелька по публичному ключу и network_id:
+// fingerprint = SHA-256(pub ‖ protocol_id) (7.2), затем адрес =
+// SHA-256(fingerprint ‖ network_id). Единая точка деривации
+// fingerprint-манифеста (v9.11): манифест хранит публичные ключи,
+// адреса нигде не хранятся — каждое устройство выводит их из
+// финального network_id.
+func AddressOfKey(publicKey, networkID []byte) []byte {
+	return DeriveAddress(Fingerprint(publicKey), networkID)
+}

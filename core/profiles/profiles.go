@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
@@ -338,7 +339,10 @@ func Validate(p *wire.ProfileParams) []string {
 // (v9.10, раздел 4): network_id непуст; recurring = on — только при
 // не-глобальном network_id (в глобальной сети нет организатора,
 // определяющего период и ресурс — recurring запрещён, комбинации
-// global+rec не существует). Возвращает список нарушений.
+// global+rec не существует). Fingerprint-манифест (v9.11): дубликаты
+// fingerprint'ов посевного круга и поставщиков отвергаются, публичный
+// ключ посевного участника непуст (иначе кошелёк не проходит C8).
+// Возвращает список нарушений.
 func ValidateGenesis(gp *wire.GenesisPackage) []string {
 	var bad []string
 	if len(gp.Manifest.NetworkID) == 0 {
@@ -349,6 +353,29 @@ func ValidateGenesis(gp *wire.GenesisPackage) []string {
 	}
 	if gp.Manifest.Profile != nil && gp.Manifest.Profile.Recurring && wire.IsGlobalNetwork(gp.Manifest.NetworkID) {
 		bad = append(bad, "recurring в глобальной сети (4: нет организатора, определяющего период; комбинация global+rec не существует)")
+	}
+	// дубликаты fingerprint'ов посевного круга (v9.11)
+	seedSeen := make(map[string]bool)
+	for i, m := range gp.Manifest.SeedCircle {
+		if len(m.PublicKey) == 0 {
+			bad = append(bad, fmt.Sprintf("посевной круг %d: пустой публичный ключ", i))
+			continue
+		}
+		fp := crypto.Fingerprint(m.PublicKey)
+		if seedSeen[string(fp)] {
+			bad = append(bad, fmt.Sprintf("дубликат fingerprint'а посевного круга: %x", fp))
+		}
+		seedSeen[string(fp)] = true
+	}
+	// дубликаты fingerprint'ов поставщиков (v9.11)
+	if gp.Manifest.Profile != nil {
+		provSeen := make(map[string]bool)
+		for _, fp := range gp.Manifest.Profile.Providers {
+			if provSeen[string(fp)] {
+				bad = append(bad, fmt.Sprintf("дубликат fingerprint'а поставщика: %x", fp))
+			}
+			provSeen[string(fp)] = true
+		}
 	}
 	return bad
 }

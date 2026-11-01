@@ -39,7 +39,7 @@ func configureCmd(args []string) error {
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds (0 — из шаблона)")
 	migrateDelayDays := fs.Uint64("migrate-delay-days", 0, "migrate_delay_days — задержка исполнения миграции, genesis-поле 49 (0 — из шаблона, 14 сут)")
 	resourceID := fs.String("resource-id", "", "resource_id / program_id (для профилей 3, 4, 8)")
-	providers := fs.String("providers", "", "адреса поставщиков (hex, через запятую; 6.2 — для restricted/peer-redeem и redeem)")
+	providers := fs.String("providers", "", "fingerprint'ы поставщиков (hex 32 байта, через запятую; 6.2 — для restricted/peer-redeem и redeem; v9.11 — fingerprint, адрес выводится из network_id)")
 	providerSeed := fs.String("provider-seed", "", "поставщик — кошелёк посевного круга по метке (например V1; адрес из манифеста)")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -100,7 +100,8 @@ func configureCmd(args []string) error {
 	if *resourceID != "" {
 		prof.ResourceID = *resourceID
 	}
-	// поставщики (6.2): обычные кошельки, адреса — в параметрах сети;
+	// поставщики (6.2): обычные кошельки; в параметрах сети —
+	// fingerprint'ы (v9.11), адрес выводится из финального network_id;
 	// нужны для restricted/peer-redeem и погашения через redeem
 	if *providers != "" {
 		prof.Providers = nil
@@ -111,7 +112,7 @@ func configureCmd(args []string) error {
 			}
 			a, err := hex.DecodeString(h)
 			if err != nil || len(a) != 32 {
-				return fmt.Errorf("-providers: %q не 32-байтный hex-адрес", h)
+				return fmt.Errorf("-providers: %q не 32-байтный hex-fingerprint", h)
 			}
 			prof.Providers = append(prof.Providers, a)
 		}
@@ -153,12 +154,9 @@ func configureCmd(args []string) error {
 	gp.Genesis.GenesisTime = uint64(*genesisTime)
 
 	// посевной круг (детерминированные метки — тестовая сеть; живая сеть
-	// генерирует ключи на устройствах). Адреса зависят от network_id —
-	// поэтому network_id деривируется ДО посевного круга
-	networkID := wire.DeriveNetworkID(gp.Manifest, gp.Genesis)
-	if *global {
-		networkID = wire.GlobalNetworkID
-	}
+	// генерирует ключи на устройствах). Fingerprint-манифест (v9.11):
+	// манифест хранит публичные ключи, адреса не хранятся — выводятся
+	// из финального network_id, предварительная деривация не нужна
 	var circle []wire.SeedMember
 	seedLabels := strings.Split(*seeds, ",")
 	for _, label := range seedLabels {
@@ -168,13 +166,14 @@ func configureCmd(args []string) error {
 		}
 		key := seedKey(label)
 		circle = append(circle, wire.SeedMember{
-			Address:   addrOf(key, networkID),
 			PublicKey: crypto.MarshalPubKey(&key.PublicKey),
 		})
 	}
 	gp.Manifest.SeedCircle = circle
-	// поставщик — кошелёк посевного круга (адрес уже в манифесте,
-	// согласован с генезисом); добавляется до деривации network_id
+	// поставщик — fingerprint кошелька посевного круга (удобство: ключ
+	// уже в манифесте; поставщик не обязан быть посевным участником —
+	// цикла само-сертификации больше нет, v9.11); добавляется до
+	// деривации network_id
 	if *providerSeed != "" {
 		idx := -1
 		for i, lbl := range seedLabels {
@@ -186,7 +185,7 @@ func configureCmd(args []string) error {
 		if idx < 0 || idx >= len(circle) {
 			return fmt.Errorf("-provider-seed %q: нет такой метки в посевном круге", *providerSeed)
 		}
-		prof.Providers = [][]byte{append([]byte(nil), circle[idx].Address...)}
+		prof.Providers = [][]byte{crypto.Fingerprint(circle[idx].PublicKey)}
 		gp.Manifest.Profile = &prof
 	}
 	inviteKey := []byte(*inviteHex)
@@ -210,7 +209,7 @@ func configureCmd(args []string) error {
 		gp.Manifest.NetworkID = append([]byte(nil), wire.GlobalNetworkID...)
 		gp.Genesis.NetworkID = append([]byte(nil), wire.GlobalNetworkID...)
 	}
-	networkID = gp.Genesis.NetworkID
+	networkID := gp.Genesis.NetworkID
 	// genesis-валидация комбинаций (v9.10, раздел 4): ошибочные комбинации
 	// (recurring в глобальной сети, recurring + free, recurring + не-quota
 	// unit, recurring + посторонний transfer_mode) отвергаются при сборке
@@ -319,6 +318,24 @@ func configureCmd(args []string) error {
 	}
 	fmt.Printf(" модули: %v\n посевной круг: %d\n артефакты: %s\n",
 		moduleNames(prof.Modules), len(circle), outDir)
+	// выведенные адреса посевных и поставщика — контроль организатором:
+	// манифест хранит только публичные ключи (v9.11), адреса выводятся
+	// из финального network_id и нигде не хранятся
+	for i, m := range circle {
+		lbl := fmt.Sprintf("seed#%d", i)
+		if i < len(seedLabels) {
+			if l := strings.TrimSpace(seedLabels[i]); l != "" {
+				lbl = l
+			}
+		}
+		fmt.Printf(" посевной %s: адрес %s (выведен из network_id)\n",
+			lbl, hex.EncodeToString(crypto.AddressOfKey(m.PublicKey, networkID)))
+	}
+	for i, fp := range prof.Providers {
+		fmt.Printf(" поставщик %d: fingerprint %s → адрес %s (выведен из network_id)\n",
+			i, hex.EncodeToString(fp),
+			hex.EncodeToString(crypto.DeriveAddress(fp, networkID)))
+	}
 	fmt.Printf(" APK: %s\n applicationId: %s\n label: %s\n display_name: %q · %s\n",
 		apk, appID, label, dn, label)
 	return nil

@@ -1,0 +1,16 @@
+сеть rho по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: f03c6694adcc4582dfe96cad4bff6517adc9b62453026afa9bdf260a5949b1d8
+ manifest_hash: 0ab8a8b49ea6edca091fd1cb6aba78f469dbc180c1e6cd2cf706db93aca04434
+ genesis_time: 1788331814 (2026-09-02T06:50:14Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/stage122/net-std
+ посевной V1: адрес aca5536f5e62f3cc936da705110f8b1388646e18ecb74721f9db1035bf07d019 (выведен из network_id)
+ посевной V2: адрес 6d9a8fc0f98403331274ce63df809040e9875bf4c88794220dec89f101cb5447 (выведен из network_id)
+ посевной V3: адрес ba67703b30a119849d2c6eab9b2c2bed522a5d1f72805f7c9f337dc5e7f96d31 (выведен из network_id)
+ APK: equality-rho-std-v1.0.0.apk
+ applicationId: io.equality.rho.86949920
+ label: Eq-86949920
+ display_name: "rho" · Eq-86949920

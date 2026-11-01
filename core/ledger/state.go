@@ -211,12 +211,15 @@ func (s *State) WalletByKey(k string) *Wallet {
 }
 
 // SeedMembers инициализирует посевной круг (решение D8: active из genesis).
-// Публичные ключи и индекс фингерпринтов сохраняются из манифеста (долг
-// этапа 4: иначе первая транзакция посевного кошелька не проходит C8).
-func (s *State) SeedMembers(members []wire.SeedMember, epoch, netTime uint64) {
+// Манифест хранит публичные ключи (fingerprint-манифест v9.11) — адреса
+// выводятся из финального network_id: SHA-256(fingerprint ‖ network_id).
+// Публичные ключи и индекс фингерпринтов сохраняются (долг этапа 4: иначе
+// первая транзакция посевного кошелька не проходит C8).
+func (s *State) SeedMembers(members []wire.SeedMember, networkID []byte, epoch, netTime uint64) {
 	for _, m := range members {
+		addr := crypto.AddressOfKey(m.PublicKey, networkID)
 		w := &Wallet{
-			Address:          m.Address,
+			Address:          addr,
 			Status:           wire.StatusActive,
 			Seed:             true,
 			RegisteredAt:     netTime,
@@ -238,10 +241,10 @@ func (s *State) SeedMembers(members []wire.SeedMember, epoch, netTime uint64) {
 				w.PublicKey = pub
 				fp := crypto.Fingerprint(m.PublicKey)
 				w.Fingerprint = fp
-				s.FingerprintIndex[string(fp)] = m.Address
+				s.FingerprintIndex[string(fp)] = addr
 			}
 		}
-		s.Wallets[key(m.Address)] = w
+		s.Wallets[key(addr)] = w
 	}
 }
 

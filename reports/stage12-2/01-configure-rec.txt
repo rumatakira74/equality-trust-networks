@@ -1,0 +1,18 @@
+сеть cirrus по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 7aab00e60210a766f327d99fcd0a446844c686a2bf58dad7e607227597f533c9
+ manifest_hash: 90c99aba0b8c0ba9cfe6b6c7b27121d0848b99b51de867f3146aebc0463abd06
+ genesis_time: 1788326486 (2026-09-02T05:21:26Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/stage122/net-rec
+ посевной V1: адрес 784e104f66aad552c0ce3aad10e69f0b2ba349ddb8a278996ff8337a1ce9ec66 (выведен из network_id)
+ посевной V2: адрес 1ac2749ab9ddd86213a5098f826b81463c7a1c4af5791e90286196c853e8f7bd (выведен из network_id)
+ посевной V3: адрес 32264c01f2260dfa9bb7613611ade0874aff6b28cf67683070f1a3764f5a6680 (выведен из network_id)
+ поставщик 0: fingerprint d0af97f63879cef9d0a2f3aeac5e857f21788e1fe454de6cfabee63e2f0184ab → адрес 1ac2749ab9ddd86213a5098f826b81463c7a1c4af5791e90286196c853e8f7bd (выведен из network_id)
+ APK: equality-cirrus-rec-v1.0.0.apk
+ applicationId: io.equality.cirrus.e5796f9c
+ label: Eq-e5796f9c
+ display_name: "cirrus" · Eq-e5796f9c

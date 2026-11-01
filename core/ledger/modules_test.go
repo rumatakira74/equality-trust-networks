@@ -30,11 +30,11 @@ func newModuleEnv(t *testing.T) *moduleEnv {
 		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8, Argon2Iterations: 1,
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
-	// поставщик — V1; адрес детерминирован от ключа (та же деривация e2e)
+	// поставщик — V1; fingerprint детерминирован от ключа, адрес
+	// выводится из network_id (fingerprint-манифест v9.11)
 	v1 := crypto.DeterministicKey("e2e:V1")
 	v1pub := crypto.MarshalPubKey(&v1.PublicKey)
-	v1addr := crypto.DeriveAddress(crypto.Fingerprint(v1pub), gp.Genesis.NetworkID)
-	p.Providers = [][]byte{v1addr}
+	p.Providers = [][]byte{crypto.Fingerprint(v1pub)}
 
 	wire.SetManifestHash(gp)
 	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}

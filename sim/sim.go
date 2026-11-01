@@ -174,7 +174,7 @@ func New(seed int64, n int, opts ...Option) *Network {
 	for i := 0; i < circleSize; i++ {
 		id := fmt.Sprintf("node-%d", i)
 		gp.Manifest.SeedCircle = append(gp.Manifest.SeedCircle, wire.SeedMember{
-			Address: net.Addrs[id], PublicKey: crypto.MarshalPubKey(&net.Keys[id].PublicKey),
+			PublicKey: crypto.MarshalPubKey(&net.Keys[id].PublicKey),
 		})
 	}
 	gp.Manifest.SeedSunset = &wire.SeedSunset{

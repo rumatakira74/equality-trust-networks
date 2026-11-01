@@ -4,6 +4,7 @@ package profiles
 import (
 	"testing"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
@@ -224,5 +225,50 @@ func TestTemplate3FreshWindowZero(t *testing.T) {
 	}
 	if p := ByID(7).Profile; p.FreshTransferWindowPeriods != 3 {
 		t.Fatalf("окно свежести base (шаблон 7): %d (не менять)", p.FreshTransferWindowPeriods)
+	}
+}
+
+// TestValidateGenesisFingerprintDuplicates — fingerprint-манифест (v9.11,
+// мини-этап 12.2): дубликаты fingerprint'ов посевного круга и поставщиков
+// отвергаются при сборке; пустой публичный ключ посевного участника —
+// тоже (кошелёк не пройдёт C8).
+func TestValidateGenesisFingerprintDuplicates(t *testing.T) {
+	k1 := crypto.DeterministicKey("fp-dup-1")
+	k2 := crypto.DeterministicKey("fp-dup-2")
+	pub1 := crypto.MarshalPubKey(&k1.PublicKey)
+	pub2 := crypto.MarshalPubKey(&k2.PublicKey)
+	fp1 := crypto.Fingerprint(pub1)
+	mk := func(circle []wire.SeedMember, providers [][]byte) *wire.GenesisPackage {
+		tpl := ByID(7)
+		prof := tpl.Profile
+		prof.Providers = providers
+		return &wire.GenesisPackage{
+			Manifest: &wire.Manifest{
+				NetworkID:  []byte("fp-dup-net"),
+				Profile:    &prof,
+				SeedCircle: circle,
+			},
+			Genesis: &wire.GenesisRecord{NetworkID: []byte("fp-dup-net")},
+		}
+	}
+	// уникальные fingerprint'ы — собирается
+	gp := mk([]wire.SeedMember{{PublicKey: pub1}, {PublicKey: pub2}}, nil)
+	if bad := ValidateGenesis(gp); len(bad) != 0 {
+		t.Fatalf("уникальные fingerprint'ы отвергнуты: %v", bad)
+	}
+	// дубликат в посевном круге (тот же ключ дважды) — отвергается
+	gp = mk([]wire.SeedMember{{PublicKey: pub1}, {PublicKey: pub1}}, nil)
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("дубликат fingerprint'а посевного круга принят")
+	}
+	// пустой публичный ключ — отвергается
+	gp = mk([]wire.SeedMember{{PublicKey: pub1}, {}}, nil)
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("пустой публичный ключ посевного круга принят")
+	}
+	// дубликат поставщика — отвергается
+	gp = mk([]wire.SeedMember{{PublicKey: pub1}}, [][]byte{fp1, fp1})
+	if bad := ValidateGenesis(gp); len(bad) == 0 {
+		t.Fatalf("дубликат fingerprint'а поставщика принят")
 	}
 }

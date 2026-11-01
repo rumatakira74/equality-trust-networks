@@ -45,7 +45,7 @@ func newConsEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *consEnv {
 		priv := e.key(id)
 		pub := crypto.MarshalPubKey(&priv.PublicKey)
 		circle = append(circle, wire.SeedMember{
-			Address: e.addr(id), PublicKey: pub,
+			PublicKey: pub,
 		})
 	}
 	gp.Manifest.SeedCircle = circle
