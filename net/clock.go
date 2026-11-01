@@ -13,7 +13,8 @@ import (
 	"time"
 )
 
-// RealClock — реальное время узла (ledger.EpochSource).
+// RealClock — реальное время узла (допуск C9 и отображение; v9.13:
+// валидацию реестра не двигает — ядро применяет tx от txNow).
 type RealClock struct {
 	GenesisTime  uint64 // genesis_time из genesis-записи
 	EpochSeconds uint64 // epoch_seconds из профиля
