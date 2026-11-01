@@ -75,7 +75,8 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 - A transfer of a unit to a provider wallet with a `resource_id` and an optional time slot. The provider publishes a signed `receipt`.
 - The provider is an ordinary wallet defined in the network parameters by its public key (a fingerprint; v9.11): the address is derived from the final `network_id` (Section 7.2) and is not listed separately. It has no special governance rights; a provider need not be a seed-circle member. Ownership of a provider wallet is proven by a signature; membership in the provider list is by fingerprint. For physical access it must wait for network confirmation (Section 12.4).
 - A quota (`quota_reset`) does not accumulate and burns at the end of the period.
-- With `recurring = true`, every unit carries a period mark, and transferring a unit of period P is rejected after the boundary of period P+1; there is no balance reset — the history stays verifiable (decision of October 27, 2026).
+- **The std semantics of "touched" units (v9.13, a formalization of stage 12 divergence No. 6):** with `fresh_transfer_window = 0` the wallet's first spend moves all of its cohorts into Liquid (a zero transferability window means instant maturation); after that, reset burning (the period boundary, `quota_reset` without `recurring`) does not affect the touched units — only untouched cohorts burn. The history stays public and verifiable: burned cohorts are visible in the journal.
+- With `recurring = true`, every unit carries a period mark, and transferring a unit of period P is rejected after the boundary of period P+1 (the boundary is from txNow = claim, v9.13); there is no balance reset — the history stays verifiable (decision of October 27, 2026).
 
 ### 6.3 `pool` — the pool (collections, a program budget, a common fund)
 

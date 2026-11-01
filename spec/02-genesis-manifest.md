@@ -62,7 +62,31 @@ GenesisRecord {
   `entry_mode`, `registered_expiry_days`, `sandbox`, пороги гардианов
   (`guardian_*_threshold/count`, `guardian_min_age_days`,
   `guardian_max_wards`, `migrate_delay_days`), `timestamp_tolerance_seconds`,
-  `mint_challenge_window_hours`.
+  `mint_challenge_window_hours`, `period_seconds`.
+
+### 2.2.1. Время: поля 61 и 51 (v9.13, этап фикса времени)
+
+- **Поле 61 `period_seconds`** — длина периода выпуска в секундах;
+  `0` — конвенция 30 суток. Периоды считаются арифметически от
+  `genesis_time`: `period = (t − genesis_time) / period_seconds` (9.2).
+  Поле масштабирует одну и ту же длину периода везде: часы узла
+  (отображение), replay и слот челленджа выпуска (7.6:
+  `period_start + H(...) mod period_seconds`) — границы периода
+  детерминированы для всех узлов. Тестовые сети задают короткие периоды
+  (например, 120 с); на правила валидации длина не влияет — только на
+  календарь границ.
+- **Поле 51 `mint_challenge_window_hours`** — окно челленджа выпуска
+  (7.6): claim обязан лежать в пределах ±окна от слота заявляемого
+  периода (`0` — проверка окна выключена). При коротких `period_seconds`
+  слот заявляемого завершённого периода накрывается окном всегда;
+  достижимость первых заявляемых периодов посевного круга (квоты
+  с периода 1 у genesis, quota_reset) задаёт величину окна: шаблонное
+  ±48 ч их не накрывает при genesis в прошлом — тестовая сеть задаёт
+  большее окно (прогон 12-testnet: 2400 ч).
+- **`protocol_version` (поле 5 genesis-записи)** — `2` (v9.13): семантика
+  валидации/сеттлемента изменилась (txNow = `timestamp_claim`, C9 — слой
+  сети, сеттлемент от max(txNow)); миграции нет — живых сетей нет,
+  тестовые пересоздаются.
 - **[M] Изменяемые** при `params_mutable = true` — только в границах
   `mutable_bounds` (раздел 2.4): `accrual_window_periods`,
   `demurrage_rate_micros`, `demurrage_floor`, `transfer_moratorium_days`.
