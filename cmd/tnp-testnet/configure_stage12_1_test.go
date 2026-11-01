@@ -1,5 +1,6 @@
-// Тесты мини-этапа 12.1 (решения владельца 01.11.2026): applicationId
-// io.equality.<sanitized-slug>.<hash8>, палитра Material 16 тонов,
+// Тесты мини-этапа 12.1 (решения владельца 01.11.2026; applicationId
+// дополнен префиксом x в 12.3): io.equality.<sanitized-slug>.x<hash8>,
+// палитра Material 16 тонов,
 // окно свежести шаблона 3 = 0 (расхождение №5 отчёта этапа 12).
 package main
 
@@ -13,7 +14,7 @@ import (
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
-// TestApplicationIDSlugHash — applicationId = io.equality.<sanitized-slug>.
+// TestApplicationIDSlugHash — applicationId = io.equality.<sanitized-slug>.x
 // <hash8>: дефисы slug → «_» (Android запрещает их в пакете), <hash8> —
 // первые 8 hex SHA-256(network_id), тот же хеш, что в label Eq-<hash8>;
 // глобальная сеть — io.equality.global.<hash8>. Уникальность — на хеше:
@@ -22,16 +23,16 @@ func TestApplicationIDSlugHash(t *testing.T) {
 	nid := sha256.Sum256([]byte("manifest-genesis")) // детерминированный network_id
 	h := sha256.Sum256(nid[:])                        // hash8 = SHA-256(network_id)
 	hash8 := hex.EncodeToString(h[:4])
-	if got, want := ApplicationID(nid[:], "monte-cloud"), "io.equality.monte_cloud."+hash8; got != want {
+	if got, want := ApplicationID(nid[:], "monte-cloud"), "io.equality.monte_cloud.x"+hash8; got != want {
 		t.Fatalf("application_id: %q (want %q)", got, want)
 	}
-	if got, want := ApplicationID(nid[:], "abc"), "io.equality.abc."+hash8; got != want {
+	if got, want := ApplicationID(nid[:], "abc"), "io.equality.abc.x"+hash8; got != want {
 		t.Fatalf("application_id без дефисов: %q (want %q)", got, want)
 	}
 	// глобальная сеть: hash8 от константы network_id = "global"
 	gh := sha256.Sum256(wire.GlobalNetworkID)
 	if got, want := ApplicationID(wire.GlobalNetworkID, "global"),
-		"io.equality.global."+hex.EncodeToString(gh[:4]); got != want {
+		"io.equality.global.x"+hex.EncodeToString(gh[:4]); got != want {
 		t.Fatalf("application_id глобальной сети: %q (want %q)", got, want)
 	}
 }

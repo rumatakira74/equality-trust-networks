@@ -83,16 +83,19 @@ func APKName(slug string, recurring bool, version string) string {
 }
 
 // ApplicationID — applicationId на сеть (решение владельца 01.11.2026,
-// мини-этап 12.1): io.equality.<sanitized-slug>.<hash8>, глобальная —
-// io.equality.global.<hash8>. sanitized-slug — slug с дефисами,
+// мини-этапы 12.1/12.3): io.equality.<sanitized-slug>.x<hash8>, глобальная
+// — io.equality.global.x<hash8>. sanitized-slug — slug с дефисами,
 // заменёнными на «_» (дефисы в Android-пакете запрещены, расхождение №7
 // отчёта этапа 12); <hash8> — первые 8 hex SHA-256(network_id), тот же
-// хеш, что в label Eq-<hash8>. Уникальность — целиком на хеше:
-// network_id уникален по построению (v9.10), равные slug разных
-// организаторов больше не коллизируют (PENDING №2/№3 этапа 12 закрыты).
+// хеш, что в label Eq-<hash8>. Префикс «x» перед hash8 ставится всегда:
+// сегмент Android-пакета обязан начинаться с буквы, hash8 начинается с
+// hex-цифры в 10/16 случаев (находка прогона 12.2: AAPT отверг
+// io.equality.cirrus.783da646); префикс без маппинга — инъективно.
+// Уникальность — целиком на хеше: network_id уникален по построению
+// (v9.10), равные slug разных организаторов не коллизируют.
 func ApplicationID(networkID []byte, slug string) string {
 	h := sha256.Sum256(networkID)
-	hash8 := hex.EncodeToString(h[:4])
+	hash8 := "x" + hex.EncodeToString(h[:4])
 	if wire.IsGlobalNetwork(networkID) || slug == "global" {
 		return "io.equality.global." + hash8
 	}

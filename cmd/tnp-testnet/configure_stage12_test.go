@@ -69,7 +69,7 @@ func TestConfigureProfile8Rec(t *testing.T) {
 	// applicationId (решение владельца 01.11.2026): дефисы slug → «_»,
 	// суффикс <hash8> = первые 8 hex SHA-256(network_id) — тот же хеш,
 	// что в label Eq-<hash8>
-	wantAppID := "io.equality.monte_cloud." + strings.TrimPrefix(wantLabel, "Eq-")
+	wantAppID := "io.equality.monte_cloud.x" + strings.TrimPrefix(wantLabel, "Eq-")
 	if aj["application_id"] != wantAppID {
 		t.Fatalf("application_id: %v (want %s)", aj["application_id"], wantAppID)
 	}
@@ -142,7 +142,7 @@ func TestConfigureGlobalStd(t *testing.T) {
 	// applicationId глобальной сети: io.equality.global.<hash8>,
 	// <hash8> — от константы network_id = "global" (тот же хеш,
 	// что в label Eq-<hash8>)
-	wantAppID := "io.equality.global." + strings.TrimPrefix(wire.EqLabel(wire.GlobalNetworkID), "Eq-")
+	wantAppID := "io.equality.global.x" + strings.TrimPrefix(wire.EqLabel(wire.GlobalNetworkID), "Eq-")
 	if aj["application_id"] != wantAppID {
 		t.Fatalf("application_id: %v (want %s)", aj["application_id"], wantAppID)
 	}
