@@ -218,19 +218,32 @@ func TestLightNodeCheckpointProof(t *testing.T) {
 	if !waitPeers(t, l, 1, 15*time.Second) {
 		t.Fatal("лёгкий узел не подключился")
 	}
-	if err := l.LightSync(ctx); err != nil {
-		t.Fatalf("LightSync: %v", err)
+	// доказательство против корня ФИНАЛИЗИРОВАННОГО чекпоинта.
+	// Предложение эпохи строится один раз на эпоху (блокер 8.1) из
+	// состояния на момент тика cpLoop: под -race первый тик строителя
+	// (окно очереди) может опередить применение mint — чекпоинт №1
+	// финализируется с корнем ДО mint, а доказательство полного узла
+	// всегда от текущего состояния (с mint). Лёгкий узел в этом
+	// состоянии честно ждёт следующего чекпоинта (эпохи короткие,
+	// consEpoch=2): корень доказательства сверяется с корнем
+	// подписанного порогом заголовка, пока не сойдётся.
+	var header checkpointHeaderMsg
+	var proof *balanceProofMsg
+	deadline = time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		if err := l.LightSync(ctx); err != nil {
+			t.Fatalf("LightSync: %v", err)
+		}
+		if h, ok := l.LatestHeader(); ok {
+			p, err := l.GetBalanceProof(ctx, n1.Host.ID(), e.addr("V2"))
+			if err == nil && l.VerifyProofAgainstCheckpoint(e.addr("V2"), p, h) {
+				header, proof = h, p
+				break
+			}
+		}
+		time.Sleep(300 * time.Millisecond)
 	}
-	header, ok := l.LatestHeader()
-	if !ok {
-		t.Fatal("лёгкий узел не получил заголовок чекпоинта")
-	}
-	proof, err := l.GetBalanceProof(ctx, n1.Host.ID(), e.addr("V2"))
-	if err != nil {
-		t.Fatalf("proof: %v", err)
-	}
-	// доказательство против корня ФИНАЛИЗИРОВАННОГО чекпоинта
-	if !l.VerifyProofAgainstCheckpoint(e.addr("V2"), proof, header) {
+	if proof == nil {
 		t.Fatal("доказательство не сходится с корнем чекпоинта")
 	}
 	// доказательство против произвольного корня не проходит
