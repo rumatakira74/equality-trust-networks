@@ -42,9 +42,8 @@ func newEnv(t *testing.T) *env {
 		e.pubs[string(addr)] = pub
 	}
 	gp.Manifest.SeedCircle = members
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
-	e.manifestHash = mh[:]
+	wire.SetManifestHash(gp)
+	e.manifestHash = append([]byte(nil), gp.Genesis.ManifestHash...)
 	e.clock = &ledger.FixedClock{T: 1_700_000_000, E: 1, P: 1}
 	l, err := ledger.New(gp, e.clock, ledger.Options{})
 	if err != nil {

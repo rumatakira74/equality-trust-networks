@@ -13,8 +13,7 @@ import (
 func newFeeLedger(t *testing.T) *Ledger {
 	t.Helper()
 	gp := params.TestGenesis()
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
 	l, err := New(gp, clock, Options{})
 	if err != nil {
@@ -118,8 +117,7 @@ func TestAdaptiveFeeWarmupAndZero(t *testing.T) {
 func TestAdaptiveFeeDisabled(t *testing.T) {
 	gp := params.TestGenesis()
 	gp.Manifest.Profile.FeeAdjustEpochs = 0
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	l, err := New(gp, &FixedClock{T: 1_700_000_000, E: 1, P: 1}, Options{})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)

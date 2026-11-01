@@ -464,6 +464,16 @@ func FinalizeGenesis(gp *GenesisPackage) {
 	gp.Genesis.NetworkID = append([]byte(nil), nid...)
 }
 
+// SetManifestHash — manifest_hash по конвенции v9.10 (SHA-256 манифеста с
+// пустым network_id, см. DeriveNetworkID); для тестовых genesis с явным
+// network_id (песочница, векторы). Сборка реальных сетей — FinalizeGenesis.
+func SetManifestHash(gp *GenesisPackage) {
+	m0 := *gp.Manifest
+	m0.NetworkID = nil
+	mh := m0.ManifestHash()
+	gp.Genesis.ManifestHash = mh[:]
+}
+
 // VerifySelfCertified — проверка само-сертификации genesis-пакета:
 // network_id непуст и совпадает в манифесте и genesis-записи; для
 // не-глобальной сети network_id обязан равняться H(manifest ‖ genesis)

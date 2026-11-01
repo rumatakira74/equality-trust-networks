@@ -45,8 +45,12 @@ func New(gp *wire.GenesisPackage, clock EpochSource, opts Options) (*Ledger, err
 		return nil, errors.New("ledger: неполный genesis-пакет")
 	}
 	m := gp.Manifest
-	// 2.6 (1): manifest_hash
-	mh := m.ManifestHash()
+	// 2.6 (1): manifest_hash — SHA-256(manifest с пустым network_id):
+	// network_id = H(manifest ‖ genesis) включает genesis, genesis
+	// включает manifest_hash — иначе деривация круговая (v9.10, 2.1)
+	m0 := *m
+	m0.NetworkID = nil
+	mh := m0.ManifestHash()
 	if !bytes.Equal(mh[:], gp.Genesis.ManifestHash) {
 		return nil, errors.New("ledger: manifest_hash не сходится")
 	}

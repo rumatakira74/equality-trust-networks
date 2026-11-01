@@ -15,8 +15,7 @@ import (
 func newSettleLedger(t *testing.T) (*Ledger, *FixedClock) {
 	gp := params.TestGenesis()
 	// демередж 1%/мес, floor 3000 (значения 1.2)
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	clock := &FixedClock{T: 1_790_000_000, E: 100, P: 16}
 	l, err := New(gp, clock, Options{})
 	if err != nil {

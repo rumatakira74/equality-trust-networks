@@ -181,8 +181,7 @@ func New(seed int64, n int, opts ...Option) *Network {
 		UseActiveWallets: true, ActiveWallets: cfg.SeedSunsetActive, DeadlineEpoch: cfg.SeedSunsetEpochs,
 	}
 	gp.Genesis.GenesisTime = cfg.GenesisTime
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp) // v9.10: хеш манифеста с пустым network_id
 	net.GP = gp
 	net.Time = cfg.GenesisTime
 	for i := 0; i < n; i++ {

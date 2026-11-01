@@ -50,8 +50,7 @@ func newConsEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *consEnv {
 	}
 	gp.Manifest.SeedCircle = circle
 	gp.Genesis.GenesisTime = 1_700_000_000
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	clock := &ledger.FixedClock{T: 1_700_000_000, E: 1, P: 1}
 	l, err := ledger.New(gp, clock, ledger.Options{SkipMintChallengeWindow: true})
 	if err != nil {

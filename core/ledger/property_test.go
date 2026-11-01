@@ -35,8 +35,7 @@ func newPropEnv(t *testing.T, seedWallets int) *propEnv {
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
 	gp.Manifest.Profile.DemurrageRateMicros = 0 // демередж — отдельный тест сеттлемента
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	clock := &FixedClock{T: 1_790_000_000, E: 100, P: 16}
 	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
 	if err != nil {

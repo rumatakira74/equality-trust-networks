@@ -436,8 +436,9 @@ func generate(args []string) error {
 		inviteKey = b
 	}
 	gp.Genesis.InviteKey = inviteKey
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp) // v9.10: хеш манифеста с пустым network_id
+	mh := [32]byte{}
+	copy(mh[:], gp.Genesis.ManifestHash)
 
 	if err := os.MkdirAll(*out, 0o755); err != nil {
 		return err

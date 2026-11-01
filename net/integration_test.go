@@ -153,8 +153,7 @@ func TestNetworkIsolation(t *testing.T) {
 	e2.gp.Manifest.NetworkID = e2.gp.Genesis.NetworkID
 	// адреса пересчитываются от network_id
 	e2.addrs = make(map[string][]byte)
-	mh2 := e2.gp.Manifest.ManifestHash()
-	e2.gp.Genesis.ManifestHash = mh2[:]
+	wire.SetManifestHash(e2.gp)
 
 	b := e2.newNode(nodeOpts{level: LevelFull, manual: manualAddrs(t, a)})
 	e2.start(b)

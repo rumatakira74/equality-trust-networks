@@ -346,8 +346,7 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 	// реальное окно ±48 ч (7.6): SandboxGenesis в песочнице открывает
 	// весь период (учебный оверрайд) — здесь проверяем именно слот №39
 	gen.gp.Manifest.Profile.MintChallengeWindowHours = 48
-	mh := gen.gp.Manifest.ManifestHash()
-	gen.gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gen.gp)
 	// genesis 60 суток назад: текущий период 2, заявляемый 1
 	gen.gp.Genesis.GenesisTime = uint64(time.Now().Add(-60 * 24 * time.Hour).Unix())
 

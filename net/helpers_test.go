@@ -86,8 +86,7 @@ func newTestEnv(t *testing.T, opts ...func(*wire.ProfileParams)) *testEnv {
 	gp.Manifest.SeedCircle = circle
 	gp.Genesis.GenesisTime = genesisT
 	gp.Genesis.EpochZero = 0
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	// синтетический корень аттестации (проверка R2; реальные корни — Google)
 	env.rootKey = crypto.DeterministicKey("net-test-root")
 	cert, _, err := attest.SyntheticRoot("net-test", env.rootKey)

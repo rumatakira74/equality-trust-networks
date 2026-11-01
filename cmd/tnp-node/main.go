@@ -315,8 +315,7 @@ func testGenesis(networkID string) *wire.GenesisPackage {
 	gp.Manifest.SeedCircle = circle
 	gp.Genesis.GenesisTime = genesisT
 	gp.Genesis.EpochZero = 0
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp) // v9.10: хеш манифеста с пустым network_id
 	return gp
 }
 

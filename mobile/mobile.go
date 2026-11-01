@@ -299,8 +299,7 @@ func SandboxGenesis(networkID string, genesisTime, epochSeconds,
 		genesisTime = time.Now().Add(-65 * 24 * time.Hour).Unix()
 	}
 	gp.Genesis.GenesisTime = uint64(genesisTime)
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp) // v9.10: хеш манифеста с пустым network_id
 	return &Genesis{gp: gp}
 }
 

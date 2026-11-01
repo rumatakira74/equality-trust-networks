@@ -34,8 +34,7 @@ func newE2E(t *testing.T) *e2eEnv {
 		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8, Argon2Iterations: 1,
 		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
 	}
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	clock := &FixedClock{T: 1_700_000_000, E: 1, P: 1}
 	l, err := New(gp, clock, Options{SkipMintChallengeWindow: true})
 	if err != nil {
@@ -435,8 +434,7 @@ func TestReplayFromStore(t *testing.T) {
 	clock2 := &FixedClock{T: e.clock.NetTime(), E: e.clock.Epoch(), P: e.clock.Period()}
 	gp := params.TestGenesis()
 	gp.Manifest.Profile.Pow = e.ledger.State.Net.Profile.Pow
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	l2, err := New(gp, clock2, Options{SkipMintChallengeWindow: true})
 	if err != nil {
 		t.Fatalf("genesis2: %v", err)

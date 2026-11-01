@@ -193,14 +193,15 @@ func TestGenesis() *wire.GenesisPackage {
 		Profile:     &profile,
 		SeedSunset:  &wire.SeedSunset{UseActiveWallets: true, ActiveWallets: 100, DeadlineEpoch: 24}, // решение №15 (18.10.2026)
 	}
-	mh := manifest.ManifestHash()
 	genesis := &wire.GenesisRecord{
 		NetworkID:       networkID,
-		ManifestHash:    mh[:],
 		GenesisTime:     0,
 		EpochZero:       0,
 		ProtocolVersion: 1,
 		SeedSunset:      manifest.SeedSunset,
 	}
-	return &wire.GenesisPackage{Manifest: manifest, Genesis: genesis}
+	gp := &wire.GenesisPackage{Manifest: manifest, Genesis: genesis}
+	// manifest_hash — по манифесту с пустым network_id (v9.10, 2.1)
+	wire.SetManifestHash(gp)
+	return gp
 }

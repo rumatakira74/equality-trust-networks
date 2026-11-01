@@ -211,8 +211,7 @@ func (h *harness) buildGenesis() *wire.GenesisPackage {
 		TargetHard:        0x0010_0000_0000_0000,
 	}
 	// пересчитать manifest_hash после переопределений
-	mh := gp.Manifest.ManifestHash()
-	gp.Genesis.ManifestHash = mh[:]
+	wire.SetManifestHash(gp)
 	return gp
 }
 
