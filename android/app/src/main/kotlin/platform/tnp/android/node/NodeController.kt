@@ -57,14 +57,8 @@ object NodeController {
 
 
     /**
-     * Этап 7 (вопрос №38): true — узел без SQLite (в памяти).
-     * Причина: modernc/sqlite -> libc.Xlstat -> raw SYS_LSTAT — SIGSYS
-     * под app-seccopp (эмуляторы API 35/36 подтверждены); фикс —
-     * upstream (fstatat в modernc.org/libc) или замена драйвера.
+     * Условия полного узла (12.2): зарядка И Wi-Fi.
      */
-    @Volatile var inMemoryDb: Boolean = false
-
-    /** Условия полного узла (12.2): зарядка И Wi-Fi. */
     fun shouldBeFull(context: Context): Boolean {
         val bm = context.getSystemService(BatteryManager::class.java) ?: return false
         val charging = bm.isCharging ||
@@ -83,10 +77,16 @@ object NodeController {
             val gen = genesis ?: return
             val full = shouldBeFull(context)
             try {
+                // персистентность узла (этап 16, №38 решён): файл БД — в
+                // приватном каталоге приложения (databases/); рестарт —
+                // журнал из БД -> cons.Replay strict -> инкрементальная
+                // сверка (якорь №41). I/O — на executor (ANR 8.1).
+                val dbFile = context.getDatabasePath(DB_NAME)
+                dbFile.parentFile?.mkdirs()
                 val node = tnp.Tnp.startNode(
                     gen,
                     if (full) "full" else "light",
-                    if (inMemoryDb) "" else context.getDatabasePath(DB_NAME).absolutePath,
+                    dbFile.absolutePath,
                     ownWallet ?: ByteArray(0),
                     manualAddrs ?: "",
                     log,

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -211,6 +212,17 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		}
 	} else {
 		n.Light = &LightState{OwnWallet: append([]byte(nil), cfg.OwnWallet...)}
+		// персистентность лёгкого узла (этап 16, №38): своя цепочка —
+		// из локальной БД; после рестарта без пиров своя история
+		// доступна сразу, LightSync доносит только новое (12.5).
+		// Входящие НЕ сохраняются: неполный журнал сломал бы
+		// cons.Replay strict при смене уровня на full (12.2).
+		if n.Store != nil {
+			if err := n.restoreLight(); err != nil {
+				n.Close()
+				return nil, err
+			}
+		}
 	}
 	// оценка несвязанности eclipse-пиров по подсетям (№35, этап 6);
 	// классификатор связывается с реальным узлом (Host появится в Start)
@@ -739,6 +751,26 @@ func (n *Node) SubmitTx(ctx context.Context, tx *wire.Transaction) (ledger.Resul
 		return res, err
 	}
 	return res, nil
+}
+
+// restoreLight — своя цепочка лёгкого узла из БД (этап 16): lightStore
+// сохраняет только свои транзакции, здесь — восстановление после
+// рестарта. Порядок — по seq (цепочка), не по вставке.
+func (n *Node) restoreLight() error {
+	txs, err := n.Store.LoadTxs()
+	if err != nil {
+		return fmt.Errorf("net: light restore: %w", err)
+	}
+	own := string(n.Light.OwnWallet)
+	for _, tx := range txs {
+		if string(tx.Wallet) == own {
+			n.Light.OwnChain = append(n.Light.OwnChain, tx)
+		}
+	}
+	sort.Slice(n.Light.OwnChain, func(i, j int) bool {
+		return n.Light.OwnChain[i].Seq < n.Light.OwnChain[j].Seq
+	})
+	return nil
 }
 
 // lightStore — лёгкий узел: своя цепочка, свои входящие (12.5).
