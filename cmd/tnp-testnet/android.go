@@ -14,39 +14,57 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
-// equalityPalette — палитра Equality (~16 цветов; v9.10, решение 9):
-// background иконки — детерминированный цвет из SHA-256(network_id),
-// одна сеть — один цвет всегда. Состав палитры — черновой (точные тона
-// владельцем не заданы; помечено в отчёте этапа 12).
-var equalityPalette = [16]string{
-	"#E63946", "#F4A261", "#E9C46A", "#2A9D8F",
-	"#264653", "#457B9D", "#A8DADC", "#6D597A",
-	"#B5838D", "#8E9AAF", "#BC6C25", "#606C38",
-	"#283618", "#4A5759", "#7F5539", "#0B4F6C",
+// paletteTone — тон палитры Equality: имя (для сетки утверждения) и hex.
+type paletteTone struct {
+	Name string // имя Material-тона (для подписи на сетке)
+	Hex  string // "#RRGGBB"
 }
 
-// validateSlug — slug: строчные латинские буквы, цифры и дефисы
-// (человекочитаемая метка сети; входит в имя APK и applicationId).
+// equalityPalette — палитра Equality (v9.10, решение 9; решение владельца
+// 01.11.2026): 16 тонов Material уровня 500–600 без белого/чёрного/серых.
+// background иконки — детерминированный цвет из SHA-256(network_id),
+// одна сеть — один цвет всегда. Светлые тона (light blue, cyan,
+// light green, lime, yellow, amber, orange) взяты уровнем 600 —
+// контраст идентикона и подписей; остальные — 500. Сетка для утверждения
+// владельцем — reports/stage12-1/palette.png (генерация — тест
+// TestPaletteGrid, флаг EQ_PALETTE_GRID).
+var equalityPalette = [16]paletteTone{
+	{Name: "red", Hex: "#F44336"},         // Material red 500
+	{Name: "pink", Hex: "#E91E63"},        // Material pink 500
+	{Name: "purple", Hex: "#9C27B0"},     // Material purple 500
+	{Name: "deep purple", Hex: "#673AB7"}, // Material deep purple 500
+	{Name: "indigo", Hex: "#3F51B5"},      // Material indigo 500
+	{Name: "blue", Hex: "#2196F3"},        // Material blue 500
+	{Name: "light blue", Hex: "#039BE5"},  // Material light blue 600
+	{Name: "cyan", Hex: "#00ACC1"},        // Material cyan 600
+	{Name: "teal", Hex: "#009688"},        // Material teal 500
+	{Name: "green", Hex: "#4CAF50"},       // Material green 500
+	{Name: "light green", Hex: "#7CB342"}, // Material light green 600
+	{Name: "lime", Hex: "#AFB42B"},        // Material lime 600
+	{Name: "yellow", Hex: "#FBC02D"},     // Material yellow 600
+	{Name: "amber", Hex: "#FFB300"},       // Material amber 600
+	{Name: "orange", Hex: "#FB8C00"},     // Material orange 600
+	{Name: "brown", Hex: "#795548"},       // Material brown 500
+}
+
+// slugRe — slug сети (решение владельца 01.11.2026): строчная латиница,
+// цифры и дефисы, 3–24 символа, начинается со строчной буквы.
+var slugRe = regexp.MustCompile(`^[a-z][a-z0-9-]{2,23}$`)
+
+// validateSlug — slug: человекочитаемая метка сети; входит в имя APK
+// и applicationId (санитизацией дефисов), поэтому алфавит ограничен.
 func validateSlug(slug string) error {
 	if slug == "" {
 		return fmt.Errorf("slug пуст (для не-глобальной сети обязателен)")
 	}
-	if len(slug) > 32 {
-		return fmt.Errorf("slug длиннее 32 символов: %q", slug)
-	}
-	for _, r := range slug {
-		ok := (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-'
-		if !ok {
-			return fmt.Errorf("slug %q: допустимы строчные латинские буквы, цифры и дефисы", slug)
-		}
-	}
-	if strings.HasPrefix(slug, "-") || strings.HasSuffix(slug, "-") {
-		return fmt.Errorf("slug %q: не начинается и не заканчивается дефисом", slug)
+	if !slugRe.MatchString(slug) {
+		return fmt.Errorf("slug %q: допустимы строчная латиница, цифры и дефисы; 3–24 символа, первый — строчная буква (^[a-z][a-z0-9-]{2,23}$)", slug)
 	}
 	return nil
 }
@@ -64,15 +82,21 @@ func APKName(slug string, recurring bool, version string) string {
 	return fmt.Sprintf("equality-%s-%s-v%s.apk", kind, build, version)
 }
 
-// ApplicationID — applicationId на сеть (решение 6): io.equality.<slug>,
-// глобальная — io.equality.global. Одинаковый applicationId у двух сетей
-// недопустим (Android перезапишет чужое приложение вместе с данными
-// кошелька); коллизия при равных slug у разных организаторов — PENDING.
-func ApplicationID(slug string) string {
-	if wire.IsGlobalNetwork([]byte(slug)) || slug == "global" {
-		return "io.equality.global"
+// ApplicationID — applicationId на сеть (решение владельца 01.11.2026,
+// мини-этап 12.1): io.equality.<sanitized-slug>.<hash8>, глобальная —
+// io.equality.global.<hash8>. sanitized-slug — slug с дефисами,
+// заменёнными на «_» (дефисы в Android-пакете запрещены, расхождение №7
+// отчёта этапа 12); <hash8> — первые 8 hex SHA-256(network_id), тот же
+// хеш, что в label Eq-<hash8>. Уникальность — целиком на хеше:
+// network_id уникален по построению (v9.10), равные slug разных
+// организаторов больше не коллизируют (PENDING №2/№3 этапа 12 закрыты).
+func ApplicationID(networkID []byte, slug string) string {
+	h := sha256.Sum256(networkID)
+	hash8 := hex.EncodeToString(h[:4])
+	if wire.IsGlobalNetwork(networkID) || slug == "global" {
+		return "io.equality.global." + hash8
 	}
-	return "io.equality." + slug
+	return "io.equality." + strings.ReplaceAll(slug, "-", "_") + "." + hash8
 }
 
 // IconSpec — параметры adaptive-иконки (вариант 3 — гибрид):
@@ -95,7 +119,7 @@ func iconSpec(networkID []byte, logoGiven bool, recurring bool) IconSpec {
 		fg = "logo"
 	}
 	return IconSpec{
-		Background:   equalityPalette[idx],
+		Background:   equalityPalette[idx].Hex,
 		PaletteIndex: idx,
 		Foreground:   fg,
 		Badge:        recurring,

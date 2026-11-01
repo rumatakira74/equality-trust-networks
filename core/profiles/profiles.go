@@ -139,6 +139,11 @@ func All() []*Template {
 				p.ResourceID = "resource" // организатор задаёт свой resource_id
 				p.IssuanceMode = wire.IssuanceQuotaReset
 				p.AccrualWindowPeriods = 0
+				// окно свежести 0 (решение владельца 01.11.2026, мини-этап
+				// 12.1): унаследованное от base окно 3 длиннее жизни квоты
+				// при quota_reset — в std-режиме единица сгорала бы на
+				// границе периода, не созрев (расхождение №5 отчёта этапа 12)
+				p.FreshTransferWindowPeriods = 0
 				p.TransferMode = wire.TransferModeRestricted
 				p.EntryMode = wire.EntryInviteOnlyVouch
 				p.NetworkAccess = wire.NetworkAccessInviteOnly
@@ -198,7 +203,8 @@ func All() []*Template {
 				// квота переводима сразу: окно свежести 3 (унаследованное
 				// от base) дольше жизни квоты — в std-режиме единица
 				// сгорала бы на границе периода, не созрев (находка
-				// прогона этапа 12; то же верно для шаблона 3 — в отчёт)
+				// прогона этапа 12; то же верно для шаблона 3 —
+				// исправлено в мини-этапе 12.1)
 				p.FreshTransferWindowPeriods = 0
 				p.Recurring = true // периодная метка + сгорание (v9.10, раздел 4)
 				p.TransferMode = wire.TransferModePeerRedeem
