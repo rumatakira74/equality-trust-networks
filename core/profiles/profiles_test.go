@@ -208,3 +208,21 @@ func TestValidateGenesisGlobalRecurring(t *testing.T) {
 		t.Fatalf("расхождение network_id обязан отвергаться")
 	}
 }
+
+// TestTemplate3FreshWindowZero — окно свежести шаблона 3 (quota) = 0
+// (решение владельца 01.11.2026, мини-этап 12.1): унаследованное от base
+// окно 3 длиннее жизни квоты при quota_reset — в std-режиме единица
+// сгорала бы на границе периода, не созрев (расхождение №5 отчёта
+// этапа 12). Шаблон 8 — уже 0 (находка прогона этапа 12); base
+// (валютные шаблоны, например 7) — не тронут, окно 3.
+func TestTemplate3FreshWindowZero(t *testing.T) {
+	if p := ByID(3).Profile; p.FreshTransferWindowPeriods != 0 {
+		t.Fatalf("окно свежести шаблона 3: %d (нужно 0)", p.FreshTransferWindowPeriods)
+	}
+	if p := ByID(8).Profile; p.FreshTransferWindowPeriods != 0 {
+		t.Fatalf("окно свежести шаблона 8: %d (нужно 0)", p.FreshTransferWindowPeriods)
+	}
+	if p := ByID(7).Profile; p.FreshTransferWindowPeriods != 3 {
+		t.Fatalf("окно свежести base (шаблон 7): %d (не менять)", p.FreshTransferWindowPeriods)
+	}
+}

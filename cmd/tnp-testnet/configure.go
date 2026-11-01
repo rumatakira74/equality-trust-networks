@@ -277,7 +277,7 @@ func configureCmd(args []string) error {
 		slugComponent = "global"
 	}
 	apk := APKName(slugComponent, prof.Recurring, *appVersion)
-	appID := ApplicationID(slugComponent)
+	appID := ApplicationID(networkID, slugComponent)
 	label := wire.EqLabel(networkID)
 	spec := iconSpec(networkID, *logo != "", prof.Recurring)
 	if err := writeIconAssets(outDir+"/icon", networkID, spec, *logo); err != nil {

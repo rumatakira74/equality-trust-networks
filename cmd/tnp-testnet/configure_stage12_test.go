@@ -62,12 +62,16 @@ func TestConfigureProfile8Rec(t *testing.T) {
 	if aj["apk_name"] != "equality-monte-cloud-rec-v1.0.0.apk" {
 		t.Fatalf("apk_name: %v", aj["apk_name"])
 	}
-	if aj["application_id"] != "io.equality.monte-cloud" {
-		t.Fatalf("application_id: %v", aj["application_id"])
-	}
 	wantLabel := wire.EqLabel(gp.Genesis.NetworkID)
 	if aj["label"] != wantLabel || !strings.HasPrefix(wantLabel, "Eq-") || len(wantLabel) != 11 {
 		t.Fatalf("label: %v (want %s)", aj["label"], wantLabel)
+	}
+	// applicationId (решение владельца 01.11.2026): дефисы slug → «_»,
+	// суффикс <hash8> = первые 8 hex SHA-256(network_id) — тот же хеш,
+	// что в label Eq-<hash8>
+	wantAppID := "io.equality.monte_cloud." + strings.TrimPrefix(wantLabel, "Eq-")
+	if aj["application_id"] != wantAppID {
+		t.Fatalf("application_id: %v (want %s)", aj["application_id"], wantAppID)
 	}
 	icon := aj["icon"].(map[string]any)
 	if icon["badge"] != true || icon["foreground"] != "identicon" {
@@ -135,8 +139,12 @@ func TestConfigureGlobalStd(t *testing.T) {
 	if err := json.Unmarshal(ajb, &aj); err != nil {
 		t.Fatal(err)
 	}
-	if aj["application_id"] != "io.equality.global" {
-		t.Fatalf("application_id: %v", aj["application_id"])
+	// applicationId глобальной сети: io.equality.global.<hash8>,
+	// <hash8> — от константы network_id = "global" (тот же хеш,
+	// что в label Eq-<hash8>)
+	wantAppID := "io.equality.global." + strings.TrimPrefix(wire.EqLabel(wire.GlobalNetworkID), "Eq-")
+	if aj["application_id"] != wantAppID {
+		t.Fatalf("application_id: %v (want %s)", aj["application_id"], wantAppID)
 	}
 	if aj["apk_name"] != "equality-global-std-v1.0.0.apk" {
 		t.Fatalf("apk_name: %v", aj["apk_name"])
@@ -146,10 +154,21 @@ func TestConfigureGlobalStd(t *testing.T) {
 	}
 }
 
-// TestConfigureBadSlug — slug валидируется (метка входит в имя APK
-// и applicationId).
+// TestConfigureBadSlug — slug валидируется по решению владельца 01.11.2026:
+// ^[a-z][a-z0-9-]{2,23}$ — кириллица, верхний регистр, старт с цифры
+// и длина вне 3–24 невалидны; дефисы валидны (санитизируются в «_»
+// только для applicationId, имя APK сохраняет дефисы).
 func TestConfigureBadSlug(t *testing.T) {
-	for _, slug := range []string{"", "Monte", "mon te", "-monte", "monte-"} {
+	for _, slug := range []string{
+		"",                          // пустой — обязан быть -slug
+		"Monte",                     // верхний регистр
+		"mon te",                    // пробел
+		"1monte",                    // старт с цифры
+		"-monte",                    // старт с дефиса
+		"москва",                    // кириллица
+		"ab",                        // короче 3
+		"abcdefghijklmnopqrstuvwxy", // 25 символов — длиннее 24
+	} {
 		err := configureCmd([]string{"-template", "8", "-slug", slug,
 			"-out", filepath.Join(t.TempDir(), "net")})
 		if err == nil {
