@@ -257,9 +257,9 @@ func (n *Node) rebuildToFinality() {
 	n.mu.RUnlock()
 	n.applyMu.RUnlock()
 	view := n.finalityView()
-	// окно челленджа проверяется и при перестройке (этап 8): replay
-	// пинирует часы на timestamp_claim каждой транзакции
-	l, err := ledger.New(n.Cfg.Genesis, n.Clock, ledger.Options{})
+	// v9.13: replay применяет tx тем же механизмом, что live
+	// (ledger.Apply от txNow), окно челленджа сверяется с claim
+	l, err := ledger.New(n.Cfg.Genesis, ledger.Options{})
 	if err != nil {
 		n.logf("перестройка: genesis: %v", err)
 		return

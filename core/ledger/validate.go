@@ -121,12 +121,9 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 	if pub == nil || !crypto.VerifyDER(pub, sh[:], tx.Signature) {
 		return reject("E_SIG")
 	}
-	// C9: допуск timestamp ±30 мин (9.2)
-	now := l.Clock.NetTime()
-	tol := l.State.Net.Profile.TimestampToleranceSeconds
-	if tx.TimestampClaim+tol < now || now+tol < tx.TimestampClaim {
-		return reject("E_TIME")
-	}
+	// C9 (допуск timestamp ±30 мин, 9.2) — слой допуска сети (v9.13):
+	// проверяется в net при приёме/распространении; ядро и replay C9 не
+	// применяют — вердикт полностью детерминирован от txNow.
 	// C10/C11: PoW
 	pre := tx.SigningPreimage()
 	hard := tx.Type == wire.Register || tx.Type == wire.Mint
@@ -152,10 +149,12 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 		}
 		// M7: окно челленджа выпуска (7.6). Отклонение D-1 (см. отчёт):
 		// векторы этапа 0 не моделируют слот челленджа; проверка вынесена
-		// в CheckMintChallengeWindow и включается опцией.
+		// в CheckMintChallengeWindow и включается опцией. Окно сверяется
+		// с txNow (v9.13): слот period_start + H mod period_seconds
+		// (поле 61) обязан накрывать claim самой tx.
 		if tx.Type == wire.Mint && !l.Opts.SkipMintChallengeWindow {
 			mp := tx.Payload.(*wire.MintPayload)
-			if !l.CheckMintChallengeWindow(tx.Wallet, mp.Period, now) {
+			if !l.CheckMintChallengeWindow(tx.Wallet, mp.Period, l.tt.now) {
 				return reject("E_POW_HARD")
 			}
 		}
@@ -197,14 +196,46 @@ func mintChallengeSlot(genesisTime uint64, addr []byte, period, periodSecs uint6
 	return periodStart + h%periodSecs
 }
 
-// Apply применяет транзакцию: сеттлемент -> C1–C11 -> типовая таблица -> эффекты.
+// Apply применяет транзакцию: C1–C4 -> сеттлемент к txNow (подтверждается
+// только принятием) -> C5–C11 -> типовая таблица -> эффекты.
+//
+// txNow = tx.TimestampClaim (v9.13): единая точка времени live и replay.
+// Все часозависимые правила (M2/M4/M7, T3, V2, recurring-сгорание,
+// evidence/сроки, ActivatedPeriod, модули) валидируются от txNow;
+// periodAt/epochAt вычисляются от txNow арифметически от genesis.
+// Вердикт не зависит от часов узла: одинаковый журнал даёт одинаковый
+// state_root на любом узле и в replay. C9 (допуск ±30 мин) — слой
+// допуска сети (net), ядро и replay его не применяют.
 func (l *Ledger) Apply(tx *wire.Transaction) Result {
-	l.syncTime()
 	txid := tx.TxID()
 
-	if res := l.applyCommon(tx, txid); res.Code != "" && res.Outcome == Rejected {
+	if res := l.applyCommon(tx, txid); res.Outcome == Rejected {
 		return res
 	}
+	txNow := tx.TimestampClaim
+	l.tt = txTime{now: txNow, epoch: l.epochAt(txNow), period: l.periodAt(txNow)}
+	// Сеттлемент к txNow до валидации: правила проверяются против
+	// состояния, осевшего к моменту txNow (граница периода между
+	// NetTime и txNow успевает сгореть/демереджиться). Подтверждается
+	// только принятием: отклонённая tx не двигает сеттлемент — иначе
+	// узлы, видевшие отклонённую tx, расходились бы с узлами и replay,
+	// которые знают только журнал.
+	advancing := txNow > l.State.NetTime
+	var snap *State
+	if advancing {
+		snap = l.State.Clone()
+		l.settleTo(txNow)
+	}
+	res := l.applyChecked(tx, txid)
+	if res.Outcome == Rejected && advancing {
+		l.State = snap
+	}
+	return res
+}
+
+// applyChecked — применение после сеттлемента к txNow (вызывающий
+// держит l.tt; отклонение откатывает сеттлемент).
+func (l *Ledger) applyChecked(tx *wire.Transaction, txid [32]byte) Result {
 	if res := l.applyChainChecks(tx, txid); res.Outcome == Rejected {
 		return res
 	} else if res.Outcome == Conflict {
@@ -292,8 +323,8 @@ func (l *Ledger) recordConflict(tx *wire.Transaction, txid [32]byte) {
 
 func (l *Ledger) applyRegister(tx *wire.Transaction) Result {
 	p := tx.Payload.(*wire.RegisterPayload)
-	now := l.Clock.NetTime()
-	epoch := l.Clock.Epoch()
+	now := l.tt.now
+	epoch := l.tt.epoch
 
 	// R1: фингерпринт уникален и не в чёрном списке (7.2, 11)
 	fp := crypto.Fingerprint(p.AttestedPublicKey)
@@ -393,8 +424,8 @@ func (l *Ledger) applyRegister(tx *wire.Transaction) Result {
 
 func (l *Ledger) applyVouch(tx *wire.Transaction) Result {
 	vp := tx.Payload.(*wire.VouchPayload)
-	now := l.Clock.NetTime()
-	epoch := l.Clock.Epoch()
+	now := l.tt.now
+	epoch := l.tt.epoch
 	v := l.State.Wallet(tx.Wallet)
 	cand := l.State.Wallet(vp.Candidate)
 
@@ -457,7 +488,7 @@ func (l *Ledger) applyVouch(tx *wire.Transaction) Result {
 		cand.Status = wire.StatusActive
 		cand.ActivatedAt = now
 		cand.ActivatedEpoch = epoch
-		cand.ActivatedPeriod = l.Clock.Period()
+		cand.ActivatedPeriod = l.tt.period
 		for _, r := range cand.VouchesReceived {
 			cand.Activators = append(cand.Activators, r.Voucher)
 		}
@@ -482,7 +513,7 @@ func (l *Ledger) applyVouch(tx *wire.Transaction) Result {
 func (l *Ledger) applyMint(tx *wire.Transaction) Result {
 	mp := tx.Payload.(*wire.MintPayload)
 	w := l.State.Wallet(tx.Wallet)
-	period := l.Clock.Period()
+	period := l.tt.period
 	prof := l.State.Net.Profile
 
 	// M1: статус active (10.1)
@@ -551,7 +582,7 @@ func (l *Ledger) applyMint(tx *wire.Transaction) Result {
 		}
 	}
 	w.LastClaimedPeriod = mp.Period
-	w.LastTouchEpoch = l.Clock.Epoch()
+	w.LastTouchEpoch = l.tt.epoch
 	return accept(tx.TxID())
 }
 
@@ -562,8 +593,8 @@ func (l *Ledger) applyMint(tx *wire.Transaction) Result {
 func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 	tp := tx.Payload.(*wire.TransferPayload)
 	w := l.State.Wallet(tx.Wallet)
-	now := l.Clock.NetTime()
-	period := l.Clock.Period()
+	now := l.tt.now
+	period := l.tt.period
 	prof := l.State.Net.Profile
 
 	switch {
@@ -628,7 +659,7 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		} else if prof.FeeMode == wire.FeeModePool {
 			l.State.CommonFund += fee // общий фонд сети (раздел 4)
 		}
-		w.LastTouchEpoch = l.Clock.Epoch()
+		w.LastTouchEpoch = l.tt.epoch
 		return accept(tx.TxID())
 
 	case tp.Cancel != nil:
@@ -703,7 +734,7 @@ func (l *Ledger) recurringSend(tx *wire.Transaction, w, recipient *Wallet,
 			l.State.CommonFund += fee
 		}
 	}
-	w.LastTouchEpoch = l.Clock.Epoch()
+	w.LastTouchEpoch = l.tt.epoch
 	return accept(tx.TxID())
 }
 
@@ -713,8 +744,8 @@ func (l *Ledger) recurringSend(tx *wire.Transaction, w, recipient *Wallet,
 
 func (l *Ledger) applyMigrate(tx *wire.Transaction) Result {
 	mp := tx.Payload.(*wire.MigratePayload)
-	now := l.Clock.NetTime()
-	epoch := l.Clock.Epoch()
+	now := l.tt.now
+	epoch := l.tt.epoch
 	prof := l.State.Net.Profile
 
 	switch {
@@ -824,7 +855,7 @@ func (l *Ledger) applyMigrate(tx *wire.Transaction) Result {
 
 func (l *Ledger) applyEvidence(tx *wire.Transaction) Result {
 	ep := tx.Payload.(*wire.EvidencePayload)
-	period := l.Clock.Period()
+	period := l.tt.period
 	if ep.TxA == nil || ep.TxB == nil {
 		return reject("E_EVIDENCE_SIG")
 	}
@@ -873,7 +904,7 @@ func (l *Ledger) applyEvidence(tx *wire.Transaction) Result {
 	l.State.EvidenceFacts[factKey] = true
 	repeat := w.Flagged
 	w.Flagged = true
-	w.FlaggedEpoch = l.Clock.Epoch()
+	w.FlaggedEpoch = l.tt.epoch
 	if repeat {
 		// решение №12 (этап 5): повторное доказанное нарушение —
 		// приостановка выпуска навсегда
@@ -892,7 +923,7 @@ func (l *Ledger) applyEvidence(tx *wire.Transaction) Result {
 
 func (l *Ledger) applyGuardianOffer(tx *wire.Transaction) Result {
 	w := l.State.Wallet(tx.Wallet)
-	now := l.Clock.NetTime()
+	now := l.tt.now
 	// O1: active
 	if w.Status != wire.StatusActive {
 		return reject("E_GUARDIAN_STATUS")
@@ -911,7 +942,7 @@ func (l *Ledger) applyGuardianOffer(tx *wire.Transaction) Result {
 
 func (l *Ledger) applyUpdateGuardians(tx *wire.Transaction) Result {
 	up := tx.Payload.(*wire.UpdateGuardiansPayload)
-	now := l.Clock.NetTime()
+	now := l.tt.now
 
 	switch {
 	case up.Propose != nil:

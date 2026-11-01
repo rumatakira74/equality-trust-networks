@@ -377,7 +377,8 @@ func generate(args []string) error {
 	}
 	gp.Genesis.GenesisTime = uint64(*genesisTime)
 	gp.Genesis.EpochZero = 0
-	gp.Genesis.ProtocolVersion = 1
+	// v9.13: protocolVersion 2 (txNow-семантика валидации/сеттлемента)
+	gp.Genesis.ProtocolVersion = 2
 	// симуляция 8.1: эпоха короче суток (№16 — сетевые параметры теста);
 	// малые PoW-таргеты (прогон без десятков секунд на транзакцию)
 	if *epochSeconds > 0 {

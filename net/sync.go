@@ -355,9 +355,9 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 		return 0, after, anchor, errors.New("net: синхронизация журнала — только для полного узла")
 	}
 	applied := 0
-	// Replay (INV-3): часы пинируются на timestamp_claim каждой транзакции —
-	// C9 (±30 мин) проверяется на момент публикации, а не пересчёта.
-	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime, n.Cfg.Genesis.Manifest.Profile.EpochSeconds, n.Cfg.Genesis.Manifest.Profile.PeriodSeconds)
+	// Replay (INV-3, v9.13): применяем той же точкой времени, что live —
+	// txNow = timestamp_claim (ledger.Apply); C9 — слой допуска сети,
+	// при сверке не применяется.
 	for {
 		var e enc
 		e.u64(after)
@@ -385,8 +385,7 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 				// corroboration: журнал доставлен этим пиром (eclipse, 12.3)
 				id := tx.TxID()
 				n.Corroboration.Add(id[:], p)
-				rc.Pin(tx.TimestampClaim)
-				res := n.applyWithClock(tx, rc)
+				res := n.Ledger.Apply(tx)
 				n.postApply(tx, res)
 				touched = append(touched, tx.Wallet)
 				applied++

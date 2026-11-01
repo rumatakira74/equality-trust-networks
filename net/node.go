@@ -34,11 +34,6 @@ import (
 // maxPending — буфер внеочередных транзакций (спам: не переполнять очередь).
 const maxPending = 4096
 
-// settleInterval — период доведения сеттлемента до текущего времени
-// (PENDING №2 отчёта 11.2): зрелые отложенные операции применяются
-// без транзакции-триггера.
-const settleInterval = 30 * time.Second
-
 // Node — узел сети (полный или лёгкий, 12.2).
 type Node struct {
 	Cfg       *NodeConfig
@@ -205,6 +200,10 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		}
 		n.Store = st
 	}
+	// часы узла — для обоих уровней: допуск C9 (приём/распространение)
+	// и отображение; валидацию реестра они не двигают (v9.13 — txNow)
+	n.Clock = NewClock(cfg.Genesis.Genesis.GenesisTime,
+		cfg.Genesis.Manifest.Profile.EpochSeconds, cfg.Genesis.Manifest.Profile.PeriodSeconds)
 	if cfg.Level == LevelFull {
 		if err := n.initLedger(); err != nil {
 			n.Close()
@@ -224,21 +223,20 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 // initLedger — ядро из genesis + replay журнала из store (INV-3).
 func (n *Node) initLedger() error {
 	gp := n.Cfg.Genesis
-	clock := NewClock(gp.Genesis.GenesisTime, gp.Manifest.Profile.EpochSeconds, gp.Manifest.Profile.PeriodSeconds)
-	n.Clock = clock
 	// Окно челленджа выпуска (M7, 7.6) проверяется при apply: долг этапа 7
 	// закрыт (раньше SkipMintChallengeWindow=true — сетевой узёл не проверял
-	// окно). Replay пинирует часы на timestamp_claim (cons.Replay), поэтому
-	// пересчёт исторических выпусков проходит по моменту публикации.
-	l, err := ledger.New(gp, clock, ledger.Options{})
+	// окно). v9.13: ядро валидирует от txNow = timestamp_claim самой tx —
+	// live и replay применяют журнал одним механизмом, отдельного режима
+	// часов нет; окно челленджа сверяется с claim.
+	l, err := ledger.New(gp, ledger.Options{})
 	if err != nil {
 		return fmt.Errorf("net: genesis: %w", err)
 	}
 	l.TrustedRoots = n.Cfg.TrustedRoots
 	n.Ledger = l
-	// replay журнала (INV-3, cons.Replay): часы пинируются на
-	// timestamp_claim (C9 — на момент публикации); конфликтные ветки
-	// (обе в журнале хранения, INV-1c) воспроизводят выбор финализации
+	// replay журнала (INV-3, cons.Replay strict): конфликтные ветки
+	// (обе в журнале хранения, INV-1c) воспроизводят выбор финализации;
+	// сеттлемент оседает от max(txNow) по журналу — как у живых узлов
 	if n.Store != nil {
 		txs, err := n.Store.LoadTxs()
 		if err != nil {
@@ -353,31 +351,11 @@ func (n *Node) Start(ctx context.Context) error {
 	return nil
 }
 
-// settleNow — доведение сеттлемента реестра до текущего времени:
-// применение зрелых отложенных операций без транзакции-триггера.
-func (n *Node) settleNow() {
-	if n.Ledger == nil {
-		return
-	}
-	n.applyMu.Lock()
-	n.Ledger.SettleNow()
-	n.applyMu.Unlock()
-}
-
-// settleLoop — периодический flush отложенных операций (полный узел):
-// сверка со временем идёт и когда транзакций нет.
-func (n *Node) settleLoop() {
-	t := pollTicker(settleInterval)
-	defer t.Stop()
-	for {
-		select {
-		case <-n.ctx.Done():
-			return
-		case <-t.C:
-			n.settleNow()
-		}
-	}
-}
+// v9.13 (этап фикса времени): settleNow/settleLoop удалены. Сеттлемент —
+// только от max(txNow) по журналу (ledger.Apply принятых tx): доводить
+// его до часов узла значило бы расходить live-узлы с replay (PENDING №2
+// закрыт иначе — зрелые отложенные операции применяет ближайшая принятая
+// tx с достаточным claim, детерминированно на любом узле).
 
 // syncLoop — первичная синхронизация после bootstrap, затем периодическая
 // сверка (узел офлайн -> подключается и догоняет, 4.11).
@@ -416,16 +394,8 @@ func (n *Node) syncLoop() {
 	case <-time.After(500 * time.Millisecond):
 	}
 	n.SyncAllPeers()
-	// PENDING №2 (отчёт 11.2): первичная сверка завершена — узел
-	// синхронизирован, дальше часы живые. Replay/сверка пинируют часы
-	// на timestamp_claim, поэтому зрелые отложенные операции (переводы
-	// D, миграции, смены гардианов) без транзакций «зависали»; узел
-	// доводит сеттлемент до текущего времени сам — после сверки и далее
-	// периодически, без внешнего триггера. До завершения первичной
-	// сверки settle не запускается: пинированное применение истории
-	// должно оседать по историческим границам (демередж, №40).
-	n.settleNow()
-	go n.settleLoop()
+	// v9.13: сеттлемент — от max(txNow) по журналу (см. settleNow выше);
+	// доведения до часов узла нет: live и replay сходятся по построению.
 	t := pollTicker(30 * time.Second)
 	defer t.Stop()
 	for {
@@ -603,7 +573,9 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 		return
 	}
 	n.applyMu.Lock()
-	res := n.applyWithClock(tx, n.Clock)
+	// v9.13: Apply валидирует от txNow = timestamp_claim сам — подмена
+	// часов не нужна (live = replay по построению)
+	res := n.Ledger.Apply(tx)
 	// postApply читает реестр (Snowball.Observe, isFutureSeq) — под тем же
 	// локом, как в sync-цикле (data race — net/query.go, этап 7)
 	n.postApply(tx, res)
@@ -614,8 +586,8 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 }
 
 // ImportJournal — восстановление журнала из внешнего источника (БД):
-// применяет транзакции с пинированием часов на timestamp_claim каждой —
-// та же семантика, что сетевая сверка (SyncJournalFrom, net.ReplayClock).
+// применяет транзакции тем же механизмом, что live (ledger.Apply от
+// txNow = timestamp_claim, v9.13 — отдельного режима часов нет).
 // Введён как обход блокера 8.1-2 (авторизовано владельцем), когда replay
 // из БД падал на vouch-ах прошлых эпох; с закрытием №40 (этап 9,
 // пинирование Epoch/Period в cons.Replay) обычный рестарт из БД снова
@@ -623,13 +595,10 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 // импорт до старта сети, без гонки с gossip/сверками.
 // Возвращает число применённых (accepted) транзакций.
 func (n *Node) ImportJournal(txs []*wire.Transaction) int {
-	rc := NewReplayClock(n.Cfg.Genesis.Genesis.GenesisTime,
-		n.Cfg.Genesis.Manifest.Profile.EpochSeconds, n.Cfg.Genesis.Manifest.Profile.PeriodSeconds)
 	applied := 0
 	for _, tx := range txs {
 		n.applyMu.Lock()
-		rc.Pin(tx.TimestampClaim)
-		res := n.applyWithClock(tx, rc)
+		res := n.Ledger.Apply(tx)
 		n.postApply(tx, res)
 		n.applyMu.Unlock()
 		n.retryPending(tx.Wallet)
@@ -638,16 +607,6 @@ func (n *Node) ImportJournal(txs []*wire.Transaction) int {
 		}
 	}
 	return applied
-}
-
-// applyWithClock — Apply с подменой часов (вызывающий держит applyMu).
-// Используется при replay журнала: C9 проверяется на момент публикации.
-func (n *Node) applyWithClock(tx *wire.Transaction, clock ledger.EpochSource) ledger.Result {
-	old := n.Ledger.Clock
-	n.Ledger.Clock = clock
-	res := n.Ledger.Apply(tx)
-	n.Ledger.Clock = old
-	return res
 }
 
 // postApply — обработка результата применения.
@@ -750,6 +709,11 @@ func (n *Node) commitTx(tx *wire.Transaction) {
 // ветки публикуются (эквивокация доставляется, 4.3); отклонённые — нет.
 func (n *Node) SubmitTx(ctx context.Context, tx *wire.Transaction) (ledger.Result, error) {
 	res := ledger.Result{Outcome: ledger.Rejected, Code: "E_NO_LEDGER"}
+	// C9 — допуск сети (v9.13): локальная публикация claim вне допуска
+	// часов узла не принимается (сеть такую tx не ретранслирует)
+	if err := n.c9Admit(tx); err != nil {
+		return ledger.Result{Outcome: ledger.Rejected, Code: "E_TIME"}, err
+	}
 	if n.Cfg.Level == LevelFull && n.Ledger != nil {
 		n.applyMu.Lock()
 		res = n.Ledger.Apply(tx)

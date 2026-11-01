@@ -1,12 +1,16 @@
 // Сетевое время (9.2): источник правды — эпохи чекпоинтов; до этапа 5 —
 // системное время узла. Периоды выпуска — календарные месяцы; в headless-ядре
 // месяц = 30 суток (этап 3), здесь та же конвенция (уточнение по UTC — этап 5).
+//
+// v9.13 (этап фикса времени): часы узла больше не участвуют в валидации
+// реестра — ядро применяет каждую tx от txNow = timestamp_claim.
+// RealClock остаётся для отображения (mobile) и допуска C9 (приём/
+// распространение tx в net): claim вне ±timestamp_tolerance_seconds
+// часов узла не принимается и не распространяется; replay C9 не применяет.
 package net
 
 import (
 	"time"
-
-	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 )
 
 // RealClock — реальное время узла (ledger.EpochSource).
@@ -45,38 +49,3 @@ func (c *RealClock) Period() uint64 {
 	}
 	return (now - c.GenesisTime) / c.PeriodSecs
 }
-
-// ReplayClock — часы, пинируемые на время каждой транзакции при replay
-// журнала (INV-3): C9 (допуск timestamp ±30 мин) проверяется на момент
-// публикации, а не на момент пересчёта.
-type ReplayClock struct {
-	RealClock
-	pinned uint64
-}
-
-// NewReplayClock — часы для replay.
-func NewReplayClock(genesisTime, epochSeconds, periodSeconds uint64) *ReplayClock {
-	return &ReplayClock{RealClock: *NewClock(genesisTime, epochSeconds, periodSeconds)}
-}
-
-// Pin фиксирует время транзакции (ее timestamp_claim).
-func (c *ReplayClock) Pin(t uint64) { c.pinned = t }
-
-func (c *ReplayClock) NetTime() uint64 { return c.pinned }
-
-func (c *ReplayClock) Epoch() uint64 {
-	if c.pinned <= c.GenesisTime {
-		return 0
-	}
-	return (c.pinned - c.GenesisTime) / c.EpochSeconds
-}
-
-func (c *ReplayClock) Period() uint64 {
-	if c.pinned <= c.GenesisTime {
-		return 0
-	}
-	return (c.pinned - c.GenesisTime) / c.PeriodSecs
-}
-
-var _ ledger.EpochSource = (*RealClock)(nil)
-var _ ledger.EpochSource = (*ReplayClock)(nil)

@@ -14,6 +14,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pb "github.com/libp2p/go-libp2p-pubsub/pb"
@@ -256,8 +257,30 @@ func hex12(tx *wire.Transaction) string {
 	return hex.EncodeToString(id[:])[:12]
 }
 
+// c9Admit — допуск C9 (9.2, v9.13 — слой допуска сети): tx с claim вне
+// ±timestamp_tolerance_seconds часов узла не принимается и не
+// распространяется. Ядро и replay C9 не применяют — вердикт полностью
+// детерминирован от txNow = claim; допуск отсекает только приём/
+// ретрансляцию (понятная диагностика). Sandbox/тестовые сети — допуск
+// управляем: проверка не применяется (короткие period_seconds и
+// предсборка tx прогонов не ломаются).
+func (n *Node) c9Admit(tx *wire.Transaction) error {
+	prof := n.Cfg.Genesis.Manifest.Profile
+	if prof.Sandbox || n.Clock == nil {
+		return nil
+	}
+	tol := prof.TimestampToleranceSeconds
+	now := n.Clock.NetTime()
+	if tx.TimestampClaim+tol < now || now+tol < tx.TimestampClaim {
+		return fmt.Errorf("timestamp_claim %d вне допуска C9 (±%d с от часов узла %d)",
+			tx.TimestampClaim, tol, now)
+	}
+	return nil
+}
+
 // cheapCheck — дешёвая проверка до ретрансляции (4.3): подпись, лёгкий PoW,
-// размер (размер — в валидаторе), seq/prev в связке. Полный apply — в фоне.
+// размер (размер — в валидаторе), seq/prev в связке, допуск C9. Полный
+// apply — в фоне.
 func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	if len(tx.NetworkID) == 0 || string(tx.NetworkID) != string(n.networkID) {
 		return errors.New("чужая сеть")
@@ -267,6 +290,11 @@ func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	}
 	if tx.Pow == nil {
 		return errors.New("нет PoW")
+	}
+	// C9 — допуск сети (v9.13): claim вне допуска часов узла — не
+	// принимается и не ретранслируется
+	if err := n.c9Admit(tx); err != nil {
+		return err
 	}
 	// C10/C11 (дешёвый вариант): алгоритм соответствует типу.
 	hard := tx.Type == wire.Register || tx.Type == wire.Mint

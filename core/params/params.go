@@ -194,10 +194,13 @@ func TestGenesis() *wire.GenesisPackage {
 		SeedSunset:  &wire.SeedSunset{UseActiveWallets: true, ActiveWallets: 100, DeadlineEpoch: 24}, // решение №15 (18.10.2026)
 	}
 	genesis := &wire.GenesisRecord{
-		NetworkID:       networkID,
-		GenesisTime:     0,
-		EpochZero:       0,
-		ProtocolVersion: 1,
+		NetworkID:   networkID,
+		GenesisTime: 0,
+		EpochZero:   0,
+		// v9.13 (этап фикса времени): семантика валидации/сеттлемента
+		// изменилась (txNow = timestamp_claim, C9 — слой сети) — версия
+		// поднята; миграции нет (живых сетей нет, тестовые пересоздаются)
+		ProtocolVersion: 2,
 		SeedSunset:      manifest.SeedSunset,
 	}
 	gp := &wire.GenesisPackage{Manifest: manifest, Genesis: genesis}

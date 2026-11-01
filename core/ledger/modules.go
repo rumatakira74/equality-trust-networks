@@ -92,8 +92,8 @@ func (l *Ledger) moduleEnabled(id uint32) bool {
 // мораторий от register, переводимый остаток ≥ amount + fee, fee по
 // fee_mode (burn — сжигается, pool — общий фонд сети).
 func (l *Ledger) spendWithFee(w *Wallet, amount uint64) error {
-	now := l.Clock.NetTime()
-	period := l.Clock.Period()
+	now := l.tt.now
+	period := l.tt.period
 	prof := l.State.Net.Profile
 	if now-w.RegisteredAt < prof.TransferMoratoriumDays*86400 {
 		return errMoratorium
@@ -131,7 +131,7 @@ func (l *Ledger) applyPoolCreate(tx *wire.Transaction) Result {
 		return reject("E_MODULE")
 	}
 	p := tx.Payload.(*wire.PoolCreatePayload)
-	epoch := l.Clock.Epoch()
+	epoch := l.tt.epoch
 	if l.State.Wallet(p.Recipient) == nil || !l.inProviders(p.Recipient) {
 		return reject("E_POOL_PARAMS")
 	}
@@ -184,7 +184,7 @@ func (l *Ledger) applyPoolDonate(tx *wire.Transaction) Result {
 	if pool == nil || pool.Closed {
 		return reject("E_POOL_STATE")
 	}
-	if pool.ReleaseMode == wire.PoolReleaseOnDeadline && l.Clock.Epoch() > pool.DeadlineEpoch {
+	if pool.ReleaseMode == wire.PoolReleaseOnDeadline && l.tt.epoch > pool.DeadlineEpoch {
 		return reject("E_POOL_STATE") // дедлайн прошёл, выпуск закрыт
 	}
 	w := l.State.Wallet(tx.Wallet)
@@ -199,7 +199,7 @@ func (l *Ledger) applyPoolDonate(tx *wire.Transaction) Result {
 		pool.Released = true
 		pool.Share = pool.Balance / countActiveWallets(l)
 	}
-	w.LastTouchEpoch = l.Clock.Epoch()
+	w.LastTouchEpoch = l.tt.epoch
 	return accept(tx.TxID())
 }
 
@@ -284,7 +284,7 @@ func (l *Ledger) applyPoolClaim(tx *wire.Transaction) Result {
 	pool.Balance -= share
 	pool.Claimed[string(tx.Wallet)] = true
 	w.Liquid += share
-	w.LastTouchEpoch = l.Clock.Epoch()
+	w.LastTouchEpoch = l.tt.epoch
 	return accept(tx.TxID())
 }
 
@@ -323,7 +323,7 @@ func (l *Ledger) applyRedeem(tx *wire.Transaction) Result {
 		return reject("E_MODULE")
 	}
 	p := tx.Payload.(*wire.RedeemPayload)
-	now := l.Clock.NetTime()
+	now := l.tt.now
 	if !l.inProviders(p.Provider) {
 		return reject("E_REDEEM_PROVIDER")
 	}
@@ -340,7 +340,7 @@ func (l *Ledger) applyRedeem(tx *wire.Transaction) Result {
 	// поставщику доли приходят с метками периода участника
 	if l.State.Net.Profile.Recurring {
 		fee := l.State.Net.Fee(p.Amount, l.State.FeeRate)
-		if res := l.recurringSend(tx, w, provider, p.Amount, fee, l.Clock.Period()); res.Outcome != Accepted {
+		if res := l.recurringSend(tx, w, provider, p.Amount, fee, l.tt.period); res.Outcome != Accepted {
 			return res
 		}
 	} else {
@@ -358,7 +358,7 @@ func (l *Ledger) applyRedeem(tx *wire.Transaction) Result {
 		ResourceID: p.ResourceID,
 		Slot:       p.Slot,
 	}
-	w.LastTouchEpoch = l.Clock.Epoch()
+	w.LastTouchEpoch = l.tt.epoch
 	return accept(txid)
 }
 
@@ -405,7 +405,7 @@ func (l *Ledger) applyContributionClaim(tx *wire.Transaction) Result {
 	}
 	p := tx.Payload.(*wire.ContributionClaimPayload)
 	w := l.State.Wallet(tx.Wallet)
-	period := l.Clock.Period()
+	period := l.tt.period
 	if w.Status != wire.StatusActive {
 		return reject("E_STATUS")
 	}
