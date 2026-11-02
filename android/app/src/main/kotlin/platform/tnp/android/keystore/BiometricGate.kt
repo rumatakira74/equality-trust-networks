@@ -70,6 +70,10 @@ object BiometricGate {
      * CryptoObject — ключ с setUserAuthenticationRequired(true) без
      * биометрии не подписывает.
      *
+     * Окно 0 (A5, тема UI-защиты владельца): временного окна нет —
+     * каждая операция подписи требует живую биометрию; авторизация
+     * криптографически связана с операцией через CryptoObject.
+     *
      * В режиме-приманке (тревожный вход) не вызывается никогда: ключ
      * подписи не используется (8.2).
      */
@@ -91,10 +95,18 @@ object BiometricGate {
             ContextCompat.getMainExecutor(activity),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val sig = result.cryptoObject?.signature
-                        // plain-режим (API 35+): initSign повторно — уже
-                        // внутри 30-секундного окна авторизации
-                        ?: wallet.newSignature()
+                    var sig = result.cryptoObject?.signature
+                    if (sig == null) {
+                        // plain-фолбэк: повторный initSign после биометрии.
+                        // Окно 0 окна не открывает: если ключ снова не
+                        // авторизован — подписи нет (отказ, не ослабление)
+                        val s = wallet.newSignature()
+                        if (wallet.sigInitialized) sig = s
+                    }
+                    if (sig == null) {
+                        onResult(null)
+                        return
+                    }
                     onResult(wallet.sign(sig, hash))
                 }
 
@@ -106,8 +118,8 @@ object BiometricGate {
 
         val signature = wallet.newSignature()
         if (wallet.sigInitialized) {
-            // initSign прошёл (окно авторизации открыто) — CryptoObject
-            // валиден: биометрия криптографически связана с операцией
+            // initSign начал операцию — CryptoObject связывает биометрию
+            // с этой подписью (окно 0: на каждую операцию)
             try {
                 android.util.Log.d("TnpBridge", "prompt.authenticate с CryptoObject")
                 newPrompt().authenticate(info, BiometricPrompt.CryptoObject(signature))
@@ -117,13 +129,11 @@ object BiometricGate {
                 newPrompt().authenticate(info)
             }
         } else {
-            // API 35+: initSign на auth-bound ключе кидает
-            // UserNotAuthenticatedException ДО старта операции —
-            // CryptoObject невалиден ("Crypto primitive not
-            // initialized"). Plain-биометрия: успешная аутентификация
-            // открывает 30-с окно ключа (setUserAuthenticationParameters,
-            // этап 6), подпись — в onAuthenticationSucceeded
-            // (правка этапа 7).
+            // initSign на auth-bound ключе кинул UserNotAuthenticatedException
+            // ДО старта операции (API 35, этап 7) — CryptoObject невалиден
+            // ("Crypto primitive not initialized"). Plain-биометрия; окно 0
+            // окна не открывает, поэтому подпись — только если повторный
+            // initSign в onAuthenticationSucceeded пройдёт
             android.util.Log.d("TnpBridge", "prompt.authenticate plain (UNA)")
             newPrompt().authenticate(info)
         }
