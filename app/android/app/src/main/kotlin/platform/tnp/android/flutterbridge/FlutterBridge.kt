@@ -132,8 +132,11 @@ object FlutterBridge {
             NodeController.genesis = gen
             NodeController.ownWallet = address()
             val peersFile = java.io.File(netDir, "peers.txt")
+            // явный UTF-8 при декодировании байтов (п.7 кодировок):
+            // файл писался утилитой в UTF-8, без BOM
             NodeController.manualAddrs = if (peersFile.isFile) {
-                peersFile.readLines().filter { it.isNotBlank() }.joinToString(",")
+                peersFile.readLines(Charsets.UTF_8)
+                    .filter { it.isNotBlank() }.joinToString(",")
             } else {
                 null
             }
