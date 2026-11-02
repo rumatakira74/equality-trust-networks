@@ -44,6 +44,12 @@ class FakePlatformService implements PlatformService {
   bool registered = false;
   bool duress = false;
   String pinResult = 'normal'; // normal | none
+  // легенда приманки (как DuressState/tnp_duress): остаток, история и
+  // подменной адрес генерируются при создании легенды (setupPin) и
+  // стабильны для экземпляра (F5)
+  int decoyBalance = 0;
+  List<String> decoyHistory = [];
+  String? decoyAddr;
   // хранимые PIN (как PinManager: обычный обязателен, тревожный опционален;
   // по файлу нельзя узнать, задан ли тревожный — тут хранится для проверок)
   String? _normalPin;
@@ -133,10 +139,24 @@ class FakePlatformService implements PlatformService {
       List<String> decoyHistory) async {
     calls.add('setupPin');
     setupDuressPin = duress;
+    // легенда приманки создана (как setLegend): остаток, история и
+    // подменной адрес генерируются один раз и живут с легендой (F5)
+    this.decoyBalance = decoyBalance;
+    this.decoyHistory = List.of(decoyHistory);
+    decoyAddr = _genDecoyAddr();
     // модель PinManager: оба хеша одним записывающим вызовом; проверка
     // одного и того же кода для обоих PIN (неразличимость)
     _normalPin = normal;
     _duressPin = (duress == null || duress.isEmpty) ? null : duress;
+  }
+
+  /// Подменной адрес: валидный hex (64 символа), не равен реальному,
+  /// стабилен для экземпляра (генерируется при создании легенды).
+  String _genDecoyAddr() {
+    for (final c in ['9f' * 32, '9e' * 32, '9d' * 32]) {
+      if (c != wallet.address) return c;
+    }
+    return '9c' * 32;
   }
 
   @override
@@ -196,7 +216,11 @@ class FakePlatformService implements PlatformService {
   }
 
   @override
-  Future<String> walletAddress() async => wallet.address;
+  Future<String> walletAddress() async {
+    // F5: в режиме-приманки все точки выдачи адреса возвращают подменной
+    if (duress) return decoyAddr ??= _genDecoyAddr();
+    return wallet.address;
+  }
 
   @override
   Future<bool> walletRegistered() async => registered;
@@ -382,7 +406,44 @@ class FakePlatformService implements PlatformService {
   Future<int> balanceWithProof() async => wallet.balance;
 
   @override
-  Future<WalletInfo> walletInfo({String? addrHex}) async => wallet;
+  Future<WalletInfo> walletInfo({String? addrHex}) async {
+    // F5: в режиме-приманки мост отдаёт decoy-кошелёк (адрес подменной,
+    // остаток легенды, гардианов нет) — как decoyWalletJson в мосту
+    if (duress && addrHex == null) {
+      return WalletInfo.fromJson({
+        'exists': true,
+        'address': decoyAddr ??= _genDecoyAddr(),
+        'status': 'ACTIVE',
+        'flagged': false,
+        'decoy': true,
+        'balance': decoyBalance,
+        'liquid': decoyBalance,
+        'locked': 0,
+        'age_days': 400,
+        'vouch_depth': 1,
+        'vouches_received': 3,
+        'personal_guardians': [],
+        'activators': [],
+        'threshold_p': 3000,
+        'pending_threshold': 0,
+        'pending_threshold_not_before': 0,
+        'last_period': 2,
+        'completed_mint_periods': 2,
+        'public_guardian': false,
+        'wards': 0,
+        'mint_suspended_until_period': 0,
+        'seq': 4,
+        'tip': '',
+        'registered_at': 0,
+        'activated_at': 0,
+        'epoch': 0,
+        'synthetic': false,
+        'seed': false,
+        'terminal': false,
+      });
+    }
+    return wallet;
+  }
 
   @override
   Future<Map<String, int>> vouchProgress({String? addrHex}) async =>

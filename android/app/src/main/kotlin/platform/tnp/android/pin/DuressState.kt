@@ -3,6 +3,7 @@ package platform.tnp.android.pin
 import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
+import tnp.Tnp
 
 /**
  * Режим-приманка (8.2): вход по тревожному PIN. Правдоподобный остаток
@@ -34,6 +35,31 @@ class DuressState(context: Context) {
         return out
     }
 
+    /**
+     * Подменной адрес легенды (8.2, F5): генерируется ОДИН раз (при
+     * создании легенды) и хранится в tnp_duress — стабилен между сессиями
+     * и рестартами, пока жива легенда. Адрес деривируется обычным путём от
+     * случайного ключа (mobile.GenerateDecoyAddress) — валидного формата,
+     * не деривируется от реального ключа/фингерпринта, ≠ реальному.
+     * real — адрес настоящего кошелька (для проверки неравенства; может
+     * быть null до создания кошелька).
+     */
+    fun ensureDecoyAddress(networkID: ByteArray, real: ByteArray?): ByteArray {
+        prefs.getString(KEY_DECOY_ADDRESS, null)?.let { h ->
+            unhexOrNull(h)?.let { b ->
+                if (b.size == 32) return b
+            }
+        }
+        val addr = Tnp.generateDecoyAddress(networkID, real ?: ByteArray(0))
+            ?: throw IllegalStateException("подменной адрес не сгенерирован")
+        prefs.edit().putString(KEY_DECOY_ADDRESS, hex(addr)).apply()
+        return addr
+    }
+
+    /** Подменной адрес легенды (генерируется при отсутствии). */
+    fun decoyAddress(networkID: ByteArray, real: ByteArray? = null): ByteArray =
+        ensureDecoyAddress(networkID, real)
+
     /** Настройка легенды (при настройке тревожного PIN). */
     fun setLegend(balance: Long, history: List<String>) {
         prefs.edit()
@@ -59,5 +85,18 @@ class DuressState(context: Context) {
         const val PREFS = "tnp_duress"
         const val KEY_BALANCE = "decoy_balance"
         const val KEY_HISTORY = "decoy_history"
+        const val KEY_DECOY_ADDRESS = "decoy_address"
+
+        private fun hex(b: ByteArray): String =
+            b.joinToString("") { "%02x".format(it) }
+
+        private fun unhexOrNull(s: String): ByteArray? = try {
+            ByteArray(s.length / 2) { i ->
+                ((Character.digit(s[i * 2], 16) shl 4) +
+                    Character.digit(s[i * 2 + 1], 16)).toByte()
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 }
