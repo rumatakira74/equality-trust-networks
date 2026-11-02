@@ -115,11 +115,9 @@ object FlutterBridge {
         NodeController.log = tnp.Logger { line ->
             android.util.Log.d("TnpNode", line)
         }
-        // SQLite узла на Android отключён (в памяти): modernc/sqlite
-        // вызывает raw SYS_LSTAT (libc.Xlstat), app-seccomp эмуляторов
-        // API 35/36 даёт SIGSYS (вопрос №38, отчёт этапа 7); проверка
-        // на живом телефоне — чек-лист
-        NodeController.inMemoryDb = true
+        // персистентность узла (этап 16, №38): файл БД в приватном
+        // каталоге приложения; SIGSYS-диагноз этапа 7 закрыт сменой
+        // драйвера — см. reports/REPORT-STAGE-16-NODE-PERSISTENCE.md
         // внутренний каталог (adb: run-as <pkg> — debug-сборка) или внешний
         // (<external files>, adb push до первого запуска)
         var netDir: java.io.File? = java.io.File(java.io.File(appContext.filesDir, "networks"), "")

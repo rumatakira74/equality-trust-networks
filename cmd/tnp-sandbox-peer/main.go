@@ -194,10 +194,13 @@ func mintFor(node *tnp.Node, gen *tnp.Genesis, id string, addr []byte, period ui
 	if err != nil {
 		return err
 	}
+	// amount = issuance × diff (M6): у посевного круга
+	// activated_period = 1 (этап 12: период 0 не заявляем — сентинел
+	// last_claimed_period), diff для периода 1 = 1 − (1−1) = 1, для
+	// периода 2 = 2 − 1 = 1 — везде 1000. До этапа 12
+	// activated_period был 0 и период 1 требовал 2000 (diff = 2) —
+	// с тех пор сумма устарела, выпуски падали E_MINT_AMOUNT.
 	amount := uint64(1000)
-	if seq == 0 && period == 1 {
-		amount = 2000 // diff = period − (activated_period − 1) = 2
-	}
 	tx := tnp.NewMint(gen.NetworkID(), addr, int64(seq+1), prev,
 		int64(period), int64(amount), gen.ProtocolVersion(), time.Now().Unix())
 	tx.SolveHard(gen.PowTargetHard(), gen.Argon2MemKiB(), gen.Argon2Iterations(), gen.Argon2Par())

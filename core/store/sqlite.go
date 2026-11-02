@@ -1,6 +1,16 @@
 // SQLite-хранилище (раздел 12.5): цепочки транзакций, индекс
 // «фингерпринт -> адрес», чёрный список фингерпринтов, заголовки чекпоинтов,
-// снимок состояния. Драйвер pure-Go modernc.org/sqlite (без CGo).
+// снимок состояния. Драйвер ncruces/go-sqlite3 (этап 16, №38): SQLite
+// скомпилирован в WASM и исполняется через wazero (pure-Go, без CGo и без
+// libc) — файловый I/O идёт через пакет os Go (openat/fstatat), raw
+// legacy-сисколлы (lstat/stat/access) не излучаются ни на одной
+// архитектуре — seccomp-политика приложения Android (API 35/36)
+// не даёт SIGSYS. Предыдущий драйвер modernc.org/sqlite на linux/amd64
+// (x86_64-эмуляторы) излучал raw SYS_LSTAT из musl-пути fstatat
+// (libc._fstatat_kstat, быстрый путь AT_FDCWD+AT_SYMLINK_NOFOLLOW) —
+// SIGSYS подтверждён tombstone на API 36; на arm64 modernc безопасен
+// (ядро не реализует legacy-сисколлы), но эмуляторная разработка/CI
+// идут на x86_64. Выбор драйвера — reports/REPORT-STAGE-16-NODE-PERSISTENCE.md.
 package store
 
 import (
@@ -8,8 +18,8 @@ import (
 	"errors"
 	"fmt"
 
+	_ "github.com/ncruces/go-sqlite3/driver"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
-	_ "modernc.org/sqlite"
 )
 
 // Store — SQLite-хранилище ядра.
@@ -19,7 +29,7 @@ type Store struct {
 
 // Open открывает (и создаёт) базу.
 func Open(path string) (*Store, error) {
-	db, err := sql.Open("sqlite", path)
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}

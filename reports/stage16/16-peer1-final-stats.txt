@@ -1,0 +1,1 @@
+sandbox-peer: статус: {"level":"full","peer_id":"QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP","peers":2,"journal_len":10,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":9,"state_root":"256dca9432ef81a8f27221e5de986c69a10d26f3d071daa0fffb6e855250127a"}
