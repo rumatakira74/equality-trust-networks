@@ -67,6 +67,11 @@ class PinManager(context: Context) {
      * тревожный — неотличимо) сбрасывает.
      */
     fun verify(pin: String): PinCheck {
+        // пустой PIN — отказ без PBKDF2: Android (BouncyCastle) отвергает
+        // пустой пароль в SecretKeyFactory (InvalidKeySpecException
+        // «password empty»), а исключение в verify брикуло бы экран
+        // (настройка требует 4-16 символов — пустой PIN никогда не верен)
+        if (pin.isEmpty()) return PinCheck.NONE
         val rec = read() ?: return PinCheck.NONE
         if (attempts.lockedRemaining() > 0) return PinCheck.NONE
         val h = hash(pin, rec.salt)

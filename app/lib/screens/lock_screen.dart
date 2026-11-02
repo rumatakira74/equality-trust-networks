@@ -45,8 +45,14 @@ class _LockScreenState extends State<LockScreen> {
       _error = null;
     });
     final platform = context.read<PlatformService>();
-    // одинаковая задержка для любого исхода (неразличимость, 8.2)
-    final res = await platform.verifyPin(_controller.text);
+    // одинаковая задержка для любого исхода (неразличимость, 8.2);
+    // платформенная ошибка не брикует экран (сброс _busy)
+    String res;
+    try {
+      res = await platform.verifyPin(_controller.text);
+    } catch (_) {
+      res = 'none';
+    }
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     if (res == 'normal') {

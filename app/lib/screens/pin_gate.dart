@@ -56,8 +56,14 @@ class _PinDialogState extends State<_PinDialog> {
       _error = null;
     });
     final platform = context.read<PlatformService>();
-    // один и тот же вызов и ритм для любого PIN (неразличимость)
-    final res = await platform.verifyPin(_controller.text);
+    // один и тот же вызов и ритм для любого PIN (неразличимость);
+    // платформенная ошибка не брикует диалог (сброс _busy)
+    String res;
+    try {
+      res = await platform.verifyPin(_controller.text);
+    } catch (_) {
+      res = 'none';
+    }
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     if (res == 'normal') {
