@@ -32,6 +32,7 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/csv"
 	"encoding/hex"
@@ -46,9 +47,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/libp2p/go-libp2p"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
@@ -66,9 +64,9 @@ func eclipseCmd(args []string) error {
 	trackFile := fs.String("track-file", "", "файл с txid (hex по строке) для мониторинга (victim)")
 	listen := fs.String("listen", "/ip4/127.0.0.1/udp/0/quic-v1", "адрес прослушивания (victim/relay)")
 	linkGroups := fs.Bool("link-groups", true, "несвязанность eclipse-пиров по подсетям (№35)")
-	peerMA := fs.String("peer", "", "multiaddr пира для подключения (relay)")
+	peerMA := fs.String("peer", "", "multiaddr жертвы для подключения после submit (relay)")
+	syncPeer := fs.String("sync-peer", "", "multiaddr честного узла для первичной сверки (relay)")
 	txFile := fs.String("tx", "", "файл с wire.Transaction (relay)")
-	everyMs := fs.Int("every-ms", 200, "период публикации tx, мс (relay)")
 	attackDur := fs.Int("duration", 20, "длительность публикации tx, сек (relay)")
 	out := fs.String("out", "", "каталог артефактов (driver)")
 	victimBin := fs.String("victim-bin", "", "бинарь жертвы (по умолчанию — этот же бинарь; «до фикса» — из main+tooling)")
@@ -77,9 +75,9 @@ func eclipseCmd(args []string) error {
 	seedPeriod := fs.Uint64("seed-period", 2, "период выпуска посевных кошельков (driver)")
 	attackAddrs := fs.String("attack-addrs", "127.0.0.1,127.0.1.1,127.0.2.1", "IP атакующих-реле (через запятую; один IP — негативный контроль одной подсети)")
 	attackPort := fs.Int("attack-port", 4901, "базовый UDP-порт реле (driver)")
-	phase1 := fs.Int("phase1", 60, "сек фазы честной латентности (driver)")
-	phase2 := fs.Int("phase2", 20, "сек фазы атаки (driver)")
-	phase3 := fs.Int("phase3", 80, "сек ожидания финализации конфликта (driver)")
+	phase1 := fs.Int("phase1", 55, "сек фазы честной латентности (driver)")
+	phase2 := fs.Int("phase2", 55, "сек фазы атаки (driver)")
+	phase3 := fs.Int("phase3", 70, "сек ожидания финализации конфликта (driver)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -96,7 +94,7 @@ func eclipseCmd(args []string) error {
 		if *peerMA == "" || *txFile == "" {
 			return fmt.Errorf("relay: нужны -peer и -tx")
 		}
-		return eclipseRelay(*genesis, *listen, *peerMA, *txFile, *everyMs, *attackDur)
+		return eclipseRelay(*genesis, *listen, *peerMA, *syncPeer, *txFile, *attackDur)
 	case "driver":
 		if *out == "" {
 			return fmt.Errorf("driver: нужен -out")
@@ -123,6 +121,7 @@ type eclipseTracked struct {
 type eclipseVictimStatus struct {
 	net.Stats
 	Addrs       []string                  `json:"addrs"`
+	Conns       []string                  `json:"conns"` // peer -> remote addr
 	StateRoot   string                    `json:"state_root"`
 	Checkpoints int                       `json:"checkpoints"`
 	Tracked     map[string]eclipseTracked `json:"tracked"`
@@ -176,6 +175,9 @@ func writeEclipseStatus(path, trackPath string, node *net.Node) {
 	for _, a := range node.Host.Addrs() {
 		st.Addrs = append(st.Addrs, a.String())
 	}
+	for _, c := range node.Host.Network().Conns() {
+		st.Conns = append(st.Conns, fmt.Sprintf("%s -> %s", c.RemotePeer().ShortString(), c.RemoteMultiaddr().String()))
+	}
 	if r, err := node.StateRoot(); err == nil {
 		st.StateRoot = hex.EncodeToString(r)
 	}
@@ -222,10 +224,14 @@ func readEclipseStatus(path string) *eclipseVictimStatus {
 }
 
 // -----------------------------------------------------------------------
-// relay — атакующий: raw gossipsub, публикует один tx-файл пирам
+// relay — атакующий: полный узел, кладёт tx-файл в свой журнал и держит
+// соединение с жертвой; жертва сверяется с ним (SyncJournalFrom →
+// Corroboration.Add от каждого реле). Source-адрес реле — его listen IP,
+// поэтому группы связи у жертвы — по /24 (требуется unshare -Urn с
+// /32-адресами на lo, см. driver.txt).
 // -----------------------------------------------------------------------
 
-func eclipseRelay(genesisPath, listen, peerMA, txFile string, everyMs, duration int) error {
+func eclipseRelay(genesisPath, listen, peerMA, syncPeer, txFile string, duration int) error {
 	gp, err := loadGenesis(genesisPath)
 	if err != nil {
 		return err
@@ -234,50 +240,77 @@ func eclipseRelay(genesisPath, listen, peerMA, txFile string, everyMs, duration 
 	if err != nil {
 		return err
 	}
+	tx, err := wire.DecodeTransaction(txBytes)
+	if err != nil {
+		return fmt.Errorf("tx-файл: %w", err)
+	}
+	rootKey := crypto.DeterministicKey("tnp-android-root:" + string(gp.Genesis.NetworkID))
+	rootCert, _, err := attest.SyntheticRoot("android", rootKey)
+	if err != nil {
+		return fmt.Errorf("synthetic root: %w", err)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
-	host, err := libp2p.New(
-		libp2p.ListenAddrStrings(listen),
-		libp2p.UserAgent("tnp/"+hex.EncodeToString(gp.Genesis.NetworkID)),
-	)
+	cfg := &net.NodeConfig{
+		Genesis:             gp,
+		NodeKey:             crypto.DeterministicKey("tnp-testnet-node:eclipse-relay:" + listen),
+		Level:               net.LevelFull,
+		ListenAddrs:         strings.Split(listen, ","),
+		ManualAddrs:         manualOf(peerMA),
+		TrustedRoots:        []*x509.Certificate{rootCert},
+		AllowSyntheticRoots: true,
+		LinkGroups:          false,
+		Log:                 func(f string, a ...any) { fmt.Fprintf(os.Stderr, "реле: "+f+"\n", a...) },
+	}
+	node, err := net.NewNode(cfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("узел: %w", err)
 	}
-	defer host.Close()
-	ps, err := pubsub.NewGossipSub(ctx, host,
-		pubsub.WithMessageSignaturePolicy(pubsub.StrictNoSign),
-		pubsub.WithMaxMessageSize(64*1024+4096),
-	)
-	if err != nil {
-		return err
+	if err := node.Start(ctx); err != nil {
+		return fmt.Errorf("запуск: %w", err)
 	}
-	topic, err := ps.Join("tx/" + hex.EncodeToString(gp.Genesis.NetworkID))
-	if err != nil {
-		return err
+	defer node.Close()
+	txid := tx.TxID()
+	fmt.Fprintf(os.Stderr, "реле: %s -> жертва %s, tx %s (%d байт) на %d с\n",
+		node.Host.ID().ShortString(), peerMA, hex.EncodeToString(txid[:8]), len(txBytes), duration)
+	// первичная сверка с жертвой (журнал: регистрации + выпуски — нужны для
+	// приёма tx на seq 2), затем tx — в свой журнал; жертва забирает её сверкой
+	// (identify при подключении + 30-с тик syncLoop). Dial только к жертве —
+	// тогда source-адрес у жертвы из подсети listen-адреса реле
+	wantJournal := 2 + 3 // 2 регистрации + 3 выпуска (см. driver)
+	for i := 0; i < 40; i++ {
+		if node.Stats().JournalLen >= wantJournal {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
 	}
-	ai, err := addrInfoOfMA(peerMA)
-	if err != nil {
-		return err
+	go func() {
+		res, err := node.SubmitTx(ctx, tx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "реле: submit err: %v\n", err)
+			return
+		}
+		fmt.Fprintf(os.Stderr, "реле: tx %s: %s/%s (журнал %d)\n",
+			hex.EncodeToString(txid[:8]), res.Outcome, res.Code, node.Stats().JournalLen)
+	}()
+	for i := 0; i < 20; i++ {
+		if node.Stats().JournalLen > wantJournal {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
 	}
-	if err := host.Connect(ctx, ai); err != nil {
-		return fmt.Errorf("реле не подключилось к жертве: %w", err)
-	}
-	fmt.Fprintf(os.Stderr, "реле: %s -> жертва %s, tx %d байт каждые %d мс на %d с\n",
-		host.ID().ShortString(), ai.ID.ShortString(), len(txBytes), everyMs, duration)
+	fmt.Fprintf(os.Stderr, "реле: tx %s в журнале (журнал %d)\n",
+		hex.EncodeToString(txid[:8]), node.Stats().JournalLen)
+	// держим узел живым: жертва сверяется с каждым пиром по identify и по
+	// 30-с тику syncLoop — Add(txid, реле) от каждого реле из своей /24
 	end := time.Now().Add(time.Duration(duration) * time.Second)
-	tick := time.NewTicker(time.Duration(everyMs) * time.Millisecond)
-	defer tick.Stop()
-	n := 0
 	for time.Now().Before(end) {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-tick.C:
+		case <-time.After(time.Second):
 		}
-		_ = topic.Publish(ctx, txBytes)
-		n++
 	}
-	fmt.Fprintf(os.Stderr, "реле: опубликовано %d раз\n", n)
 	return nil
 }
 
@@ -303,22 +336,23 @@ func trackStr(t eclipseTracked) string {
 
 // eclipseSummary — итог прогона (summary.json).
 type eclipseSummary struct {
-	NetworkID       string `json:"network_id"`
-	LinkGroups      bool   `json:"link_groups"`
-	AttackAddrs     string `json:"attack_addrs"`
-	VictimBin       string `json:"victim_bin"`
-	HonestLatMs     int64  `json:"honest_c_latency_ms"` // -1: не финализирована за phase1
-	HonestCGroups   int    `json:"honest_c_groups"`
-	AttackAGroups   int    `json:"attack_a_groups_max"`
-	AttackAStatus   string `json:"attack_a_status_end_phase2"`
-	FinalAStatus    string `json:"final_a_status"`
-	FinalAFinal     bool   `json:"final_a_finalized"`
-	FinalBStatus    string `json:"final_b_status"`
-	FinalBFinal     bool   `json:"final_b_finalized"`
-	Checkpoints     int    `json:"checkpoints"`
-	JournalLen      int    `json:"journal_len"`
-	StateRoot       string `json:"state_root"`
-	AttackSucceeded bool   `json:"attack_a_finalized_pre_finality"` // A стала finalized до финальности (баг)
+	NetworkID          string `json:"network_id"`
+	LinkGroups         bool   `json:"link_groups"`
+	AttackAddrs        string `json:"attack_addrs"`
+	VictimBin          string `json:"victim_bin"`
+	HonestLatMs        int64  `json:"honest_c_latency_ms"` // -1: не финализирована за phase1
+	HonestCGroups      int    `json:"honest_c_groups"`
+	AttackAGroups      int    `json:"attack_a_groups_max"`
+	AttackAStatus      string `json:"attack_a_status_end_phase2"`
+	AttackAPreFinality string `json:"attack_a_status_at_3groups_pre_finality"`
+	FinalAStatus       string `json:"final_a_status"`
+	FinalAFinal        bool   `json:"final_a_finalized"`
+	FinalBStatus       string `json:"final_b_status"`
+	FinalBFinal        bool   `json:"final_b_finalized"`
+	Checkpoints        int    `json:"checkpoints"`
+	JournalLen         int    `json:"journal_len"`
+	StateRoot          string `json:"state_root"`
+	AttackSucceeded    bool   `json:"attack_a_finalized_pre_finality"` // A стала finalized до финальности (баг)
 }
 
 func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victimPort int,
@@ -427,11 +461,14 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	seedLabels := splitLabels(seedsStr)
-	if len(seedLabels) < 3 {
-		return fmt.Errorf("нужно минимум 3 метки посевного круга, дано %d", len(seedLabels))
+	if len(seedLabels) < 2 {
+		return fmt.Errorf("нужно минимум 2 метки посевного круга, дано %d", len(seedLabels))
 	}
-	honest := make([]*net.Node, 3)
-	for i := 0; i < 3; i++ {
+	// 2 честных узла (подписи чекпоинтов 2-из-3): вместе с 3 реле и жертвой
+	// на теме 6 пиров = D mesh, жертва в mesh каждого реле и получает
+	// сообщения напрямую (иначе ReceivedFrom — форвардер, группы схлопываются)
+	honest := make([]*net.Node, 2)
+	for i := 0; i < 2; i++ {
 		key := seedKey(seedLabels[i])
 		cfg := &net.NodeConfig{
 			Genesis:             gp,
@@ -464,30 +501,42 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 		n.SyncAllPeers()
 	}
 	time.Sleep(1 * time.Second)
-	fmt.Fprintf(os.Stderr, "eclipse: честная сеть из 3 узлов поднята\n")
+	fmt.Fprintf(os.Stderr, "eclipse: честная сеть из 2 узлов поднята\n")
 
-	// 3. сетап: регистрация кошелька жертвы V, выпуски посевного круга
+	// 3. сетап: регистрация кошельков жертвы V и второго получателя V2
+	// (поручительства ниже — vouch от посевного круга, выпуски не нужны)
 	env := &txEnv{gp: gp, node: honest[0], ctx: ctx}
 	vKey := walletKey("ECL-V")
 	vPub := crypto.MarshalPubKey(&vKey.PublicKey)
 	vAddr := crypto.DeriveAddress(crypto.Fingerprint(vPub), gp.Genesis.NetworkID)
-	challenge := attest.ChallengeFormula(vPub, crypto.ProtocolID, gp.Genesis.NetworkID)
-	chain, err := tnp.SandboxAttestationChain(vPub, gp.Genesis.NetworkID, challenge)
-	if err != nil {
+	v2Addr := addrOf(walletKey("ECL-W2"), gp.Genesis.NetworkID)
+	register := func(key *ecdsa.PrivateKey, addr []byte, label string) error {
+		pub := crypto.MarshalPubKey(&key.PublicKey)
+		challenge := attest.ChallengeFormula(pub, crypto.ProtocolID, gp.Genesis.NetworkID)
+		chain, err := tnp.SandboxAttestationChain(pub, gp.Genesis.NetworkID, challenge)
+		if err != nil {
+			return err
+		}
+		tx, err := buildTx(env, key, addr, wire.Register, &wire.RegisterPayload{
+			AttestedPublicKey:    pub,
+			AttestationChain:     chain,
+			AttestationChallenge: challenge,
+		}, true)
+		if err != nil {
+			return err
+		}
+		if err := submit(env, tx); err != nil {
+			return fmt.Errorf("register %s: %w", label, err)
+		}
+		return nil
+	}
+	if err := register(vKey, vAddr, "V"); err != nil {
 		return err
 	}
-	regTx, err := buildTx(env, vKey, vAddr, wire.Register, &wire.RegisterPayload{
-		AttestedPublicKey:    vPub,
-		AttestationChain:     chain,
-		AttestationChallenge: challenge,
-	}, true)
-	if err != nil {
+	if err := register(walletKey("ECL-W2"), v2Addr, "V2"); err != nil {
 		return err
 	}
-	if err := submit(env, regTx); err != nil {
-		return fmt.Errorf("register V: %w", err)
-	}
-	wantBase := 1
+	wantBase := 2
 	for _, sl := range seedLabels {
 		key := seedKey(sl)
 		addr := addrOf(key, gp.Genesis.NetworkID)
@@ -514,11 +563,10 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	}
 	fmt.Fprintf(os.Stderr, "eclipse: сетап применён жертвой (журнал %d)\n", wantBase)
 
-	// 4. транзакции: A (двойная трата W->V), B (конфликт W->W2, тот же seq/prev),
-	// C (честная V3->V)
+	// 4. переводы (seq 2 после выпуска): A (W->V) — «офлайн-платёж» жертве,
+	// B (W->V2) — конфликтная двойная трата (тот же seq/prev), C (S15->V) — честная
 	wKey := seedKey(seedLabels[0])
 	wAddr := addrOf(wKey, gp.Genesis.NetworkID)
-	w2Addr := addrOf(walletKey("ECL-W2"), gp.Genesis.NetworkID)
 	txA, err := buildTx(env, wKey, wAddr, wire.Transfer, &wire.TransferPayload{
 		Send: &wire.TransferSend{Recipient: vAddr, Amount: 100},
 	}, false)
@@ -526,7 +574,7 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 		return err
 	}
 	txB, err := buildTx(env, wKey, wAddr, wire.Transfer, &wire.TransferPayload{
-		Send: &wire.TransferSend{Recipient: w2Addr, Amount: 100},
+		Send: &wire.TransferSend{Recipient: v2Addr, Amount: 100},
 	}, false)
 	if err != nil {
 		return err
@@ -534,7 +582,7 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	if txA.Seq != txB.Seq || string(txA.Prev) != string(txB.Prev) {
 		return fmt.Errorf("A и B не конфликтуют по seq/prev")
 	}
-	v3Key := seedKey(seedLabels[2])
+	v3Key := seedKey(seedLabels[1])
 	txC, err := buildTx(env, v3Key, addrOf(v3Key, gp.Genesis.NetworkID), wire.Transfer, &wire.TransferPayload{
 		Send: &wire.TransferSend{Recipient: vAddr, Amount: 1},
 	}, false)
@@ -596,6 +644,11 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 
 	// startRelays — 3 реле-процесса, публикующих данный tx-файл; реле i
 	// подключается к адресу жертвы на своём IP (source = свой IP -> своя /24)
+	h1MA := ""
+	for _, a := range honest[0].Host.Addrs() {
+		h1MA = fmt.Sprintf("%s/p2p/%s", a.String(), honest[0].Host.ID().String())
+		break
+	}
 	startRelays := func(txPath string, dur int) ([]*exec.Cmd, error) {
 		var procs []*exec.Cmd
 		for i, ip := range attackIPs {
@@ -610,8 +663,8 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 			cmd := exec.Command(self, "eclipse", "-role", "relay",
 				"-genesis", genesisPath,
 				"-listen", fmt.Sprintf("/ip4/%s/udp/%d/quic-v1", ip, attackPortBase+i),
-				"-peer", peer, "-tx", txPath,
-				"-every-ms", "200", "-duration", strconv.Itoa(dur))
+				"-peer", peer, "-sync-peer", h1MA, "-tx", txPath,
+				"-duration", strconv.Itoa(dur))
 			cmd.Stderr = logF
 			if err := cmd.Start(); err != nil {
 				return nil, err
@@ -661,23 +714,17 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	waitProcs(relays)
 	fmt.Fprintf(os.Stderr, "eclipse: phase1 завершена: C latency=%d мс groups=%d\n", latMs, cGroups)
 
-	// 6. phase2 — атака: сначала B в честную сеть (B побеждает), затем
-	// реле публикуют A (двойная трата) 3 группами
+	// 6. phase2 — атака: реле (3 /24) доставляют двойную трату A жертве;
+	// пока конфликт B ещё не опубликован, у жертвы «до финальности» —
+	// фиксируем, достигается ли «финализировано» через 3 соучастников
 	phase = "attack"
-	for _, n := range honest {
-		envn := &txEnv{gp: gp, node: n, ctx: ctx}
-		// B на каждом честном узле — first-seen = B, голосование сходится к B
-		if res, err := n.SubmitTx(ctx, txB); err != nil || res.Outcome.String() != "accept" {
-			return fmt.Errorf("B на честном узле: %v/%s %w", res.Outcome, res.Code, err)
-		}
-		_ = envn
-	}
 	attackAStatus := ""
 	attackAGroups := 0
 	relays, err = startRelays(filepath.Join(outDir, "txA.bin"), phase2)
 	if err != nil {
 		return err
 	}
+	attackAPreFinality := "" // статус A при 3 группах ДО финальности (окно атаки)
 	deadline = time.Now().Add(time.Duration(phase2) * time.Second)
 	for time.Now().Before(deadline) {
 		if st := readEclipseStatus(statusPath); st != nil {
@@ -686,12 +733,27 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 					attackAGroups = t.Groups
 				}
 				attackAStatus = t.Status
+				if t.Groups >= 3 && !t.Finalized && attackAPreFinality == "" {
+					attackAPreFinality = t.Status
+				}
 			}
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
+	fmt.Fprintf(os.Stderr, "eclipse: атака: A группы=%d статус=%q, при 3 группах до финальности=%q\n",
+		attackAGroups, attackAStatus, attackAPreFinality)
+	// затем конфликтная B — в честную сеть (B побеждает финализацией)
+	for _, n := range honest {
+		// B — конфликтная ветка: accept или conflict оба доставляют её в сеть
+		res, err := n.SubmitTx(ctx, txB)
+		if err != nil || (res.Outcome.String() != "accept" && res.Outcome.String() != "conflict") {
+			return fmt.Errorf("B на честном узле: %v/%s %w", res.Outcome, res.Code, err)
+		}
+		fmt.Fprintf(os.Stderr, "eclipse: B на честном узле %s: %s/%s\n",
+			n.Host.ID().ShortString(), res.Outcome, res.Code)
+	}
+	fmt.Fprintf(os.Stderr, "eclipse: B опубликована в честной сети\n")
 	waitProcs(relays)
-	fmt.Fprintf(os.Stderr, "eclipse: phase2 завершена: A группы=%d статус=%q\n", attackAGroups, attackAStatus)
 
 	// 7. phase3 — ждём чекпоинт(ы): B финализирована, A — нет
 	phase = "conflict"
@@ -710,14 +772,15 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	// 8. артефакты
 	final := readEclipseStatus(statusPath)
 	sum := eclipseSummary{
-		NetworkID:     hex.EncodeToString(gp.Genesis.NetworkID),
-		LinkGroups:    linkGroups,
-		AttackAddrs:   attackAddrs,
-		VictimBin:     victimBin,
-		HonestLatMs:   latMs,
-		HonestCGroups: cGroups,
-		AttackAGroups: attackAGroups,
-		AttackAStatus: attackAStatus,
+		NetworkID:          hex.EncodeToString(gp.Genesis.NetworkID),
+		LinkGroups:         linkGroups,
+		AttackAddrs:        attackAddrs,
+		VictimBin:          victimBin,
+		HonestLatMs:        latMs,
+		HonestCGroups:      cGroups,
+		AttackAGroups:      attackAGroups,
+		AttackAStatus:      attackAStatus,
+		AttackAPreFinality: attackAPreFinality,
 	}
 	if final != nil {
 		sum.Checkpoints = final.Checkpoints
@@ -732,8 +795,8 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 			sum.FinalBFinal = t.Finalized
 		}
 	}
-	// успех атаки (баг F16): A получила finalized ДО финальности конфликта
-	sum.AttackSucceeded = attackAStatus == "finalized"
+	// успех атаки (баг F16): A получила finalized при 3 группах ДО финальности
+	sum.AttackSucceeded = attackAPreFinality == "finalized"
 
 	if err := writeEclipseCSV(filepath.Join(outDir, "samples.csv"), samples); err != nil {
 		return err
@@ -747,6 +810,13 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	}
 	fmt.Println(string(sumBlob))
 	return nil
+}
+
+func manualOf(ma string) []string {
+	if ma == "" {
+		return nil
+	}
+	return []string{ma}
 }
 
 func honestAddrs(nodes []*net.Node) []string {

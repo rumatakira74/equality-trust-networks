@@ -1,0 +1,11 @@
+жертва: handleTx: tx e64d585af81c type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx 29c6523cfdc2 type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx 96d42bb4e219 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx e6cb526ff9f2 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx b749534b4bc2 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx 9746e1cc4f96 type=TRANSFER seq=2 от <peer.ID Qm*h6GMeR>
+жертва: handleTx: tx 4132d1d3c7e7 type=TRANSFER seq=2 от <peer.ID Qm*NTSqJJ>
+жертва: handleTx: tx 68d9636e8dfa type=TRANSFER seq=2 от <peer.ID Qm*vtpVWc>
+жертва: конфликтная ветка 68d9636e8dfa (seq=2) доставлена
+жертва: голосование: конфликт 5e25e68c| финализирован (ветка 4132d1d3c7e7)
+жертва: gossipLoop: выход: context canceled

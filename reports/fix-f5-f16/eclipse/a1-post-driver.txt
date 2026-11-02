@@ -1,0 +1,150 @@
+eclipse: жертва запущена (pid 615555)
+eclipse: жертва /ip4/127.0.0.1/udp/4611/quic-v1/p2p/QmabkddP99q2atswJcuARpMUVCLtHzb1MXaNcCJwiR1XFm (addrs [/ip4/127.0.0.1/udp/4611/quic-v1 /ip4/127.0.1.1/udp/4611/quic-v1 /ip4/127.0.2.1/udp/4611/quic-v1])
+2026/11/02 19:19:30 [zeroconf] no suitable IPv4 interface: udp4: failed to join any of these interfaces: []
+2026/11/02 19:19:30 [zeroconf] no suitable IPv6 interface: udp6: failed to join any of these interfaces: []
+2026/11/02 19:19:30 [zeroconf] no suitable IPv4 interface: udp4: failed to join any of these interfaces: []
+2026/11/02 19:19:30 [zeroconf] no suitable IPv6 interface: udp6: failed to join any of these interfaces: []
+eclipse: честная сеть из 2 узлов поднята
+tx 2fe75e7d5094287b: accept/OK seq=1
+честный: handleTx: tx 2fe75e7d5094 type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+tx d82540c02d1132df: accept/OK seq=1
+честный: handleTx: tx d82540c02d11 type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+tx b5f1d6e23511ad75: accept/OK seq=1
+честный: handleTx: tx b5f1d6e23511 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+tx 42bfe7fc2e0fc8f0: accept/OK seq=1
+честный: handleTx: tx 42bfe7fc2e0f type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+tx f2ebede36e102692: accept/OK seq=1
+честный: handleTx: tx f2ebede36e10 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+eclipse: сетап применён жертвой (журнал 5)
+eclipse: tx A=51bd95df2173 B=49ae6617dec5 C=a4fab0d872bd
+eclipse: реле x3 (127.0.0.1,127.0.1.1,127.0.2.1) публикуют txC.bin на 30 с
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: sync <peer.ID Qm*XAH9NS>: применено транзакций: 5
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: sync <peer.ID Qm*ipMBSQ>: применено транзакций: 5
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: sync <peer.ID Qm*ipMBSQ>: применено транзакций: 5
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: sync <peer.ID Qm*tAaFiZ>: применено транзакций: 5
+честный: sync <peer.ID Qm*tAaFiZ>: применено транзакций: 5
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: sync <peer.ID Qm*tAaFiZ>: применено транзакций: 5
+честный: sync <peer.ID Qm*tAaFiZ>: применено транзакций: 5
+честный: handleTx: tx a4fab0d872bd type=TRANSFER seq=2 от <peer.ID Qm*XAH9NS>
+честный: handleTx: tx a4fab0d872bd type=TRANSFER seq=2 от <peer.ID Qm*ipMBSQ>
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+eclipse: phase1 завершена: C latency=-1 мс groups=3
+eclipse: реле x3 (127.0.0.1,127.0.1.1,127.0.2.1) публикуют txA.bin на 60 с
+честный: handleTx: tx 51bd95df2173 type=TRANSFER seq=2 от <peer.ID Qm*tAaFiZ>
+честный: handleTx: tx 51bd95df2173 type=TRANSFER seq=2 от <peer.ID Qm*tAaFiZ>
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+честный: отклонена 000000000000: E_DUP
+eclipse: атака: A группы=3 статус="published", при 3 группах до финальности="published"
+eclipse: B на честном узле <peer.ID Qm*vtpVWc>: conflict/EQUIVOCATION_BRANCH_LOST
+честный: handleTx: tx 49ae6617dec5 type=TRANSFER seq=2 от <peer.ID Qm*vtpVWc>
+честный: конфликтная ветка 49ae6617dec5 (seq=2) доставлена
+eclipse: B на честном узле <peer.ID Qm*xGmHM4>: conflict/EQUIVOCATION_BRANCH_LOST
+eclipse: B опубликована в честной сети
+честный: handleTx: tx 49ae6617dec5 type=TRANSFER seq=2 от <peer.ID Qm*xGmHM4>
+честный: конфликтная ветка 49ae6617dec5 (seq=2) доставлена
+честный: голосование: конфликт 5e25e68c| финализирован (ветка 51bd95df2173)
+честный: голосование: конфликт 5e25e68c| финализирован (ветка 51bd95df2173)
+{
+  "network_id": "0c8204bbfc565b343a11a99ab5f7af8e3f9454231b2d1d53510ebfc6b94181c4",
+  "link_groups": true,
+  "attack_addrs": "127.0.0.1,127.0.1.1,127.0.2.1",
+  "victim_bin": "",
+  "honest_c_latency_ms": -1,
+  "honest_c_groups": 3,
+  "attack_a_groups_max": 3,
+  "attack_a_status_end_phase2": "published",
+  "attack_a_status_at_3groups_pre_finality": "published",
+  "final_a_status": "finalized",
+  "final_a_finalized": true,
+  "final_b_status": "published",
+  "final_b_finalized": false,
+  "checkpoints": 0,
+  "journal_len": 7,
+  "state_root": "001fae55f0ca67ac321c75688b3b415e0014e6cfbf92aa18085b35391f38614f",
+  "attack_a_finalized_pre_finality": false
+}
+честный: gossipLoop: выход: context canceled
+честный: gossipLoop: выход: context canceled

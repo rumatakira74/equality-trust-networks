@@ -1,0 +1,37 @@
+Воспроизведение контрольного прогона eclipse (F16) — все команды выполнялись 2026-11-02.
+
+Бинарники (вне репо, /tmp):
+  go build -o /tmp/tnp-testnet-fix ./cmd/tnp-testnet            # ветка fix-f5-f16 (post-fix)
+  # pre-fix: git worktree /tmp/prefix-main origin/main; туда скопировать
+  #   cmd/tnp-testnet/eclipse.go + case "eclipse" в main.go + TxCorroboration-заглушку в net/node.go
+  #   (finalityView().IsFinalized вместо isFinalizedTx); go build -o /tmp/tnp-testnet-pre ./cmd/tnp-testnet
+
+Genesis (окно выпуска периода 2 должно быть открыто на момент прогона):
+  T2=$(( $(date -d 'today 00:00' +%s) - 90*86400 ))
+  /tmp/tnp-testnet-fix findlabels -network-id tnp-eclipse-f16 -genesis-time $T2 -period 2 -count 5
+  # метки с открытым окном (на 2026-11-02): S03, S15, S20
+  /tmp/tnp-testnet-fix generate -network-id tnp-eclipse-f16 -genesis-time $T2 \
+      -epoch-seconds 300 -small-pow -fresh-window 0 -anchor-epoch-zero \
+      -seeds S03,S15,S20 -out /tmp/eclipse/genesis300
+  # для замера честной латентности (чекпоинты частые): -epoch-seconds 20 → /tmp/eclipse/genesis
+
+Прогон (внутри user+net namespace, чтобы source-IP реле были 127.0.x.1 — иначе ядро
+выбирает src 127.0.0.1 для любой цели 127/8 и /24-группы схлопываются):
+  unshare -Urn sh -c 'ip link set lo up; ip addr add 127.0.1.1/32 dev lo; ip addr add 127.0.2.1/32 dev lo; \
+    exec /tmp/tnp-testnet-fix eclipse -role driver \
+      -genesis /tmp/eclipse/genesis300/genesis.bin -out /tmp/eclipse/a1-post \
+      -link-groups=true -victim-port 4611 -attack-port 4961 \
+      -attack-addrs 127.0.0.1,127.0.1.1,127.0.2.1 -seeds S03,S15,S20 -seed-period 2 \
+      -phase1 30 -phase2 60 -phase3 30'
+  # pre-fix: добавить -victim-bin /tmp/tnp-testnet-pre
+  # негативный контроль одной подсети: -attack-addrs 127.0.0.1,127.0.0.1,127.0.0.1
+  # контроль без группировки: -link-groups=false
+
+Роли: victim (процесс+БД, статус-файл 500 мс), relay (полный узел, tx в журнал, dial только
+к жертве), driver (2 честных узла-подписанта, регистрация V/V2, выпуски seeds, A/B/C transfers).
+
+Матрица v3 (epoch 300s — детерминированное pre-finality окно): a1/a2/a3 × pre/post, см.
+eclipse/*-summary.json и *-samples.csv в этом каталоге.
+
+Эмуляторный прогон (F5) — см. REPORT-FIX-F5-F16.md, раздел «как делалось» (finger enroll,
+accessibility/semantics, detached-пиры, amd64-сборка peer).
