@@ -163,6 +163,12 @@ class MainActivity : FragmentActivity() {
             Toast.makeText(this, "Сначала настройте кошелёк", Toast.LENGTH_SHORT).show()
             return onUnlocked(false)
         }
+        // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+        val lockMs = pin.lockRemainingMs()
+        if (lockMs > 0) {
+            appendStatus("PIN: слишком много попыток, подождите ${(lockMs + 999) / 1000} с")
+            return onUnlocked(false)
+        }
         askPin(getString(R.string.pin_title)) { entered ->
             val pin_ = entered ?: return@askPin
             when (pin.verify(pin_)) {
@@ -176,7 +182,14 @@ class MainActivity : FragmentActivity() {
                     onUnlocked(true)
                 }
 
-                PinCheck.NONE -> onUnlocked(false)
+                PinCheck.NONE -> {
+                    // порог достигнут на этой попытке — сообщение блокировки
+                    val rem = pin.lockRemainingMs()
+                    if (rem > 0) {
+                        appendStatus("PIN: слишком много попыток, подождите ${(rem + 999) / 1000} с")
+                    }
+                    onUnlocked(false)
+                }
             }
         }
     }

@@ -115,6 +115,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errWrongPin => 'Неверный PIN';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return 'Слишком много неудачных попыток. Повторите через $seconds с';
+  }
+
+  @override
   String get confirmOperation => 'Подтвердите операцию';
 
   @override

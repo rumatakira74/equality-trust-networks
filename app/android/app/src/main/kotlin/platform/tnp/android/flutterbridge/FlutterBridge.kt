@@ -281,21 +281,29 @@ object FlutterBridge {
                 "verifyPin" -> {
                     val entered = call.argument<String>("pin")!!
                     // PBKDF2 — в фон; один и тот же код и ритм для обоих
-                    // PIN (8.2)
+                    // PIN (8.2); лимит попыток (тема UI-защиты, п.1):
+                    // «locked» — при активной блокировке и на попытке,
+                    // достигшей порога
                     bg(result) {
-                        when (pin.verify(entered)) {
-                            PinCheck.NORMAL -> {
-                                duress.exit()
-                                "normal"
+                        if (pin.lockRemainingMs() > 0) {
+                            "locked"
+                        } else {
+                            when (pin.verify(entered)) {
+                                PinCheck.NORMAL -> {
+                                    duress.exit()
+                                    "normal"
+                                }
+                                PinCheck.DURESS -> {
+                                    duress.enter()
+                                    "normal" // вход неотличим
+                                }
+                                PinCheck.NONE ->
+                                    if (pin.lockRemainingMs() > 0) "locked" else "none"
                             }
-                            PinCheck.DURESS -> {
-                                duress.enter()
-                                "normal" // вход неотличим
-                            }
-                            PinCheck.NONE -> "none"
                         }
                     }
                 }
+                "pinLockRemaining" -> result.success(pin.lockRemainingMs())
                 "duressActive" -> result.success(duress.active)
                 "exitDuress" -> {
                     duress.exit()

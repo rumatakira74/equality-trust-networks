@@ -35,6 +35,14 @@
   "btnSignBiometric": "Firmar (biometría)",
   "enterPin": "Introduzca el PIN",
   "errWrongPin": "PIN incorrecto",
+  "lockTooManyAttempts": "Demasiados intentos fallidos. Reinténtalo en {seconds} s",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "Confirme la operación",
   "keyUnlockTitle": "Desbloquear clave",
   "rejectedWithCode": "Rechazado: {code}",

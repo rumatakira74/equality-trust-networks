@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Wrong PIN'**
   String get errWrongPin;
 
+  /// No description provided for @lockTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many failed attempts. Try again in {seconds} s'**
+  String lockTooManyAttempts(int seconds);
+
   /// No description provided for @confirmOperation.
   ///
   /// In en, this message translates to:

@@ -116,6 +116,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errWrongPin => 'Wrong PIN';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return 'Too many failed attempts. Try again in $seconds s';
+  }
+
+  @override
   String get confirmOperation => 'Confirm operation';
 
   @override

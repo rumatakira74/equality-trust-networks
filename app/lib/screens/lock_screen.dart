@@ -51,6 +51,16 @@ class _LockScreenState extends State<LockScreen> {
     if (!mounted) return;
     if (res == 'normal') {
       setState(() => _unlocked = true);
+    } else if (res == 'locked') {
+      // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+      final rem = await platform.pinLockRemaining();
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!
+            .lockTooManyAttempts((rem + 999) ~/ 1000);
+        _busy = false;
+      });
+      _controller.clear();
     } else {
       // одинаковое сообщение для неверного и тревожного-неверного
       setState(() {

@@ -35,6 +35,14 @@
   "btnSignBiometric": "Подписать (биометрия)",
   "enterPin": "Введите PIN",
   "errWrongPin": "Неверный PIN",
+  "lockTooManyAttempts": "Слишком много неудачных попыток. Повторите через {seconds} с",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "Подтвердите операцию",
   "keyUnlockTitle": "Разблокировка ключа",
   "rejectedWithCode": "Отклонено: {code}",

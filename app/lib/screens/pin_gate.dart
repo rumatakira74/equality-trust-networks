@@ -62,6 +62,16 @@ class _PinDialogState extends State<_PinDialog> {
     if (!mounted) return;
     if (res == 'normal') {
       Navigator.of(context).pop(true);
+    } else if (res == 'locked') {
+      // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+      final rem = await platform.pinLockRemaining();
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!
+            .lockTooManyAttempts((rem + 999) ~/ 1000);
+        _busy = false;
+      });
+      _controller.clear();
     } else {
       // неверный и тревожный-неверный — одинаковое сообщение
       setState(() {
