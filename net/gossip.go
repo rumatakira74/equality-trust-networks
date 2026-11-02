@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"time"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pb "github.com/libp2p/go-libp2p-pubsub/pb"
@@ -39,12 +40,18 @@ type CheckpointHandler interface {
 }
 
 // newPubSub — GossipSub без подписей pubsub (транзакции несут собственные
-// подписи; спам: лёгкий PoW + комиссия уже в ядре, 12.5).
+// подписи; спам: лёгкий PoW + комиссия уже в ядре, 12.5). Peer score (A3,
+// тема net-dos-a3): счёт пира в pubsub — время в mesh, первые доставки,
+// невалидные сообщения (ValidationReject валидатора) + счёт приложения
+// (dosTracker) — низкий счёт вырезает пира из mesh (пониженный
+// приоритет/бандвит) и грейзлистит по порогу.
 func (n *Node) newPubSub(ctx context.Context, h host.Host) (*pubsub.PubSub, error) {
+	scoreParams, thresholds := n.peerScoreParams()
 	return pubsub.NewGossipSub(ctx, h,
 		pubsub.WithMessageSignaturePolicy(pubsub.StrictNoSign),
 		pubsub.WithMessageIdFn(txMessageID),
 		pubsub.WithMaxMessageSize(n.Cfg.MaxTxSize+4096),
+		pubsub.WithPeerScore(scoreParams, thresholds),
 	)
 }
 
@@ -56,7 +63,9 @@ func (n *Node) startGossip(ctx context.Context) error {
 	}
 	n.PS = ps
 
-	// Валидатор темы: дешёвая проверка ДО ретрансляции.
+	// Валидатор темы: полный путь приёма до ретрансляции (A3):
+	// дешёвые структурные проверки → подпись → бюджет дорогих
+	// операций → Argon2id/PoW.
 	if err := ps.RegisterTopicValidator(n.txTopic(),
 		func(ctx context.Context, from peer.ID, msg *pubsub.Message) pubsub.ValidationResult {
 			if len(msg.Data) > n.Cfg.MaxTxSize {
@@ -68,7 +77,7 @@ func (n *Node) startGossip(ctx context.Context) error {
 				n.countSpam()
 				return pubsub.ValidationReject
 			}
-			if err := n.cheapCheck(tx); err != nil {
+			if err := n.relayAdmit(tx, from); err != nil {
 				n.countSpam()
 				n.logf("спам от %s: %v", from.ShortString(), err)
 				return pubsub.ValidationReject
@@ -115,13 +124,17 @@ func (n *Node) gossipLoop(ctx context.Context) {
 		}
 		tx, ok := msg.ValidatorData.(*wire.Transaction)
 		if !ok {
-			// сообщение прошло валидатор до его регистрации — декодируем
+			// сообщение прошло до регистрации валидатора — полный
+			// путь приёма выполняется здесь (relayAdmit в
+			// handleTxFromPeer)
 			tx, err = wire.DecodeTransaction(msg.Data)
-			if err != nil || n.cheapCheck(tx) != nil {
+			if err != nil {
 				continue
 			}
+			n.handleTxFromPeer(tx, msg.ReceivedFrom, false)
+			continue
 		}
-		n.handleTxFromPeer(tx, msg.ReceivedFrom)
+		n.handleTxFromPeer(tx, msg.ReceivedFrom, true)
 	}
 }
 
@@ -278,75 +291,97 @@ func (n *Node) c9Admit(tx *wire.Transaction) error {
 	return nil
 }
 
-// cheapCheck — дешёвая проверка до ретрансляции (4.3): подпись, лёгкий PoW,
-// размер (размер — в валидаторе), seq/prev в связке, допуск C9. Полный
-// apply — в фоне.
+// Ошибки пути приёма (A3): классы для штрафа счёта пира; тексты —
+// прежние (существующие коды/сообщения, новых кодов нет).
+var (
+	errForeignNet      = errors.New("чужая сеть")
+	errForeignVersion  = errors.New("чужая версия протокола")
+	errNoPow           = errors.New("нет PoW")
+	errWrongPowAlgo    = errors.New("ожидался усиленный PoW")
+	errWrongPowAlgoL   = errors.New("ожидался лёгкий PoW")
+	errBadSignature    = errors.New("подпись не сходится")
+	errBadRegisterKey  = errors.New("некорректный ключ")
+	errRegisterPayload = errors.New("register без payload")
+	errPrevMismatch    = errors.New("prev не сходится с tip")
+	errUnknownWallet   = errors.New("кошелёк не известен узлу")
+	errPowHard         = errors.New("усиленный PoW не сходится")
+	errPowLight        = errors.New("лёгкий PoW не сходится")
+	errDosBudget       = errors.New("бюджет дорогих операций на пира исчерпан")
+)
+
+// cheapCheck — дешёвая проверка до ретрансляции (4.3; A3 — порядок
+// «дешёвое → подпись», дорогой Argon2id/PoW — только после подписи,
+// в relayAdmit/verifyPoW): сеть, версия протокола, наличие/тип PoW
+// (структурно), допуск C9, seq/prev в связке, подпись ECDSA P-256
+// (каноничный DER, low-s — этап 9). Полный apply — в фоне.
+//
+// Полный узел отклоняет tx незарегистрированного кошелька дёшево
+// (errUnknownWallet): ядро в тот же момент дало бы E_UNKNOWN_WALLET
+// (C5) — множество принимаемых tx не меняется, а Argon2id для
+// неизвестного отправителя не выполняется вовсе (A3: ключа нет —
+// подпись проверить нельзя, значит и дорогая работа не запускается;
+// догоняющая доставка такой tx — сверкой, журнал упорядочен).
+// Лёгкий узел (без реестра) неизвестность проверить не может — для
+// него путь прежний: подпись пропускается, PoW — под бюджетом пира
+// (relayAdmit).
+//
+// Чтение полей кошелька (PublicKey/Seq/TipTxID) — под applyMu.RLock:
+// валидатор gossip и handleTxFromPeer идут без applyMu, а фоновый
+// applyLive пишет реестр параллельно (race-аудит этапа 9, -race).
 func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	if len(tx.NetworkID) == 0 || string(tx.NetworkID) != string(n.networkID) {
-		return errors.New("чужая сеть")
+		return errForeignNet
 	}
 	if tx.ProtocolVersion != n.Cfg.Genesis.Genesis.ProtocolVersion {
-		return errors.New("чужая версия протокола")
+		return errForeignVersion
 	}
 	if tx.Pow == nil {
-		return errors.New("нет PoW")
+		return errNoPow
 	}
 	// C9 — допуск сети (v9.13): claim вне допуска часов узла — не
 	// принимается и не ретранслируется
 	if err := n.c9Admit(tx); err != nil {
 		return err
 	}
-	// C10/C11 (дешёвый вариант): алгоритм соответствует типу.
+	// C10/C11 (структурно, дёшево): алгоритм соответствует типу.
 	hard := tx.Type == wire.Register || tx.Type == wire.Mint
 	if hard && tx.Pow.Algorithm != wire.PowArgon2id {
-		return errors.New("ожидался усиленный PoW")
+		return errWrongPowAlgo
 	}
 	if !hard && tx.Pow.Algorithm != wire.PowLight {
-		return errors.New("ожидался лёгкий PoW")
+		return errWrongPowAlgoL
 	}
-	pre := tx.SigningPreimage()
-	if hard {
-		if !crypto.VerifyHard(pre, tx.Pow.Nonce, n.pow.TargetHard, crypto.Argon2Params{
-			MemoryKiB: n.pow.Argon2MemoryKiB, Iterations: n.pow.Argon2Iterations,
-			Parallelism: n.pow.Argon2Parallelism,
-		}) {
-			return errors.New("усиленный PoW не сходится")
-		}
-	} else {
-		if !crypto.VerifyLight(pre, tx.Pow.Nonce, n.pow.TargetLight) {
-			return errors.New("лёгкий PoW не сходится")
-		}
-	}
-	// Подпись: для register — ключ из payload; для остальных — ключ
-	// кошелька из локального состояния (нет кошелька — пропускаем,
-	// полный apply в фоне отклонит при невозможности).
-	//
-	// Чтение полей кошелька (PublicKey/Seq/TipTxID) — под applyMu.RLock:
-	// валидатор gossip и handleTxFromPeer идут без applyMu, а фоновый
-	// applyLive пишет реестр параллельно (race-аудит этапа 9, -race).
-	// PoW (Argon2id) — до локом: проверка не читает реестр.
+	// Подпись до дорогой работы (A3): для register — ключ из payload;
+	// для остальных — ключ кошелька из локального состояния. Полный
+	// узел без кошелька отклоняет дёшево (см. комментарий выше);
+	// лёгкий узел — пропускает (нет состояния), дорогой PoW для него
+	// ограничен бюджетом пира.
 	n.applyMu.RLock()
+	if n.Ledger != nil && tx.Type != wire.Register && n.wallet(tx.Wallet) == nil {
+		n.applyMu.RUnlock()
+		return errUnknownWallet
+	}
 	if tx.Type == wire.Register {
 		reg, ok := tx.Payload.(*wire.RegisterPayload)
 		if !ok {
 			n.applyMu.RUnlock()
-			return errors.New("register без payload")
+			return errRegisterPayload
 		}
 		pk, err := crypto.ParsePubKey(reg.AttestedPublicKey)
 		if err != nil {
 			n.applyMu.RUnlock()
-			return errors.New("некорректный ключ")
+			return errBadRegisterKey
 		}
 		sh := tx.SigningHash()
 		if !crypto.VerifyDER(pk, sh[:], tx.Signature) {
 			n.applyMu.RUnlock()
-			return errors.New("подпись не сходится")
+			return errBadSignature
 		}
 	} else if w := n.wallet(tx.Wallet); w != nil && w.PublicKey != nil {
 		sh := tx.SigningHash()
 		if !crypto.VerifyDER(w.PublicKey, sh[:], tx.Signature) {
 			n.applyMu.RUnlock()
-			return errors.New("подпись не сходится")
+			return errBadSignature
 		}
 	}
 	// seq/prev в связке: при seq = tip+1 prev обязан равняться tip;
@@ -354,9 +389,92 @@ func (n *Node) cheapCheck(tx *wire.Transaction) error {
 	if w := n.wallet(tx.Wallet); w != nil && tx.Seq == w.Seq+1 {
 		if string(tx.Prev) != string(w.TipTxID) {
 			n.applyMu.RUnlock()
-			return errors.New("prev не сходится с tip")
+			return errPrevMismatch
 		}
 	}
 	n.applyMu.RUnlock()
 	return nil
+}
+
+// verifyPoW — дорогая часть пути приёма (A3): выполняется только
+// после дешёвых проверок и подписи (relayAdmit). Реестр не читает —
+// вне applyMu.
+func (n *Node) verifyPoW(tx *wire.Transaction) error {
+	pre := tx.SigningPreimage()
+	hard := tx.Type == wire.Register || tx.Type == wire.Mint
+	if hard {
+		n.expensiveChecks.Add(1)
+		if !crypto.VerifyHard(pre, tx.Pow.Nonce, n.pow.TargetHard, crypto.Argon2Params{
+			MemoryKiB: n.pow.Argon2MemoryKiB, Iterations: n.pow.Argon2Iterations,
+			Parallelism: n.pow.Argon2Parallelism,
+		}) {
+			return errPowHard
+		}
+	} else {
+		if !crypto.VerifyLight(pre, tx.Pow.Nonce, n.pow.TargetLight) {
+			return errPowLight
+		}
+	}
+	return nil
+}
+
+// relayAdmit — единый путь приёма tx от пира (A3): дешёвые структурные
+// проверки → подпись → бюджет дорогих операций пира → Argon2id/PoW.
+// Ошибки — существующие классы (дешёвый отказ), новых кодов нет;
+// события — в счёт пира (штраф/награда), исчерпание бюджета — счёт
+// падает, по порогу dosDisconnectScore соединение разрывается
+// (крайняя мера). Вызывается валидатором темы и handleTxFromPeer
+// (сообщения до регистрации валидатора).
+func (n *Node) relayAdmit(tx *wire.Transaction, from peer.ID) error {
+	now := time.Now()
+	if err := n.cheapCheck(tx); err != nil {
+		switch {
+		case errors.Is(err, errBadSignature), errors.Is(err, errBadRegisterKey):
+			n.dos.penalty(from, dosPenaltyInvalidSig, now)
+		case errors.Is(err, errUnknownWallet):
+			n.dos.penalty(from, dosPenaltyUnknownWallet, now)
+		default:
+			n.dos.penalty(from, dosPenaltyMalformed, now)
+		}
+		n.maybeDisconnect(from)
+		return err
+	}
+	hard := tx.Type == wire.Register || tx.Type == wire.Mint
+	if hard {
+		// бюджет дорогих операций на пира (A3): окно исчерпано —
+		// дорогая проверка не выполняется, сообщение дёшево
+		// отклоняется (догоняющая доставка — сверкой)
+		if !n.dos.chargeExpensive(from, now) {
+			n.dos.penalty(from, dosPenaltyBudget, now)
+			n.budgetRejected.Add(1)
+			n.maybeDisconnect(from)
+			return errDosBudget
+		}
+		// параллельные Argon2id — лимит на узел (память, A3)
+		select {
+		case n.hardSem <- struct{}{}:
+			defer func() { <-n.hardSem }()
+		default:
+			// лимит занят: не копим очередь дорогих проверок —
+			// дёшево отклоняем (бюджет уже списан у пира)
+			n.budgetRejected.Add(1)
+			return errDosBudget
+		}
+	}
+	if err := n.verifyPoW(tx); err != nil {
+		n.dos.penalty(from, dosPenaltyInvalidPow, now)
+		n.maybeDisconnect(from)
+		return err
+	}
+	n.dos.reward(from, dosRewardValid, now)
+	return nil
+}
+
+// maybeDisconnect — крайняя мера по порогу счёта (A3): разрыв
+// соединения с пиром, чей счёт упал ниже dosDisconnectScore.
+func (n *Node) maybeDisconnect(from peer.ID) {
+	if n.dos.score(from) < dosDisconnectScore && n.Host != nil {
+		n.logf("dos: разрыв соединения с %s (счёт %.1f)", from.ShortString(), n.dos.score(from))
+		_ = n.Host.Network().ClosePeer(from)
+	}
 }

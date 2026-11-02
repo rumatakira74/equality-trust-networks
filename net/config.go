@@ -114,6 +114,15 @@ type NodeConfig struct {
 	AllowSyntheticRoots bool
 	// Log — журнал узла (nil — тихий режим).
 	Log func(format string, args ...any)
+
+	// net-DoS (A3, тема net-dos-a3): бюджет дорогих операций
+	// (Argon2id) на пира в скользящем окне и лимит параллельных
+	// Argon2id на узел. 0 — константы DosExpensiveBudget /
+	// DosExpensiveWindow / DosMaxConcurrentHard. Поведение узла,
+	// не протокола: genesis-полей нет, protocolVersion не поднимается.
+	DosExpensiveBudget   int
+	DosExpensiveWindow   time.Duration
+	DosMaxConcurrentHard int
 }
 
 func (c *NodeConfig) networkID() []byte { return c.Genesis.Genesis.NetworkID }
