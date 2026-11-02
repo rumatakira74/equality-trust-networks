@@ -243,6 +243,12 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 	if cfg.LinkGroups {
 		n.Corroboration = NewCorroborationLinked(cfg.CorroborationN, n.peerLink)
 	}
+	// F16: подтверждение засчитывается только для txid из финализированной
+	// ветки — «финализировано» офлайн-требования гейтится финальностью
+	// (чекпоинты + финализированные выборы), а не только доставкой от N
+	// пиров. Порядок блокировок: c.mu (в Confirmed) -> n.mu.RLock (здесь) —
+	// обратного порядка (n.mu -> Corroboration) в коде нет.
+	n.Corroboration.SetFinalityCheck(n.isFinalizedTx)
 	return n, nil
 }
 
@@ -976,8 +982,10 @@ func (n *Node) PublishAwaiting(ctx context.Context) {
 	}
 }
 
-// OfflineStatus — статус транзакции офлайн-канала (финализация — заглушка
-// до этапа 5: «финализировано» = подтверждено N пирами, net/eclipse).
+// OfflineStatus — статус транзакции офлайн-канала (12.4). «Финализировано»
+// (F16) = подтверждено N несвязанными пирами (net/eclipse) И txid входит в
+// финализированную ветку (чекпоинт/финализированный выбор) — до финальности
+// соучастники «финализировано» не дают ни при каком раскладе.
 func (n *Node) OfflineStatus(txid [32]byte) OfflineStatus {
 	n.mu.RLock()
 	_, awaiting := n.awaiting[string(txid[:])]

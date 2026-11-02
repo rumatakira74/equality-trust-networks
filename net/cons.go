@@ -285,6 +285,15 @@ func (n *Node) rebuildToFinality() {
 	n.logf("перестройка: состояние пересчитано под финализацию")
 }
 
+// isFinalizedTx — txid в финализированной ветке (F16): то же
+// представление финальности, что и для перестройки состояния —
+// чекпоинты цепочки + финализированные выборы Snowball.
+// Вызывается из Corroboration.Confirmed под c.mu: порядок блокировок
+// c.mu -> n.mu.RLock, обратного порядка в коде нет.
+func (n *Node) isFinalizedTx(txid []byte) bool {
+	return n.finalityView().IsFinalized(txid)
+}
+
 // finalityView — финализированные txid (чекпоинты + локальные победители
 // голосования по ещё не покрытым конфликтам).
 func (n *Node) finalityView() *cons.FinalityView {
