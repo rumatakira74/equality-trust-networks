@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
+import '../../services/secure_mode.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
 
@@ -23,10 +24,21 @@ class _MintScreenState extends State<MintScreen> {
   bool _busy = false;
   String? _result;
 
+  late final PlatformService _platform;
+
   @override
   void initState() {
     super.initState();
+    // FLAG_SECURE (п.2): сумма выпуска — окно помечено
+    _platform = context.read<PlatformService>();
+    SecureMode.set(_platform, 'screen:mint', true);
     _load();
+  }
+
+  @override
+  void dispose() {
+    SecureMode.set(_platform, 'screen:mint', false);
+    super.dispose();
   }
 
   Future<void> _load() async {

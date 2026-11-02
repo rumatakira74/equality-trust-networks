@@ -35,6 +35,14 @@
   "btnSignBiometric": "Подписать (биометрия)",
   "enterPin": "Введите PIN",
   "errWrongPin": "Неверный PIN",
+  "lockTooManyAttempts": "Слишком много неудачных попыток. Повторите через {seconds} с",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "Подтвердите операцию",
   "keyUnlockTitle": "Разблокировка ключа",
   "rejectedWithCode": "Отклонено: {code}",
@@ -103,6 +111,7 @@
   "transferConfirmTitle": "Подтвердите перевод",
   "btConfirmTitle": "Подтвердите Bluetooth-платёж",
   "transferSent": "Перевод отправлен",
+  "transferAwaiting": "Перевод отправлен — ожидает подтверждения",
   "transferDelayed": "Перевод отложен: исполнение через {hours} ч, отменить можно в течение задержки",
   "signNotConfirmed": "Подпись не подтверждена",
   "btNoDevices": "Нет сопряжённых устройств",

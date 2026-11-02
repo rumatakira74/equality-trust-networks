@@ -401,8 +401,8 @@ The threat: the owner is forced to open the app or send money.
 
 - Two PINs: the ordinary one and the duress one. The duress PIN opens a **decoy mode**: the interface is the same, but a plausible small balance and history are shown. Showing zero is not allowed: an active wallet regularly receives issuance, and a zero balance looks suspicious.
 - **Fingerprint unlock is disabled when the duress PIN is enabled:** otherwise the coercer presses the owner's finger to the sensor.
-- In decoy mode the signing key and biometrics are not used; sending ends with a plausible "awaiting confirmation" or a network error without a real publication; notifications do not show amounts; the real wallet keeps working in the background but is not visible in the interface.
-- Both PINs are indistinguishable: the same opening time, interface, and attempt limit.
+- In decoy mode the signing key is not used; the same biometric prompt is shown (plain, without the key — skipping the prompt would give the decoy away); sending ends with a plausible "awaiting confirmation" or a network error without a real publication; notifications do not show amounts; the real wallet keeps working in the background but is not visible in the interface.
+- Both PINs are indistinguishable: the same opening time, interface, and attempt limit (5 consecutive failures lock input for 30 s, doubling up to 10 min; reset by a successful entry or 24 h without failures; key destruction on failures is not introduced).
 - **You can hide, but you cannot zero out:** the balance is the network's public state. The key is not deleted; "erase local data" is allowed (the database is restored from the network).
 - **What is not protected.** The public registry: anyone you paid to or received from knows the address and sees the balance in any client. The decoy is verifiable: the address in decoy mode will not match the real one on the network. The technique works against quick coercion and robbery, not against a prepared attacker.
 

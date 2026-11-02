@@ -115,6 +115,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errWrongPin => 'PIN 错误';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return '尝试次数过多，请在 $seconds 秒后重试';
+  }
+
+  @override
   String get confirmOperation => '确认操作';
 
   @override
@@ -360,6 +365,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get transferSent => '转账已发送';
+
+  @override
+  String get transferAwaiting => '转账已发送——等待确认';
 
   @override
   String transferDelayed(int hours) {

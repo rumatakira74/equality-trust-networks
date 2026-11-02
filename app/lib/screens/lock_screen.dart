@@ -45,12 +45,28 @@ class _LockScreenState extends State<LockScreen> {
       _error = null;
     });
     final platform = context.read<PlatformService>();
-    // одинаковая задержка для любого исхода (неразличимость, 8.2)
-    final res = await platform.verifyPin(_controller.text);
+    // одинаковая задержка для любого исхода (неразличимость, 8.2);
+    // платформенная ошибка не брикует экран (сброс _busy)
+    String res;
+    try {
+      res = await platform.verifyPin(_controller.text);
+    } catch (_) {
+      res = 'none';
+    }
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     if (res == 'normal') {
       setState(() => _unlocked = true);
+    } else if (res == 'locked') {
+      // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+      final rem = await platform.pinLockRemaining();
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!
+            .lockTooManyAttempts((rem + 999) ~/ 1000);
+        _busy = false;
+      });
+      _controller.clear();
     } else {
       // одинаковое сообщение для неверного и тревожного-неверного
       setState(() {

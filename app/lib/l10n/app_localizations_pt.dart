@@ -115,6 +115,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errWrongPin => 'PIN incorreto';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return 'Muitas tentativas falhadas. Tente novamente em $seconds s';
+  }
+
+  @override
   String get confirmOperation => 'Confirme a operação';
 
   @override
@@ -369,6 +374,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get transferSent => 'Transferência enviada';
+
+  @override
+  String get transferAwaiting =>
+      'Transferência enviada — aguardando confirmação';
 
   @override
   String transferDelayed(int hours) {

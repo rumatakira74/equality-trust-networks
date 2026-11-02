@@ -35,6 +35,14 @@
   "btnSignBiometric": "Assinar (biometria)",
   "enterPin": "Digite o PIN",
   "errWrongPin": "PIN incorreto",
+  "lockTooManyAttempts": "Muitas tentativas falhadas. Tente novamente em {seconds} s",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "Confirme a operação",
   "keyUnlockTitle": "Desbloquear chave",
   "rejectedWithCode": "Rejeitado: {code}",
@@ -103,6 +111,7 @@
   "transferConfirmTitle": "Confirme a transferência",
   "btConfirmTitle": "Confirme o pagamento por Bluetooth",
   "transferSent": "Transferência enviada",
+  "transferAwaiting": "Transferência enviada — aguardando confirmação",
   "transferDelayed": "Transferência diferida: execução em {hours} h, pode ser cancelada durante o atraso",
   "signNotConfirmed": "Assinatura não confirmada",
   "btNoDevices": "Não há dispositivos pareados",

@@ -115,6 +115,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errWrongPin => 'Неверный PIN';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return 'Слишком много неудачных попыток. Повторите через $seconds с';
+  }
+
+  @override
   String get confirmOperation => 'Подтвердите операцию';
 
   @override
@@ -368,6 +373,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get transferSent => 'Перевод отправлен';
+
+  @override
+  String get transferAwaiting => 'Перевод отправлен — ожидает подтверждения';
 
   @override
   String transferDelayed(int hours) {

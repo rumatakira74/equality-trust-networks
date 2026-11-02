@@ -23,12 +23,19 @@ import javax.crypto.spec.GCMParameterSpec
  *
  * Хранилище: файл, зашифрованный AES-GCM ключом Keystore
  * (tnp-pin-master); allowBackup=false — в бэкап не попадает.
+ *
+ * Лимит попыток (тема UI-защиты владельца, п.1): PinAttemptState —
+ * счётчик неудач с блокировкой (5 неудач → 30 с, удвоение до 10 мин);
+ * одинаков для обоих PIN (8.2), уничтожение ключа не вводится.
  */
 class PinManager(context: Context) {
     private val file: File = File(context.filesDir, FILE_NAME)
     private val keyStore: KeyStore =
         KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
     private val rng = SecureRandom()
+
+    /** Счётчик неудачных попыток (лимит, тема UI-защиты владельца, п.1). */
+    private val attempts = PinAttemptState(context)
 
     /** Настроен ли PIN (обычный или оба). */
     fun isSet(): Boolean = read() != null
@@ -47,21 +54,44 @@ class PinManager(context: Context) {
             duressHash = if (duressPin.isBlank()) null else hash(duressPin, salt),
         )
         write(rec)
+        attempts.reset() // новый PIN — счётчик неудач с нуля
     }
 
     /**
      * Проверка PIN. Возвращает NORMAL / DURESS / NONE. Один и тот же код
      * для обоих хешей — по времени/поведению вход неразличим.
+     *
+     * Лимит попыток (тема UI-защиты владельца, п.1): при активной
+     * блокировке проверка не выполняется (NONE без хеширования);
+     * неудачная попытка инкрементит счётчик, успешная (обычный или
+     * тревожный — неотличимо) сбрасывает.
      */
     fun verify(pin: String): PinCheck {
+        // пустой PIN — отказ без PBKDF2: Android (BouncyCastle) отвергает
+        // пустой пароль в SecretKeyFactory (InvalidKeySpecException
+        // «password empty»), а исключение в verify брикуло бы экран
+        // (настройка требует 4-16 символов — пустой PIN никогда не верен)
+        if (pin.isEmpty()) return PinCheck.NONE
         val rec = read() ?: return PinCheck.NONE
+        if (attempts.lockedRemaining() > 0) return PinCheck.NONE
         val h = hash(pin, rec.salt)
-        if (constantTimeEq(h, rec.normalHash)) return PinCheck.NORMAL
+        if (constantTimeEq(h, rec.normalHash)) {
+            attempts.reset()
+            return PinCheck.NORMAL
+        }
         if (rec.duressHash != null && constantTimeEq(h, rec.duressHash)) {
+            attempts.reset() // успешный вход — сброс и для приманки (8.2)
             return PinCheck.DURESS
         }
+        attempts.registerFailure()
         return PinCheck.NONE
     }
+
+    /** Остаток блокировки ввода PIN, мс (0 — не заблокировано). */
+    fun lockRemainingMs(): Long = attempts.lockedRemaining()
+
+    /** Счётчик неудачных попыток (диагностика/тесты). */
+    fun failedAttempts(): Int = attempts.failures()
 
     fun wipe() {
         if (file.exists()) file.delete()

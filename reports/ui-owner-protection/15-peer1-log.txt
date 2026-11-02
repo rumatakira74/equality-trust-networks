@@ -1,0 +1,17 @@
+peer1 (порт 4001, полный лог на устройстве — выжимка: строки tx/событий + финальный статус;
+статус-строки каждые 10 с опущены; сессии 04:09-04:48 — старт/переподключение, опущены)
+
+sandbox-peer: mint V1 период 2: отклонён: conflict/EQUIVOCATION_BRANCH_LOST
+sandbox-peer: mint V2 период 1: отклонён: conflict/EQUIVOCATION_BRANCH_LOST
+sandbox-peer: mint V2 период 2: отклонён: conflict/EQUIVOCATION_BRANCH_LOST
+sandbox-peer: mint V3 период 1: отклонён: reject/E_SEQ
+sandbox-peer: узел: handleTx: tx 48776630f622 type=REGISTER seq=1 от <peer.ID Qm*sF2Udh>
+sandbox-peer: узел: handleTx: tx a7cc1ceb7e70 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+sandbox-peer: узел: handleTx: tx d383ecf1d2f2 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+sandbox-peer: узел: handleTx: tx b964fe77cdc5 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+sandbox-peer: vouch V3: отклонён: conflict/EQUIVOCATION_BRANCH_LOST
+sandbox-peer: узел: handleTx: tx da2a64eebd6f type=VOUCH seq=3 от <peer.ID Qm*VVXdtP>
+sandbox-peer: узел: handleTx: tx 0630d2be4755 type=TRANSFER seq=2 от <peer.ID Qm*vGxq1V>
+
+--- финальный статус (08:16, после перевода в приманке 08:10):
+sandbox-peer: статус: {"level":"full","peer_id":"QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP","peers":2,"journal_len":10,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":8,"state_root":"3ce53ab9f214f0f7d9d9ef6cedb8a3221a5b5600e008ac91a39be68de296f254"}

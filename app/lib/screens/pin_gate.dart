@@ -56,12 +56,28 @@ class _PinDialogState extends State<_PinDialog> {
       _error = null;
     });
     final platform = context.read<PlatformService>();
-    // один и тот же вызов и ритм для любого PIN (неразличимость)
-    final res = await platform.verifyPin(_controller.text);
+    // один и тот же вызов и ритм для любого PIN (неразличимость);
+    // платформенная ошибка не брикует диалог (сброс _busy)
+    String res;
+    try {
+      res = await platform.verifyPin(_controller.text);
+    } catch (_) {
+      res = 'none';
+    }
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     if (res == 'normal') {
       Navigator.of(context).pop(true);
+    } else if (res == 'locked') {
+      // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+      final rem = await platform.pinLockRemaining();
+      if (!mounted) return;
+      setState(() {
+        _error = AppLocalizations.of(context)!
+            .lockTooManyAttempts((rem + 999) ~/ 1000);
+        _busy = false;
+      });
+      _controller.clear();
     } else {
       // неверный и тревожный-неверный — одинаковое сообщение
       setState(() {

@@ -1,0 +1,802 @@
+--------- beginning of main
+11-02 06:47:20.413  4179  4179 D TnpBridge: -> manifest
+11-02 06:47:20.415  4179  4179 D TnpBridge: <- manifest done
+11-02 06:47:20.505  4179  4179 D TnpBridge: -> pinIsSet
+11-02 06:47:20.505  4179  4179 D TnpBridge: <- pinIsSet done
+11-02 06:47:20.509  4179  4179 D TnpBridge: -> walletRegistered
+11-02 06:47:20.518  4179  4179 D TnpBridge: <- walletRegistered done
+11-02 06:47:20.525  4179  4179 D TnpBridge: -> walletAddress
+11-02 06:47:20.526  4179  4179 D TnpBridge: <- walletAddress done
+11-02 06:47:20.527  4179  4179 D TnpBridge: -> biometricsAvailable
+11-02 06:47:20.536  4179  4179 D TnpBridge: <- biometricsAvailable done
+11-02 06:47:20.804  4179  4179 D TnpBridge: -> biometricsAvailable
+11-02 06:47:20.807  4179  4179 D TnpBridge: <- biometricsAvailable done
+11-02 06:47:20.808  4179  4179 D TnpBridge: -> nodeStart
+11-02 06:47:20.822  4179  4179 D TnpBridge: <- nodeStart done
+11-02 06:47:20.953  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:20.953  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:20.983  4179  4235 E TnpNode : запуск узла: лёгкому узлу нужен адрес кошелька
+11-02 06:47:20.983  4179  4235 E TnpNode : go.Universe$proxyerror: лёгкому узлу нужен адрес кошелька
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at tnp.Tnp.startNode(Native Method)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStarted(NodeController.kt:86)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStartedAsync$lambda$0(NodeController.kt:42)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at platform.tnp.android.node.NodeController$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+11-02 06:47:20.983  4179  4235 E TnpNode : 	at java.lang.Thread.run(Thread.java:1119)
+11-02 06:47:20.983  4179  4235 D TnpNode : stats: null
+11-02 06:47:21.187  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:21.187  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:21.187  4179  4235 D TnpNode : stats: null
+11-02 06:47:21.391  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:21.392  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:21.392  4179  4235 D TnpNode : stats: null
+11-02 06:47:21.595  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:21.595  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:21.595  4179  4235 D TnpNode : stats: null
+11-02 06:47:21.797  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:21.798  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:21.798  4179  4235 D TnpNode : stats: null
+11-02 06:47:22.000  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:22.001  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:22.001  4179  4235 D TnpNode : stats: null
+11-02 06:47:22.203  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:22.204  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:22.204  4179  4235 D TnpNode : stats: null
+11-02 06:47:22.406  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:22.406  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:22.406  4179  4235 D TnpNode : stats: null
+11-02 06:47:22.609  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:22.609  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:22.609  4179  4235 D TnpNode : stats: null
+11-02 06:47:22.812  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:22.812  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:22.812  4179  4235 D TnpNode : stats: null
+11-02 06:47:23.015  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:23.015  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:23.015  4179  4235 D TnpNode : stats: null
+11-02 06:47:23.217  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:23.217  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:23.217  4179  4235 D TnpNode : stats: null
+11-02 06:47:23.419  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:23.419  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:23.419  4179  4235 D TnpNode : stats: null
+11-02 06:47:23.621  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:23.621  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:23.621  4179  4235 D TnpNode : stats: null
+11-02 06:47:23.823  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:23.824  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:23.824  4179  4235 D TnpNode : stats: null
+11-02 06:47:24.026  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:24.026  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:24.026  4179  4235 D TnpNode : stats: null
+11-02 06:47:24.280  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:24.280  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:24.281  4179  4235 D TnpNode : stats: null
+11-02 06:47:24.483  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:24.483  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:24.483  4179  4235 D TnpNode : stats: null
+11-02 06:47:24.685  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:24.686  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:24.686  4179  4235 D TnpNode : stats: null
+11-02 06:47:24.888  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:24.889  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:24.889  4179  4235 D TnpNode : stats: null
+11-02 06:47:25.092  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:25.092  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:25.092  4179  4235 D TnpNode : stats: null
+11-02 06:47:25.305  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:25.306  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:25.306  4179  4235 D TnpNode : stats: null
+11-02 06:47:25.518  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:25.518  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:25.518  4179  4235 D TnpNode : stats: null
+11-02 06:47:25.720  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:25.721  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:25.721  4179  4235 D TnpNode : stats: null
+11-02 06:47:25.923  4179  4179 D TnpBridge: -> nodeStats
+11-02 06:47:25.924  4179  4179 D TnpBridge: <- nodeStats done
+11-02 06:47:25.924  4179  4235 D TnpNode : stats: null
+11-02 06:59:44.331  5261  5261 D TnpBridge: -> manifest
+11-02 06:59:44.334  5261  5261 D TnpBridge: <- manifest done
+11-02 06:59:44.462  5261  5261 D TnpBridge: -> pinIsSet
+11-02 06:59:44.462  5261  5261 D TnpBridge: <- pinIsSet done
+11-02 06:59:44.465  5261  5261 D TnpBridge: -> walletRegistered
+11-02 06:59:44.466  5261  5261 D TnpBridge: <- walletRegistered done
+11-02 06:59:44.468  5261  5261 D TnpBridge: -> walletAddress
+11-02 06:59:44.473  5261  5261 D TnpBridge: <- walletAddress done
+11-02 06:59:44.476  5261  5261 D TnpBridge: -> biometricsAvailable
+11-02 06:59:44.483  5261  5261 D TnpBridge: <- biometricsAvailable done
+11-02 06:59:44.794  5261  5261 D TnpBridge: -> biometricsAvailable
+11-02 06:59:44.798  5261  5261 D TnpBridge: <- biometricsAvailable done
+11-02 06:59:44.799  5261  5261 D TnpBridge: -> nodeStart
+11-02 06:59:44.807  5261  5261 D TnpBridge: <- nodeStart done
+11-02 06:59:44.960  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:44.961  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:44.961  5261  5314 D TnpNode : stats: null
+11-02 06:59:44.989  5261  5314 E TnpNode : запуск узла: лёгкому узлу нужен адрес кошелька
+11-02 06:59:44.989  5261  5314 E TnpNode : go.Universe$proxyerror: лёгкому узлу нужен адрес кошелька
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at tnp.Tnp.startNode(Native Method)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStarted(NodeController.kt:86)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStartedAsync$lambda$0(NodeController.kt:42)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+11-02 06:59:44.989  5261  5314 E TnpNode : 	at java.lang.Thread.run(Thread.java:1119)
+11-02 06:59:45.184  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:45.184  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:45.186  5261  5314 D TnpNode : stats: null
+11-02 06:59:45.387  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:45.388  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:45.388  5261  5314 D TnpNode : stats: null
+11-02 06:59:45.590  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:45.590  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:45.590  5261  5314 D TnpNode : stats: null
+11-02 06:59:45.792  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:45.792  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:45.793  5261  5314 D TnpNode : stats: null
+11-02 06:59:45.995  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:45.996  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:45.996  5261  5314 D TnpNode : stats: null
+11-02 06:59:46.198  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:46.198  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:46.198  5261  5314 D TnpNode : stats: null
+11-02 06:59:46.400  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:46.400  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:46.400  5261  5314 D TnpNode : stats: null
+11-02 06:59:46.602  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:46.603  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:46.603  5261  5314 D TnpNode : stats: null
+11-02 06:59:46.805  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:46.805  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:46.805  5261  5314 D TnpNode : stats: null
+11-02 06:59:47.008  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:47.008  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:47.008  5261  5314 D TnpNode : stats: null
+11-02 06:59:47.210  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:47.211  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:47.211  5261  5314 D TnpNode : stats: null
+11-02 06:59:47.414  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:47.414  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:47.414  5261  5314 D TnpNode : stats: null
+11-02 06:59:47.616  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:47.616  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:47.616  5261  5314 D TnpNode : stats: null
+11-02 06:59:48.119  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:48.119  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:48.120  5261  5314 D TnpNode : stats: null
+11-02 06:59:48.354  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:48.354  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:48.354  5261  5314 D TnpNode : stats: null
+11-02 06:59:48.556  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:48.556  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:48.556  5261  5314 D TnpNode : stats: null
+11-02 06:59:48.758  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:48.758  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:48.758  5261  5314 D TnpNode : stats: null
+11-02 06:59:48.960  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:48.960  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:48.960  5261  5314 D TnpNode : stats: null
+11-02 06:59:49.162  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:49.162  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:49.163  5261  5314 D TnpNode : stats: null
+11-02 06:59:49.365  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:49.366  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:49.366  5261  5314 D TnpNode : stats: null
+11-02 06:59:49.568  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:49.568  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:49.568  5261  5314 D TnpNode : stats: null
+11-02 06:59:49.770  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:49.770  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:49.770  5261  5314 D TnpNode : stats: null
+11-02 06:59:49.972  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:49.972  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:49.973  5261  5314 D TnpNode : stats: null
+11-02 06:59:50.176  5261  5261 D TnpBridge: -> nodeStats
+11-02 06:59:50.176  5261  5261 D TnpBridge: <- nodeStats done
+11-02 06:59:50.176  5261  5314 D TnpNode : stats: null
+11-02 07:00:18.101  5261  5261 D TnpBridge: -> setupPin
+11-02 07:00:18.101  5261  5261 D TnpBridge: <- setupPin done
+11-02 07:00:20.143  5261  5261 D TnpBridge: -> registry
+11-02 07:00:20.143  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:22.151  5261  5261 D TnpBridge: -> registry
+11-02 07:00:22.151  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:24.153  5261  5261 D TnpBridge: -> registry
+11-02 07:00:24.153  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:26.157  5261  5261 D TnpBridge: -> registry
+11-02 07:00:26.157  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:28.159  5261  5261 D TnpBridge: -> registry
+11-02 07:00:28.159  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:30.162  5261  5261 D TnpBridge: -> registry
+11-02 07:00:30.162  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:32.164  5261  5261 D TnpBridge: -> registry
+11-02 07:00:32.164  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:34.174  5261  5261 D TnpBridge: -> registry
+11-02 07:00:34.174  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:36.177  5261  5261 D TnpBridge: -> registry
+11-02 07:00:36.178  5261  5261 D TnpBridge: <- registry done
+11-02 07:00:38.182  5261  5261 D TnpBridge: -> registry
+11-02 07:00:38.182  5261  5261 D TnpBridge: <- registry done
+11-02 07:01:09.684  5261  5261 D TnpBridge: -> nodeStart
+11-02 07:01:09.689  5261  5261 D TnpBridge: <- nodeStart done
+11-02 07:01:09.694  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:09.694  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:09.699  5261  5314 E TnpNode : запуск узла: лёгкому узлу нужен адрес кошелька
+11-02 07:01:09.699  5261  5314 E TnpNode : go.Universe$proxyerror: лёгкому узлу нужен адрес кошелька
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at tnp.Tnp.startNode(Native Method)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStarted(NodeController.kt:86)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController.ensureStartedAsync$lambda$0(NodeController.kt:42)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at platform.tnp.android.node.NodeController$$ExternalSyntheticLambda4.run(D8$$SyntheticClass:0)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+11-02 07:01:09.699  5261  5314 E TnpNode : 	at java.lang.Thread.run(Thread.java:1119)
+11-02 07:01:09.699  5261  5314 D TnpNode : stats: null
+11-02 07:01:09.902  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:09.902  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:09.902  5261  5314 D TnpNode : stats: null
+11-02 07:01:10.105  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:10.105  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:10.105  5261  5314 D TnpNode : stats: null
+11-02 07:01:10.307  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:10.307  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:10.307  5261  5314 D TnpNode : stats: null
+11-02 07:01:10.509  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:10.509  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:10.509  5261  5314 D TnpNode : stats: null
+11-02 07:01:10.712  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:10.712  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:10.712  5261  5314 D TnpNode : stats: null
+11-02 07:01:10.916  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:10.916  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:10.917  5261  5314 D TnpNode : stats: null
+11-02 07:01:11.118  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:11.118  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:11.119  5261  5314 D TnpNode : stats: null
+11-02 07:01:11.321  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:11.321  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:11.321  5261  5314 D TnpNode : stats: null
+11-02 07:01:11.523  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:11.524  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:11.524  5261  5314 D TnpNode : stats: null
+11-02 07:01:11.725  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:11.725  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:11.725  5261  5314 D TnpNode : stats: null
+11-02 07:01:11.927  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:11.927  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:11.928  5261  5314 D TnpNode : stats: null
+11-02 07:01:12.129  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:12.129  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:12.130  5261  5314 D TnpNode : stats: null
+11-02 07:01:12.331  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:12.331  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:12.331  5261  5314 D TnpNode : stats: null
+11-02 07:01:12.533  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:12.533  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:12.534  5261  5314 D TnpNode : stats: null
+11-02 07:01:12.735  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:12.735  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:12.735  5261  5314 D TnpNode : stats: null
+11-02 07:01:12.938  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:12.938  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:12.939  5261  5314 D TnpNode : stats: null
+11-02 07:01:13.142  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:13.143  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:13.143  5261  5314 D TnpNode : stats: null
+11-02 07:01:13.345  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:13.345  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:13.345  5261  5314 D TnpNode : stats: null
+11-02 07:01:13.547  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:13.548  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:13.548  5261  5314 D TnpNode : stats: null
+11-02 07:01:13.749  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:13.749  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:13.749  5261  5314 D TnpNode : stats: null
+11-02 07:01:13.951  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:13.952  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:13.952  5261  5314 D TnpNode : stats: null
+11-02 07:01:14.154  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:14.155  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:14.155  5261  5314 D TnpNode : stats: null
+11-02 07:01:14.356  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:14.356  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:14.356  5261  5314 D TnpNode : stats: null
+11-02 07:01:14.558  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:14.559  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:14.559  5261  5314 D TnpNode : stats: null
+11-02 07:01:14.761  5261  5261 D TnpBridge: -> buildRegister
+11-02 07:01:14.762  5261  5261 D TnpBridge: <- buildRegister done
+11-02 07:01:14.878  5261  5261 D TnpBridge: -> signTx
+11-02 07:01:14.883  5261  5261 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:01:14.903  5261  5261 D TnpBridge: <- signTx done
+11-02 07:01:32.040  5261  5261 D TnpBridge: signTx callback sig=true
+11-02 07:01:32.045  5261  5261 D TnpBridge: -> submitTx
+11-02 07:01:32.045  5261  5261 D TnpBridge: <- submitTx done
+11-02 07:01:57.608  5261  5261 D TnpBridge: -> nodeStart
+11-02 07:01:57.610  5261  5261 D TnpBridge: <- nodeStart done
+11-02 07:01:57.628  5261  5261 D TnpBridge: -> nodeStats
+11-02 07:01:57.628  5261  5261 D TnpBridge: <- nodeStats done
+11-02 07:01:57.764  5261  5314 D TnpNode : запущен: {"level":"light","peer_id":"QmXiTpBrieVaPVqTsELueF4D9RHitBkpWgm2fkKVsF2Udh","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:01:57.764  5261  5314 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:01:57.764  5261  5314 D TnpNode : stats: {"level":"light","peer_id":"QmXiTpBrieVaPVqTsELueF4D9RHitBkpWgm2fkKVsF2Udh","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:01:57.765  5261  5261 D TnpBridge: -> buildRegister
+11-02 07:01:57.765  5261  5261 D TnpBridge: <- buildRegister done
+11-02 07:01:57.849  5261  5261 D TnpBridge: -> signTx
+11-02 07:01:57.852  5261  5261 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:01:57.855  5261  5261 D TnpBridge: <- signTx done
+11-02 07:02:24.193  5261  5261 D TnpBridge: signTx callback sig=true
+11-02 07:02:24.198  5261  5261 D TnpBridge: -> submitTx
+11-02 07:02:24.201  5261  5261 D TnpBridge: <- submitTx done
+11-02 07:02:24.208  5261  5297 D TnpNode : handleTx: tx 48776630f622 type=REGISTER seq=1 от <peer.ID Qm*sF2Udh>
+11-02 07:02:25.151  5261  5297 D TnpNode : handleTx: tx 40cb1a35afb9 type=VOUCH seq=3 от <peer.ID Qm*VVXdtP>
+11-02 07:02:25.155  5261  5298 D TnpNode : handleTx: tx a7cc1ceb7e70 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+11-02 07:02:25.162  5261  5300 D TnpNode : handleTx: tx d383ecf1d2f2 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+11-02 07:02:25.166  5261  5300 D TnpNode : handleTx: tx c636c70c9f15 type=VOUCH seq=3 от <peer.ID Qm*VVXdtP>
+11-02 07:02:25.184  5261  5459 D TnpNode : handleTx: tx b964fe77cdc5 type=VOUCH seq=3 от <peer.ID Qm*8JBtJC>
+11-02 07:02:25.186  5261  5300 D TnpNode : handleTx: tx da2a64eebd6f type=VOUCH seq=3 от <peer.ID Qm*VVXdtP>
+11-02 07:03:08.328  5261  5261 D TnpBridge: -> walletAddress
+11-02 07:03:08.332  5261  5261 D TnpBridge: <- walletAddress done
+11-02 07:03:08.436  5261  5261 D TnpBridge: -> biometricLoginAllowed
+11-02 07:03:08.437  5261  5261 D TnpBridge: <- biometricLoginAllowed done
+11-02 07:03:23.659  5261  5261 D TnpBridge: -> verifyPin
+11-02 07:03:23.659  5261  5261 D TnpBridge: <- verifyPin done
+11-02 07:14:57.098  5992  5992 D TnpBridge: -> manifest
+11-02 07:14:57.100  5992  5992 D TnpBridge: <- manifest done
+11-02 07:14:57.236  5992  5992 D TnpBridge: -> pinIsSet
+11-02 07:14:57.265  5992  5992 D TnpBridge: <- pinIsSet done
+11-02 07:14:57.273  5992  5992 D TnpBridge: -> walletRegistered
+11-02 07:14:57.275  5992  5992 D TnpBridge: <- walletRegistered done
+11-02 07:14:57.292  5992  5992 D TnpBridge: -> walletAddress
+11-02 07:14:57.312  5992  5992 D TnpBridge: <- walletAddress done
+11-02 07:14:57.313  5992  5992 D TnpBridge: -> biometricsAvailable
+11-02 07:14:57.340  5992  5992 D TnpBridge: <- biometricsAvailable done
+11-02 07:14:57.343  5992  5992 D TnpBridge: -> nodeStats
+11-02 07:14:57.344  5992  5992 D TnpBridge: <- nodeStats done
+11-02 07:14:57.346  5992  6069 D TnpNode : stats: null
+11-02 07:14:57.370  5992  5992 D TnpBridge: -> walletInfo
+11-02 07:14:57.378  5992  5992 D TnpBridge: <- walletInfo done
+11-02 07:14:58.245  5992  5992 D TnpBridge: -> biometricLoginAllowed
+11-02 07:14:58.246  5992  5992 D TnpBridge: <- biometricLoginAllowed done
+11-02 07:15:36.832  5992  5992 D TnpBridge: -> biometricLogin
+11-02 07:15:36.879  5992  5992 D TnpBridge: <- biometricLogin done
+11-02 07:20:17.081  5992  5992 D TnpBridge: -> manifest
+11-02 07:20:17.084  5992  5992 D TnpBridge: <- manifest done
+11-02 07:20:17.174  5992  5992 D TnpBridge: -> pinIsSet
+11-02 07:20:17.209  5992  5992 D TnpBridge: <- pinIsSet done
+11-02 07:20:17.218  5992  5992 D TnpBridge: -> walletRegistered
+11-02 07:20:17.220  5992  5992 D TnpBridge: <- walletRegistered done
+11-02 07:20:17.227  5992  5992 D TnpBridge: -> walletAddress
+11-02 07:20:17.232  5992  5992 D TnpBridge: <- walletAddress done
+11-02 07:20:17.237  5992  5992 D TnpBridge: -> biometricsAvailable
+11-02 07:20:17.245  5992  5992 D TnpBridge: <- biometricsAvailable done
+11-02 07:20:17.252  5992  5992 D TnpBridge: -> nodeStats
+11-02 07:20:17.252  5992  5992 D TnpBridge: <- nodeStats done
+11-02 07:20:17.253  5992  6069 D TnpNode : stats: null
+11-02 07:20:17.278  5992  5992 D TnpBridge: -> walletInfo
+11-02 07:20:17.278  5992  5992 D TnpBridge: <- walletInfo done
+11-02 07:20:18.096  5992  5992 D TnpBridge: -> biometricLoginAllowed
+11-02 07:20:18.096  5992  5992 D TnpBridge: <- biometricLoginAllowed done
+11-02 07:23:32.003  5992  5992 D TnpBridge: -> verifyPin
+11-02 07:23:32.003  5992  5992 D TnpBridge: <- verifyPin done
+11-02 07:23:32.045  5992  6069 E TnpBridge: bg err (TEMP DEBUG)
+11-02 07:23:32.045  5992  6069 E TnpBridge: java.security.spec.InvalidKeySpecException: Could not generate secret key
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:535)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.pin.PinHash.hash(PinHash.kt:18)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.pin.PinManager.hash(PinManager.kt:140)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.pin.PinManager.verify(PinManager.kt:72)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.flutterbridge.FlutterBridge.handle$lambda$2(FlutterBridge.kt:302)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.flutterbridge.FlutterBridge$$ExternalSyntheticLambda13.invoke(D8$$SyntheticClass:0)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.flutterbridge.FlutterBridge.bg$lambda$0(FlutterBridge.kt:76)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at platform.tnp.android.flutterbridge.FlutterBridge$$ExternalSyntheticLambda43.run(D8$$SyntheticClass:0)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at java.lang.Thread.run(Thread.java:1119)
+11-02 07:23:32.045  5992  6069 E TnpBridge: Caused by: java.lang.IllegalArgumentException: password empty
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at com.android.org.bouncycastle.jcajce.provider.symmetric.PBEPBKDF2$BasePBKDF2.engineGenerateSecret(PBEPBKDF2.java:240)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:524)
+11-02 07:23:32.045  5992  6069 E TnpBridge: 	... 10 more
+11-02 07:27:18.847  6391  6391 D TnpBridge: -> manifest
+11-02 07:27:18.848  6391  6391 D TnpBridge: <- manifest done
+11-02 07:27:18.949  6391  6391 D TnpBridge: -> pinIsSet
+11-02 07:27:19.048  6391  6391 D TnpBridge: <- pinIsSet done
+11-02 07:27:19.056  6391  6391 D TnpBridge: -> walletRegistered
+11-02 07:27:19.057  6391  6391 D TnpBridge: <- walletRegistered done
+11-02 07:27:19.062  6391  6391 D TnpBridge: -> walletAddress
+11-02 07:27:19.097  6391  6391 D TnpBridge: <- walletAddress done
+11-02 07:27:19.107  6391  6391 D TnpBridge: -> biometricsAvailable
+11-02 07:27:19.134  6391  6391 D TnpBridge: <- biometricsAvailable done
+11-02 07:27:19.149  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:27:19.150  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:27:19.152  6391  6444 D TnpNode : stats: null
+11-02 07:27:19.154  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:27:19.155  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:27:20.036  6391  6391 D TnpBridge: -> biometricLoginAllowed
+11-02 07:27:20.036  6391  6391 D TnpBridge: <- biometricLoginAllowed done
+11-02 07:27:21.533  6391  6391 D TnpBridge: -> biometricLogin
+11-02 07:27:21.546  6391  6391 D TnpBridge: <- biometricLogin done
+11-02 07:31:12.652  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:31:12.652  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:31:14.723  6391  6391 D TnpBridge: -> history
+11-02 07:31:14.723  6391  6391 D TnpBridge: <- history done
+11-02 07:31:14.723  6391  6391 D TnpBridge: -> vouchProgress
+11-02 07:31:14.724  6391  6391 D TnpBridge: <- vouchProgress done
+11-02 07:31:14.724  6391  6391 D TnpBridge: -> registry
+11-02 07:31:14.724  6391  6391 D TnpBridge: <- registry done
+11-02 07:31:14.724  6391  6391 D TnpBridge: -> pendingMigrations
+11-02 07:31:14.724  6391  6391 D TnpBridge: <- pendingMigrations done
+11-02 07:31:14.740  6391  6391 D TnpBridge: -> setSecureMode
+11-02 07:31:14.741  6391  6391 D TnpBridge: <- setSecureMode done
+11-02 07:31:14.860  6391  6391 D TnpBridge: -> nodeStart
+11-02 07:31:14.863  6391  6391 D TnpBridge: <- nodeStart done
+11-02 07:31:14.864  6391  6391 D TnpBridge: -> guardianOffers
+11-02 07:31:14.865  6391  6391 D TnpBridge: <- guardianOffers done
+11-02 07:31:14.898  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:31:14.898  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:31:15.307  6391  6444 D TnpNode : запущен: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:31:15.308  6391  6444 D TnpNode : sync: <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:31:15.308  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:31:15.313  6391  6391 D TnpBridge: -> history
+11-02 07:31:15.313  6391  6391 D TnpBridge: <- history done
+11-02 07:31:15.313  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:31:15.313  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:31:15.324  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:31:15.325  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:31:15.332  6391  6444 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:31:15.338  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:31:15.500  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:31:15.500  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:31:15.500  6391  6391 D TnpBridge: -> awaiting
+11-02 07:31:15.501  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:31:15.518  6391  6391 D TnpBridge: -> history
+11-02 07:31:15.518  6391  6391 D TnpBridge: <- history done
+11-02 07:31:15.528  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:31:15.528  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:31:15.670  6391  6391 D TnpBridge: -> awaiting
+11-02 07:31:15.670  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:32:49.889  6391  6391 D TnpBridge: -> setSecureMode
+11-02 07:32:49.890  6391  6391 D TnpBridge: <- setSecureMode done
+11-02 07:33:44.046  6391  6391 D TnpBridge: -> setSecureMode
+11-02 07:33:44.046  6391  6391 D TnpBridge: <- setSecureMode done
+11-02 07:37:10.171  6391  6391 D TnpBridge: -> feeQuote
+11-02 07:37:10.172  6391  6391 D TnpBridge: <- feeQuote done
+11-02 07:37:10.239  6391  6391 D TnpBridge: -> feeQuote
+11-02 07:37:10.239  6391  6391 D TnpBridge: <- feeQuote done
+11-02 07:37:10.274  6391  6391 D TnpBridge: -> feeQuote
+11-02 07:37:10.274  6391  6391 D TnpBridge: <- feeQuote done
+11-02 07:46:13.995  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:46:13.996  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:46:17.264  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:46:17.264  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:47:00.236  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:47:00.237  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:47:01.775  6391  6391 D TnpBridge: -> buildTransfer
+11-02 07:47:01.775  6391  6391 D TnpBridge: <- buildTransfer done
+11-02 07:47:01.836  6391  6391 D TnpBridge: -> signTx
+11-02 07:47:02.117  6391  6391 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:47:02.120  6391  6391 D TnpBridge: <- signTx done
+11-02 07:47:44.440  6391  6391 D TnpBridge: signTx callback sig=true
+11-02 07:47:44.443  6391  6391 D TnpBridge: -> submitTx
+11-02 07:47:44.444  6391  6391 D TnpBridge: <- submitTx done
+11-02 07:47:44.447  6391  6583 D TnpNode : handleTx: tx 0630d2be4755 type=TRANSFER seq=2 от <peer.ID Qm*vGxq1V>
+11-02 07:47:44.449  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:47:44.449  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:47:44.449  6391  6444 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:47:44.449  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:47:44.450  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:47:44.450  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:47:44.452  6391  6391 D TnpBridge: -> history
+11-02 07:47:44.452  6391  6391 D TnpBridge: <- history done
+11-02 07:47:44.454  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:47:44.454  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:47:44.455  6391  6391 D TnpBridge: -> awaiting
+11-02 07:47:44.455  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:48:57.989  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:48:57.990  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:48:59.552  6391  6391 D TnpBridge: -> buildTransfer
+11-02 07:48:59.552  6391  6391 D TnpBridge: <- buildTransfer done
+11-02 07:48:59.604  6391  6391 D TnpBridge: -> signTx
+11-02 07:48:59.612  6391  6391 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:48:59.617  6391  6391 D TnpBridge: <- signTx done
+11-02 07:49:43.616  6391  6391 D TnpBridge: signTx callback sig=true
+11-02 07:49:43.620  6391  6391 D TnpBridge: -> submitTx
+11-02 07:49:43.620  6391  6391 D TnpBridge: <- submitTx done
+11-02 07:49:43.625  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:49:43.625  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:49:43.625  6391  6444 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:49:43.626  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:49:43.629  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:49:43.629  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:49:43.635  6391  6391 D TnpBridge: -> history
+11-02 07:49:43.636  6391  6391 D TnpBridge: <- history done
+11-02 07:49:43.638  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:49:43.638  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:49:43.640  6391  6391 D TnpBridge: -> awaiting
+11-02 07:49:43.640  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:50:21.572  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:50:21.573  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:50:23.114  6391  6391 D TnpBridge: -> buildTransfer
+11-02 07:50:23.114  6391  6391 D TnpBridge: <- buildTransfer done
+11-02 07:50:23.153  6391  6391 D TnpBridge: -> signTx
+11-02 07:50:23.157  6391  6391 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:50:23.163  6391  6391 D TnpBridge: <- signTx done
+11-02 07:51:25.658  6391  6391 D TnpBridge: signTx callback sig=true
+11-02 07:51:25.660  6391  6391 D TnpBridge: -> submitTx
+11-02 07:51:25.664  6391  6391 D TnpBridge: <- submitTx done
+11-02 07:51:25.665  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:51:25.666  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:51:25.667  6391  6444 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:51:25.667  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:51:25.667  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:51:25.667  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:51:25.674  6391  6391 D TnpBridge: -> history
+11-02 07:51:25.674  6391  6391 D TnpBridge: <- history done
+11-02 07:51:25.809  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:51:25.810  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:51:25.815  6391  6391 D TnpBridge: -> awaiting
+11-02 07:51:25.815  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:51:28.184  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:51:28.184  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:56:11.277  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:56:11.277  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:56:12.741  6391  6391 D TnpBridge: -> buildTransfer
+11-02 07:56:12.741  6391  6391 D TnpBridge: <- buildTransfer done
+11-02 07:56:12.749  6391  6391 D TnpBridge: -> signTx
+11-02 07:56:12.751  6391  6391 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:56:12.754  6391  6391 D TnpBridge: <- signTx done
+11-02 07:57:01.321  6391  6391 D TnpBridge: signTx callback sig=true
+11-02 07:57:01.324  6391  6391 D TnpBridge: -> submitTx
+11-02 07:57:01.328  6391  6391 D TnpBridge: <- submitTx done
+11-02 07:57:01.329  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:57:01.329  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:57:01.330  6391  6444 D TnpNode : sync: <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:57:01.330  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:57:01.334  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:57:01.334  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:57:01.336  6391  6391 D TnpBridge: -> history
+11-02 07:57:01.338  6391  6391 D TnpBridge: <- history done
+11-02 07:57:01.341  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:57:01.341  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:57:01.497  6391  6391 D TnpBridge: -> awaiting
+11-02 07:57:01.497  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:57:07.213  6391  6391 D TnpBridge: -> verifyPin
+11-02 07:57:07.213  6391  6391 D TnpBridge: <- verifyPin done
+11-02 07:57:08.728  6391  6391 D TnpBridge: -> buildTransfer
+11-02 07:57:08.728  6391  6391 D TnpBridge: <- buildTransfer done
+11-02 07:57:08.765  6391  6391 D TnpBridge: -> signTx
+11-02 07:57:08.777  6391  6391 D TnpBridge: prompt.authenticate с CryptoObject
+11-02 07:57:08.789  6391  6391 D TnpBridge: <- signTx done
+11-02 07:57:48.665  6391  6391 D TnpBridge: signTx callback sig=true
+11-02 07:57:48.671  6391  6391 D TnpBridge: -> submitTx
+11-02 07:57:48.671  6391  6391 D TnpBridge: <- submitTx done
+11-02 07:57:48.673  6391  6391 D TnpBridge: -> nodeStats
+11-02 07:57:48.673  6391  6391 D TnpBridge: <- nodeStats done
+11-02 07:57:48.677  6391  6444 D TnpNode : sync: <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 07:57:48.677  6391  6444 D TnpNode : stats: {"level":"light","peer_id":"Qmf89uQ5GxAmkRDYtJojDwzPfmULQzHnnC34fQLLvGxq1V","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 07:57:48.678  6391  6391 D TnpBridge: -> walletInfo
+11-02 07:57:48.685  6391  6391 D TnpBridge: <- walletInfo done
+11-02 07:57:48.706  6391  6391 D TnpBridge: -> history
+11-02 07:57:48.707  6391  6391 D TnpBridge: <- history done
+11-02 07:57:48.715  6391  6391 D TnpBridge: -> pendingTransfers
+11-02 07:57:48.716  6391  6391 D TnpBridge: <- pendingTransfers done
+11-02 07:57:48.722  6391  6391 D TnpBridge: -> awaiting
+11-02 07:57:48.722  6391  6391 D TnpBridge: <- awaiting done
+11-02 07:58:18.324  7400  7400 D TnpBridge: -> manifest
+11-02 07:58:18.325  7400  7400 D TnpBridge: <- manifest done
+11-02 07:58:18.415  7400  7400 D TnpBridge: -> pinIsSet
+11-02 07:58:18.446  7400  7400 D TnpBridge: <- pinIsSet done
+11-02 07:58:18.463  7400  7400 D TnpBridge: -> walletRegistered
+11-02 07:58:18.464  7400  7400 D TnpBridge: <- walletRegistered done
+11-02 07:58:18.471  7400  7400 D TnpBridge: -> walletAddress
+11-02 07:58:18.489  7400  7400 D TnpBridge: <- walletAddress done
+11-02 07:58:18.490  7400  7400 D TnpBridge: -> biometricsAvailable
+11-02 07:58:18.502  7400  7400 D TnpBridge: <- biometricsAvailable done
+11-02 07:58:18.509  7400  7400 D TnpBridge: -> nodeStats
+11-02 07:58:18.510  7400  7400 D TnpBridge: <- nodeStats done
+11-02 07:58:18.511  7400  7451 D TnpNode : stats: null
+11-02 07:58:18.513  7400  7400 D TnpBridge: -> walletInfo
+11-02 07:58:18.514  7400  7400 D TnpBridge: <- walletInfo done
+11-02 07:58:19.334  7400  7400 D TnpBridge: -> biometricLoginAllowed
+11-02 07:58:19.334  7400  7400 D TnpBridge: <- biometricLoginAllowed done
+11-02 07:58:21.816  7400  7400 D TnpBridge: -> biometricLogin
+11-02 07:58:21.830  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 07:58:30.899  7400  7400 D TnpBridge: -> verifyPin
+11-02 07:58:30.900  7400  7400 D TnpBridge: <- verifyPin done
+11-02 07:58:33.423  7400  7400 D TnpBridge: -> biometricLogin
+11-02 07:58:33.428  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 07:58:42.420  7400  7400 D TnpBridge: -> verifyPin
+11-02 07:58:42.420  7400  7400 D TnpBridge: <- verifyPin done
+11-02 07:59:06.413  7400  7400 D TnpBridge: -> biometricLogin
+11-02 07:59:06.417  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 08:03:59.391  7400  7400 D TnpBridge: -> verifyPin
+11-02 08:03:59.392  7400  7400 D TnpBridge: <- verifyPin done
+11-02 08:04:33.195  7400  7400 D TnpBridge: -> biometricLogin
+11-02 08:04:33.209  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 08:04:42.085  7400  7400 D TnpBridge: -> verifyPin
+11-02 08:04:42.085  7400  7400 D TnpBridge: <- verifyPin done
+11-02 08:04:45.007  7400  7400 D TnpBridge: -> biometricLogin
+11-02 08:04:45.012  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 08:04:53.886  7400  7400 D TnpBridge: -> verifyPin
+11-02 08:04:53.887  7400  7400 D TnpBridge: <- verifyPin done
+11-02 08:04:55.410  7400  7400 D TnpBridge: -> pinLockRemaining
+11-02 08:04:55.411  7400  7400 D TnpBridge: <- pinLockRemaining done
+11-02 08:04:56.818  7400  7400 D TnpBridge: -> biometricLogin
+11-02 08:04:56.822  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 08:05:05.783  7400  7400 D TnpBridge: -> verifyPin
+11-02 08:05:05.783  7400  7400 D TnpBridge: <- verifyPin done
+11-02 08:05:06.135  7400  7400 D TnpBridge: -> pinLockRemaining
+11-02 08:05:06.136  7400  7400 D TnpBridge: <- pinLockRemaining done
+11-02 08:05:57.465  7400  7400 D TnpBridge: -> biometricLogin
+11-02 08:05:57.469  7400  7400 D TnpBridge: <- biometricLogin done
+11-02 08:06:49.548  7400  7400 D TnpBridge: -> verifyPin
+11-02 08:06:49.548  7400  7400 D TnpBridge: <- verifyPin done
+11-02 08:06:51.484  7400  7400 D TnpBridge: -> history
+11-02 08:06:51.485  7400  7400 D TnpBridge: <- history done
+11-02 08:06:51.485  7400  7400 D TnpBridge: -> vouchProgress
+11-02 08:06:51.485  7400  7400 D TnpBridge: <- vouchProgress done
+11-02 08:06:51.485  7400  7400 D TnpBridge: -> registry
+11-02 08:06:51.485  7400  7400 D TnpBridge: <- registry done
+11-02 08:06:51.485  7400  7400 D TnpBridge: -> pendingMigrations
+11-02 08:06:51.486  7400  7400 D TnpBridge: <- pendingMigrations done
+11-02 08:06:51.486  7400  7400 D TnpBridge: -> setSecureMode
+11-02 08:06:51.487  7400  7400 D TnpBridge: <- setSecureMode done
+11-02 08:06:51.492  7400  7400 D TnpBridge: -> nodeStart
+11-02 08:06:51.495  7400  7400 D TnpBridge: <- nodeStart done
+11-02 08:06:51.524  7400  7400 D TnpBridge: -> nodeStats
+11-02 08:06:51.524  7400  7400 D TnpBridge: <- nodeStats done
+11-02 08:06:51.528  7400  7451 D TnpNode : stats: null
+11-02 08:06:51.623  7400  7400 D TnpBridge: -> guardianOffers
+11-02 08:06:51.626  7400  7400 D TnpBridge: <- guardianOffers done
+11-02 08:06:51.704  7400  7451 D TnpNode : запущен: {"level":"light","peer_id":"QmR6oQVoxjNeqMZ6fuSkGqwCBxuR9dUi5zaZ2H2RMi5yBf","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:06:51.943  7400  7400 D TnpBridge: -> nodeStats
+11-02 08:06:51.944  7400  7400 D TnpBridge: <- nodeStats done
+11-02 08:06:51.962  7400  7451 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:06:51.970  7400  7451 D TnpNode : stats: {"level":"light","peer_id":"QmR6oQVoxjNeqMZ6fuSkGqwCBxuR9dUi5zaZ2H2RMi5yBf","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:06:51.979  7400  7400 D TnpBridge: -> history
+11-02 08:06:51.979  7400  7400 D TnpBridge: <- history done
+11-02 08:06:51.980  7400  7400 D TnpBridge: -> nodeStats
+11-02 08:06:51.980  7400  7400 D TnpBridge: <- nodeStats done
+11-02 08:06:52.003  7400  7451 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:06:52.004  7400  7451 D TnpNode : stats: {"level":"light","peer_id":"QmR6oQVoxjNeqMZ6fuSkGqwCBxuR9dUi5zaZ2H2RMi5yBf","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:06:52.117  7400  7400 D TnpBridge: -> pendingTransfers
+11-02 08:06:52.118  7400  7400 D TnpBridge: <- pendingTransfers done
+11-02 08:06:52.118  7400  7400 D TnpBridge: -> walletInfo
+11-02 08:06:52.118  7400  7400 D TnpBridge: <- walletInfo done
+11-02 08:06:52.127  7400  7400 D TnpBridge: -> awaiting
+11-02 08:06:52.127  7400  7400 D TnpBridge: <- awaiting done
+11-02 08:06:52.146  7400  7400 D TnpBridge: -> history
+11-02 08:06:52.146  7400  7400 D TnpBridge: <- history done
+11-02 08:06:52.392  7400  7400 D TnpBridge: -> pendingTransfers
+11-02 08:06:52.393  7400  7400 D TnpBridge: <- pendingTransfers done
+11-02 08:06:52.396  7400  7400 D TnpBridge: -> awaiting
+11-02 08:06:52.396  7400  7400 D TnpBridge: <- awaiting done
+11-02 08:07:16.581  8133  8133 D TnpBridge: -> manifest
+11-02 08:07:16.583  8133  8133 D TnpBridge: <- manifest done
+11-02 08:07:16.670  8133  8133 D TnpBridge: -> pinIsSet
+11-02 08:07:16.680  8133  8133 D TnpBridge: <- pinIsSet done
+11-02 08:07:16.695  8133  8133 D TnpBridge: -> walletRegistered
+11-02 08:07:16.696  8133  8133 D TnpBridge: <- walletRegistered done
+11-02 08:07:16.704  8133  8133 D TnpBridge: -> walletAddress
+11-02 08:07:16.716  8133  8133 D TnpBridge: <- walletAddress done
+11-02 08:07:16.719  8133  8133 D TnpBridge: -> biometricsAvailable
+11-02 08:07:16.728  8133  8133 D TnpBridge: <- biometricsAvailable done
+11-02 08:07:16.730  8133  8133 D TnpBridge: -> nodeStats
+11-02 08:07:16.731  8133  8133 D TnpBridge: <- nodeStats done
+11-02 08:07:16.737  8133  8185 D TnpNode : stats: null
+11-02 08:07:16.739  8133  8133 D TnpBridge: -> walletInfo
+11-02 08:07:16.739  8133  8133 D TnpBridge: <- walletInfo done
+11-02 08:07:17.564  8133  8133 D TnpBridge: -> biometricLoginAllowed
+11-02 08:07:17.564  8133  8133 D TnpBridge: <- biometricLoginAllowed done
+11-02 08:07:20.039  8133  8133 D TnpBridge: -> biometricLogin
+11-02 08:07:20.047  8133  8133 D TnpBridge: <- biometricLogin done
+11-02 08:08:13.735  8133  8133 D TnpBridge: -> verifyPin
+11-02 08:08:13.735  8133  8133 D TnpBridge: <- verifyPin done
+11-02 08:08:15.806  8133  8133 D TnpBridge: -> history
+11-02 08:08:15.807  8133  8133 D TnpBridge: -> vouchProgress
+11-02 08:08:15.807  8133  8133 D TnpBridge: <- vouchProgress done
+11-02 08:08:15.808  8133  8133 D TnpBridge: -> registry
+11-02 08:08:15.808  8133  8133 D TnpBridge: <- registry done
+11-02 08:08:15.823  8133  8133 D TnpBridge: -> pendingMigrations
+11-02 08:08:15.829  8133  8133 D TnpBridge: -> setSecureMode
+11-02 08:08:15.830  8133  8133 D TnpBridge: <- setSecureMode done
+11-02 08:08:15.895  8133  8133 D TnpBridge: -> pendingTransfers
+11-02 08:08:15.904  8133  8133 D TnpBridge: -> guardianOffers
+11-02 08:08:15.904  8133  8133 D TnpBridge: <- guardianOffers done
+11-02 08:08:15.911  8133  8133 D TnpBridge: -> nodeStart
+11-02 08:08:15.919  8133  8133 D TnpBridge: <- nodeStart done
+11-02 08:08:15.960  8133  8133 D TnpBridge: -> awaiting
+11-02 08:08:16.114  8133  8185 D TnpNode : запущен: {"level":"light","peer_id":"QmUpaHaztET4QNCmFq2QCT45b8nhL14jp1h8qb467mHaAF","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:08:16.123  8133  8133 D TnpBridge: -> nodeStats
+11-02 08:08:16.123  8133  8133 D TnpBridge: <- nodeStats done
+11-02 08:08:16.124  8133  8185 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:08:16.124  8133  8185 D TnpNode : stats: {"level":"light","peer_id":"QmUpaHaztET4QNCmFq2QCT45b8nhL14jp1h8qb467mHaAF","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:08:16.180  8133  8133 D TnpBridge: -> history
+11-02 08:08:16.180  8133  8133 D TnpBridge: -> nodeStats
+11-02 08:08:16.181  8133  8133 D TnpBridge: <- nodeStats done
+11-02 08:08:16.181  8133  8133 D TnpBridge: -> pendingTransfers
+11-02 08:08:16.181  8133  8133 D TnpBridge: -> awaiting
+11-02 08:08:16.186  8133  8185 D TnpNode : sync: <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:08:16.186  8133  8185 D TnpNode : stats: {"level":"light","peer_id":"QmUpaHaztET4QNCmFq2QCT45b8nhL14jp1h8qb467mHaAF","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:08:16.190  8133  8133 D TnpBridge: -> walletInfo
+11-02 08:08:16.344  8133  8133 D TnpBridge: -> history
+11-02 08:08:16.350  8133  8133 D TnpBridge: -> pendingTransfers
+11-02 08:08:16.352  8133  8133 D TnpBridge: -> awaiting
+11-02 08:08:54.620  8133  8133 D TnpBridge: -> feeQuote
+11-02 08:08:54.620  8133  8133 D TnpBridge: <- feeQuote done
+11-02 08:08:54.673  8133  8133 D TnpBridge: -> feeQuote
+11-02 08:08:54.673  8133  8133 D TnpBridge: <- feeQuote done
+11-02 08:08:54.724  8133  8133 D TnpBridge: -> feeQuote
+11-02 08:08:54.724  8133  8133 D TnpBridge: <- feeQuote done
+11-02 08:09:19.218  8133  8133 D TnpBridge: -> verifyPin
+11-02 08:09:19.218  8133  8133 D TnpBridge: <- verifyPin done
+11-02 08:09:20.714  8133  8133 D TnpBridge: -> buildTransfer
+11-02 08:09:20.714  8133  8133 D TnpBridge: <- buildTransfer done
+11-02 08:09:20.763  8133  8133 D TnpBridge: -> signTx
+11-02 08:10:15.058  8133  8133 D TnpBridge: -> submitTx
+11-02 08:10:15.063  8133  8133 D TnpBridge: -> nodeStats
+11-02 08:10:15.063  8133  8133 D TnpBridge: <- nodeStats done
+11-02 08:10:15.064  8133  8185 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:10:15.065  8133  8185 D TnpNode : stats: {"level":"light","peer_id":"QmUpaHaztET4QNCmFq2QCT45b8nhL14jp1h8qb467mHaAF","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:10:15.066  8133  8133 D TnpBridge: -> walletInfo
+11-02 08:10:15.068  8133  8133 D TnpBridge: -> history
+11-02 08:10:15.069  8133  8133 D TnpBridge: -> pendingTransfers
+11-02 08:10:15.071  8133  8133 D TnpBridge: -> awaiting
+11-02 08:12:50.421  8509  8509 D TnpBridge: -> manifest
+11-02 08:12:50.426  8509  8509 D TnpBridge: <- manifest done
+11-02 08:12:50.526  8509  8509 D TnpBridge: -> pinIsSet
+11-02 08:12:50.589  8509  8509 D TnpBridge: <- pinIsSet done
+11-02 08:12:50.600  8509  8509 D TnpBridge: -> walletRegistered
+11-02 08:12:50.602  8509  8509 D TnpBridge: <- walletRegistered done
+11-02 08:12:50.603  8509  8509 D TnpBridge: -> walletAddress
+11-02 08:12:50.617  8509  8509 D TnpBridge: <- walletAddress done
+11-02 08:12:50.618  8509  8509 D TnpBridge: -> biometricsAvailable
+11-02 08:12:50.623  8509  8509 D TnpBridge: <- biometricsAvailable done
+11-02 08:12:50.628  8509  8509 D TnpBridge: -> nodeStats
+11-02 08:12:50.628  8509  8509 D TnpBridge: <- nodeStats done
+11-02 08:12:50.628  8509  8558 D TnpNode : stats: null
+11-02 08:12:50.632  8509  8509 D TnpBridge: -> walletInfo
+11-02 08:12:50.633  8509  8509 D TnpBridge: <- walletInfo done
+11-02 08:12:51.416  8509  8509 D TnpBridge: -> biometricLoginAllowed
+11-02 08:12:51.416  8509  8509 D TnpBridge: <- biometricLoginAllowed done
+11-02 08:12:53.999  8509  8509 D TnpBridge: -> biometricLogin
+11-02 08:12:54.012  8509  8509 D TnpBridge: <- biometricLogin done
+11-02 08:13:31.700  8509  8509 D TnpBridge: -> verifyPin
+11-02 08:13:31.700  8509  8509 D TnpBridge: <- verifyPin done
+11-02 08:13:33.723  8509  8509 D TnpBridge: -> history
+11-02 08:13:33.723  8509  8509 D TnpBridge: <- history done
+11-02 08:13:33.723  8509  8509 D TnpBridge: -> vouchProgress
+11-02 08:13:33.723  8509  8509 D TnpBridge: <- vouchProgress done
+11-02 08:13:33.723  8509  8509 D TnpBridge: -> registry
+11-02 08:13:33.723  8509  8509 D TnpBridge: <- registry done
+11-02 08:13:33.723  8509  8509 D TnpBridge: -> pendingMigrations
+11-02 08:13:33.723  8509  8509 D TnpBridge: <- pendingMigrations done
+11-02 08:13:33.729  8509  8509 D TnpBridge: -> setSecureMode
+11-02 08:13:33.729  8509  8509 D TnpBridge: <- setSecureMode done
+11-02 08:13:33.831  8509  8509 D TnpBridge: -> nodeStart
+11-02 08:13:33.836  8509  8509 D TnpBridge: <- nodeStart done
+11-02 08:13:33.872  8509  8509 D TnpBridge: -> guardianOffers
+11-02 08:13:33.873  8509  8509 D TnpBridge: <- guardianOffers done
+11-02 08:13:33.873  8509  8509 D TnpBridge: -> nodeStats
+11-02 08:13:33.873  8509  8509 D TnpBridge: <- nodeStats done
+11-02 08:13:33.874  8509  8558 D TnpNode : stats: null
+11-02 08:13:34.052  8509  8558 D TnpNode : запущен: {"level":"light","peer_id":"QmWH8fEkbqNTtL4pijwmrArx925pvTjLryxj2Escypfexm","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:13:34.217  8509  8509 D TnpBridge: -> nodeStats
+11-02 08:13:34.217  8509  8509 D TnpBridge: <- nodeStats done
+11-02 08:13:34.226  8509  8558 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:13:34.226  8509  8558 D TnpNode : stats: {"level":"light","peer_id":"QmWH8fEkbqNTtL4pijwmrArx925pvTjLryxj2Escypfexm","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:13:34.257  8509  8509 D TnpBridge: -> history
+11-02 08:13:34.257  8509  8509 D TnpBridge: <- history done
+11-02 08:13:34.258  8509  8509 D TnpBridge: -> nodeStats
+11-02 08:13:34.258  8509  8509 D TnpBridge: <- nodeStats done
+11-02 08:13:34.284  8509  8558 D TnpNode : sync: <peer.ID Qm*VVXdtP>: applied=0 err=net: синхронизация журнала — только для полного узла; <peer.ID Qm*8JBtJC>: applied=0 err=net: синхронизация журнала — только для полного узла
+11-02 08:13:34.284  8509  8558 D TnpNode : stats: {"level":"light","peer_id":"QmWH8fEkbqNTtL4pijwmrArx925pvTjLryxj2Escypfexm","peers":2,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-02 08:13:34.451  8509  8509 D TnpBridge: -> pendingTransfers
+11-02 08:13:34.452  8509  8509 D TnpBridge: <- pendingTransfers done
+11-02 08:13:34.452  8509  8509 D TnpBridge: -> walletInfo
+11-02 08:13:34.452  8509  8509 D TnpBridge: <- walletInfo done
+11-02 08:13:34.487  8509  8509 D TnpBridge: -> awaiting
+11-02 08:13:34.490  8509  8509 D TnpBridge: <- awaiting done
+11-02 08:13:34.621  8509  8509 D TnpBridge: -> history
+11-02 08:13:34.621  8509  8509 D TnpBridge: <- history done
+11-02 08:13:34.622  8509  8509 D TnpBridge: -> pendingTransfers
+11-02 08:13:34.622  8509  8509 D TnpBridge: <- pendingTransfers done
+11-02 08:13:34.683  8509  8509 D TnpBridge: -> awaiting
+11-02 08:13:34.683  8509  8509 D TnpBridge: <- awaiting done

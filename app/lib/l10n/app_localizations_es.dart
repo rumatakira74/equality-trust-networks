@@ -116,6 +116,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get errWrongPin => 'PIN incorrecto';
 
   @override
+  String lockTooManyAttempts(int seconds) {
+    return 'Demasiados intentos fallidos. Reinténtalo en $seconds s';
+  }
+
+  @override
   String get confirmOperation => 'Confirme la operación';
 
   @override
@@ -371,6 +376,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get transferSent => 'Transferencia enviada';
+
+  @override
+  String get transferAwaiting =>
+      'Transferencia enviada — en espera de confirmación';
 
   @override
   String transferDelayed(int hours) {

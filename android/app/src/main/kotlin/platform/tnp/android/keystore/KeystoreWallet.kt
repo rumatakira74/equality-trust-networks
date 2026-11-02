@@ -70,7 +70,10 @@ class KeystoreWallet(
             .setDigests(KeyProperties.DIGEST_NONE)
             // challenge задаёт узел (R4): связывает ключ с сетью
             .setAttestationChallenge(challenge)
-            // подпись — только после биометрии (BIOMETRIC_STRONG)
+            // подпись — только после биометрии (BIOMETRIC_STRONG);
+            // окно 0 (A5, тема UI-защиты владельца): ключ без
+            // временного окна — каждая операция подписи требует
+            // живую биометрию (README 8.1 «без временного окна»)
             .setUserAuthenticationRequired(true)
             .setUserAuthenticationParameters(
                 AUTH_TIMEOUT_SECONDS,
@@ -97,10 +100,10 @@ class KeystoreWallet(
 
     /**
      * Инициализация подписи (для BiometricPrompt.CryptoObject).
-     * initSign на ключе с setUserAuthenticationRequired(true) кидает
-     * UserNotAuthenticatedException ДО биометрии (API 35) — это
-     * ожидаемо: авторизация выполняется BiometricPrompt с CryptoObject
-     * (правка этапа 7; на API 36 этапа 6 исключение не возникало).
+     * Окно 0 (A5): initSign начинает операцию, авторизация — CryptoObject
+     * на каждую подпись; на ключе с setUserAuthenticationRequired(true)
+     * может кинуть UserNotAuthenticatedException ДО биометрии — тогда
+     * авторизация выполняется BiometricPrompt (правка этапа 7).
      */
     fun newSignature(): Signature {
         // подпись готового 32-байтного дайджеста (см. setDigests выше)
@@ -109,13 +112,13 @@ class KeystoreWallet(
             sig.initSign(keyStore.getKey(alias, null) as java.security.PrivateKey)
             sigInitialized = true
         } catch (_: android.security.keystore.UserNotAuthenticatedException) {
-            // авторизация — BiometricPrompt (окно 30 с)
+            // авторизация — BiometricPrompt (окно 0: CryptoObject)
             sigInitialized = false
         }
         return sig
     }
 
-    /** initSign прошёл (окно авторизации открыто) — CryptoObject валиден. */
+    /** initSign прошёл (операция начата) — CryptoObject валиден. */
     @Volatile var sigInitialized: Boolean = false
         private set
 
@@ -134,7 +137,9 @@ class KeystoreWallet(
     companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
         const val ALIAS_WALLET = "tnp-wallet"
-        const val AUTH_TIMEOUT_SECONDS = 30
+
+        /** Окно авторизации ключа (A5): 0 — без окна, биометрия на каждую подпись. */
+        const val AUTH_TIMEOUT_SECONDS = 0
 
         /** Уровень защиты для minLevel (7.2): TEE=1, StrongBox=2. */
         fun minSecurityLevel(): Int =

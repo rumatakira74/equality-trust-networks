@@ -39,6 +39,12 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // FLAG_SECURE (тема UI-защиты владельца, п.2): экран показывает
+        // баланс/статус — системные скриншоты и превью «недавних» пусты
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+        )
         pin = PinManager(this)
         duress = DuressState(this)
         flow = WalletFlow(this)
@@ -119,8 +125,26 @@ class MainActivity : FragmentActivity() {
         gate { unlocked ->
             if (!unlocked) return@gate
             if (duress.active) {
-                // ключ подписи при приманке не используется (8.2)
-                appendStatus("перевод недоступен")
+                // приманка (8.2, A6): тот же путь и ритм, что у честного
+                // перевода — сборка (PoW) и биометрический промпт; ключ
+                // НЕ используется (plain-биометрия), публикации нет,
+                // ответ правдоподобен («ожидает подтверждения»)
+                val built = flow.buildTransferTx(
+                    genesis!!, flow.address(genesis!!.networkID())!!, 1,
+                )
+                if (built == null) {
+                    appendStatus("перевод: нет узла/пиров или seq")
+                    return@gate
+                }
+                BiometricGate.authenticatePlain(
+                    this, "Подтвердите перевод", "Отмена",
+                ) { ok ->
+                    if (!ok) {
+                        appendStatus("перевод: без подписи")
+                    } else {
+                        appendStatus("перевод: ожидает подтверждения")
+                    }
+                }
                 return@gate
             }
             val built = flow.buildTransferTx(
@@ -163,6 +187,12 @@ class MainActivity : FragmentActivity() {
             Toast.makeText(this, "Сначала настройте кошелёк", Toast.LENGTH_SHORT).show()
             return onUnlocked(false)
         }
+        // лимит попыток (тема UI-защиты, п.1): блокировка ввода
+        val lockMs = pin.lockRemainingMs()
+        if (lockMs > 0) {
+            appendStatus("PIN: слишком много попыток, подождите ${(lockMs + 999) / 1000} с")
+            return onUnlocked(false)
+        }
         askPin(getString(R.string.pin_title)) { entered ->
             val pin_ = entered ?: return@askPin
             when (pin.verify(pin_)) {
@@ -176,7 +206,14 @@ class MainActivity : FragmentActivity() {
                     onUnlocked(true)
                 }
 
-                PinCheck.NONE -> onUnlocked(false)
+                PinCheck.NONE -> {
+                    // порог достигнут на этой попытке — сообщение блокировки
+                    val rem = pin.lockRemainingMs()
+                    if (rem > 0) {
+                        appendStatus("PIN: слишком много попыток, подождите ${(rem + 999) / 1000} с")
+                    }
+                    onUnlocked(false)
+                }
             }
         }
     }

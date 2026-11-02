@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/secure_mode.dart';
 import '../state/app_state.dart';
 import 'migration/migration_screen.dart';
 import 'registry/registry_screen.dart';
@@ -24,9 +25,13 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    // узел живёт всё время приложения (foreground service, 12.2)
+    // FLAG_SECURE (п.2): вкладка кошелька (баланс, история, отложенные) —
+    // окно помечено, пока вкладка видима; смена вкладки снимает
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final app = context.read<AppState>();
+      await SecureMode.set(
+          app.platform, 'tab:wallet', true); // старт — вкладка кошелька
+      // узел живёт всё время приложения (foreground service, 12.2)
       // сначала узел (синхронизация с пирами), затем снапшот кошелька —
       // иначе UI увидит пустой реестр до готовности узла
       if (!app.nodeRunning) await app.startNode();
@@ -48,7 +53,14 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(index: _tab, children: screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
+        onDestinationSelected: (i) {
+          setState(() => _tab = i);
+          // FLAG_SECURE (п.2): пометка — только на вкладке кошелька
+          // (баланс/суммы); реестр/поручительства/настройки — публичные
+          // данные, экраны остаются фотографируемыми
+          SecureMode.set(
+              context.read<AppState>().platform, 'tab:wallet', i == 0);
+        },
         destinations: [
           NavigationDestination(
               icon: const Icon(Icons.account_balance_wallet), label: l.navWallet),

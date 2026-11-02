@@ -35,6 +35,14 @@
   "btnSignBiometric": "签名（生物识别）",
   "enterPin": "输入 PIN",
   "errWrongPin": "PIN 错误",
+  "lockTooManyAttempts": "尝试次数过多，请在 {seconds} 秒后重试",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "确认操作",
   "keyUnlockTitle": "解锁密钥",
   "rejectedWithCode": "已拒绝：{code}",
@@ -103,6 +111,7 @@
   "transferConfirmTitle": "确认转账",
   "btConfirmTitle": "确认蓝牙付款",
   "transferSent": "转账已发送",
+  "transferAwaiting": "转账已发送——等待确认",
   "transferDelayed": "转账已延迟：{hours} 小时后执行，延迟期间可以取消",
   "signNotConfirmed": "签名未确认",
   "btNoDevices": "没有已配对的设备",

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../services/platform_service.dart';
+import '../../services/secure_mode.dart';
 import '../../services/tx_errors.dart';
 import '../../state/app_state.dart';
 import '../pin_gate.dart';
@@ -28,8 +29,20 @@ class _TransferScreenState extends State<TransferScreen> {
   bool _btMode = false;
   List<String> _btDevices = [];
 
+  late final PlatformService _platform;
+
+  @override
+  void initState() {
+    super.initState();
+    // FLAG_SECURE (п.2): суммы и получатель — окно помечено;
+    // сервис сохранён в initState — dispose без поиска по дереву
+    _platform = context.read<PlatformService>();
+    SecureMode.set(_platform, 'screen:transfer', true);
+  }
+
   @override
   void dispose() {
+    SecureMode.set(_platform, 'screen:transfer', false);
     _recipient.dispose();
     _amount.dispose();
     super.dispose();
@@ -82,12 +95,16 @@ class _TransferScreenState extends State<TransferScreen> {
         return;
       }
       final res = await platform.submitTx(id);
-      // понятные ошибки по конвенции кодов (этап 12: сгоревшая единица)
+      // понятные ошибки по конвенции кодов (этап 12: сгоревшая единица);
+      // приманка (8.2, A6): публикации не было — ответ правдоподобен
+      // («ожидает подтверждения», спека 8.2)
       final txError = res.accepted ? null : localizedTxError(l, res.code);
       setState(() => _result = res.accepted
-          ? (_willBeDelayed
-              ? l.transferDelayed(_delayHours)
-              : l.transferSent)
+          ? (res.fake
+              ? l.transferAwaiting
+              : (_willBeDelayed
+                  ? l.transferDelayed(_delayHours)
+                  : l.transferSent))
           : (txError ?? l.rejectedWithCode(res.code)));
       await app.refreshWallet();
     } catch (e) {

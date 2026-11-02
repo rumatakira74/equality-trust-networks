@@ -144,15 +144,39 @@ class FakePlatformService implements PlatformService {
     calls.add('verifyPin');
     // без заданного PIN — только none (мост без PinManager)
     if (_normalPin == null) return pinResult;
+    // лимит попыток (тема UI-защиты, п.1): как PinAttemptPolicy —
+    // 5 неудач -> блокировка, успешный вход сбрасывает
+    if (pinFailures >= 5) return 'locked';
     if (pin == _normalPin) {
       duress = false; // обычный PIN выводит из приманки
+      pinFailures = 0;
       return 'normal';
     }
     if (_duressPin != null && pin == _duressPin) {
       duress = true; // тревожный: приманка активна, ответ неотличим
+      pinFailures = 0;
       return 'normal';
     }
-    return 'none';
+    pinFailures++;
+    return pinFailures >= 5 ? 'locked' : 'none';
+  }
+
+  /// Счётчик неудачных попыток PIN (модель PinAttemptState).
+  int pinFailures = 0;
+
+  /// Остаток блокировки, мс (модель: 30 с после 5 неудач).
+  int pinLockMs = 30000;
+
+  @override
+  Future<int> pinLockRemaining() async => pinFailures >= 5 ? pinLockMs : 0;
+
+  /// Журнал пометок FLAG_SECURE (п.2): последовательность true/false.
+  final List<bool> secureModeCalls = [];
+
+  @override
+  Future<void> setSecureMode(bool on) async {
+    calls.add('setSecureMode($on)');
+    secureModeCalls.add(on);
   }
 
   @override
@@ -297,9 +321,10 @@ class FakePlatformService implements PlatformService {
   @override
   Future<SubmitResult> submitTx(String id) async {
     if (duress) {
-      // приманка (8.2): публикации нет, ответ как у обычного перевода
+      // приманка (8.2): публикации нет, ответ правдоподобен —
+      // «ожидает подтверждения» (A6), реестр не тронут
       calls.add('submitFake($id)');
-      return SubmitResult('accepted', 'OK');
+      return SubmitResult('accepted', 'OK', fake: true);
     }
     calls.add('submit($id)');
     return submitResult;

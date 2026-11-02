@@ -132,8 +132,11 @@ object FlutterBridge {
             NodeController.genesis = gen
             NodeController.ownWallet = address()
             val peersFile = java.io.File(netDir, "peers.txt")
+            // явный UTF-8 при декодировании байтов (п.7 кодировок):
+            // файл писался утилитой в UTF-8, без BOM
             NodeController.manualAddrs = if (peersFile.isFile) {
-                peersFile.readLines().filter { it.isNotBlank() }.joinToString(",")
+                peersFile.readLines(Charsets.UTF_8)
+                    .filter { it.isNotBlank() }.joinToString(",")
             } else {
                 null
             }
@@ -170,6 +173,13 @@ object FlutterBridge {
 
     private fun hex(b: ByteArray?): String =
         b?.joinToString("") { "%02x".format(it) } ?: ""
+
+    /** Правдоподобная hex-подпись (64 байта) для приманки (A6). */
+    private fun fakeSigHex(): String {
+        val b = ByteArray(64)
+        java.security.SecureRandom().nextBytes(b)
+        return hex(b)
+    }
 
     private fun unhex(s: String): ByteArray =
         ByteArray(s.length / 2) { i ->
@@ -281,20 +291,46 @@ object FlutterBridge {
                 "verifyPin" -> {
                     val entered = call.argument<String>("pin")!!
                     // PBKDF2 — в фон; один и тот же код и ритм для обоих
-                    // PIN (8.2)
+                    // PIN (8.2); лимит попыток (тема UI-защиты, п.1):
+                    // «locked» — при активной блокировке и на попытке,
+                    // достигшей порога
                     bg(result) {
-                        when (pin.verify(entered)) {
-                            PinCheck.NORMAL -> {
-                                duress.exit()
-                                "normal"
+                        if (pin.lockRemainingMs() > 0) {
+                            "locked"
+                        } else {
+                            when (pin.verify(entered)) {
+                                PinCheck.NORMAL -> {
+                                    duress.exit()
+                                    "normal"
+                                }
+                                PinCheck.DURESS -> {
+                                    duress.enter()
+                                    "normal" // вход неотличим
+                                }
+                                PinCheck.NONE ->
+                                    if (pin.lockRemainingMs() > 0) "locked" else "none"
                             }
-                            PinCheck.DURESS -> {
-                                duress.enter()
-                                "normal" // вход неотличим
-                            }
-                            PinCheck.NONE -> "none"
                         }
                     }
+                }
+                "pinLockRemaining" -> result.success(pin.lockRemainingMs())
+                // FLAG_SECURE (тема UI-защиты владельца, п.2): пометка
+                // окна — экраны с балансом/суммами не попадают в
+                // системные скриншоты и превью «недавних» (пустой
+                // скриншот — доказательство работы флага)
+                "setSecureMode" -> {
+                    val on = call.argument<Boolean>("on") ?: false
+                    if (on) {
+                        activity.window.setFlags(
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        )
+                    } else {
+                        activity.window.clearFlags(
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        )
+                    }
+                    result.success(null)
                 }
                 "duressActive" -> result.success(duress.active)
                 "exitDuress" -> {
@@ -463,8 +499,9 @@ object FlutterBridge {
                     val nonce = (call.argument<Any>("nonce") as Number).toLong()
                     val title = call.argument<String>("title") ?: "Подтвердите миграцию"
                     if (duress.active) {
-                        // приманка: ключ не используется (8.2)
-                        result.success(mapOf("sig" to "", "fake" to true))
+                        // приманка: ключ не используется (8.2); пустая
+                        // строка — видимый признак, ответ правдоподобен
+                        result.success(mapOf("sig" to fakeSigHex(), "fake" to true))
                         return
                     }
                     // хеш (эпоха — из узла) — в фон; биометрия — в главном
@@ -542,8 +579,9 @@ object FlutterBridge {
                     val title = call.argument<String>("title")
                         ?: "Подтвердите смену гардианов подопечного"
                     if (duress.active) {
-                        // приманка: ключ не используется (8.2)
-                        result.success(mapOf("sig" to "", "fake" to true))
+                        // приманка: ключ не используется (8.2); пустая
+                        // строка — видимый признак, ответ правдоподобен
+                        result.success(mapOf("sig" to fakeSigHex(), "fake" to true))
                         return
                     }
                     BiometricGate.signWithBiometric(
@@ -577,10 +615,12 @@ object FlutterBridge {
                         return
                     }
                     if (duress.active) {
-                        // приманка (8.2): подпись НЕ выполняется, ответ
-                        // правдоподобен («ожидает подтверждения» ниже)
-                        Thread.sleep(400)
-                        result.success(mapOf("ok" to true, "fake" to true))
+                        // приманка (8.2, A6): тот же биометрический
+                        // промпт, что у честной подписи (plain — ключ
+                        // не используется), подписи и публикации нет
+                        BiometricGate.authenticatePlain(activity, title, "Отмена") { ok ->
+                            result.success(mapOf("ok" to ok, "fake" to true))
+                        }
                         return
                     }
                     BiometricGate.signWithBiometric(activity, wallet, title, tx.signingHash()) { sig ->
@@ -719,7 +759,15 @@ object FlutterBridge {
                     val txid = unhex(call.argument<String>("txid")!!)
                     bg(result) { node()?.offlineStatus(txid) ?: "unknown" }
                 }
-                "awaiting" -> bg(result) { node()?.awaitingJSON() ?: "[]" }
+                "awaiting" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные офлайн-платежи
+                        // (суммы) не показываются
+                        result.success("[]")
+                        return
+                    }
+                    bg(result) { node()?.awaitingJSON() ?: "[]" }
+                }
 
                 // -- запросы состояния (net/query.go через мост) — в фон --
                 "balanceWithProof" -> {
@@ -776,6 +824,12 @@ object FlutterBridge {
                     }
                 }
                 "pendingTransfers" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные отложенные переводы
+                        // (суммы) не показываются — легенда без них
+                        result.success("[]")
+                        return
+                    }
                     val argAddr = call.argument<String?>("addr")
                     bg(result) {
                         val n = node() ?: throw Err("NONODE", "узел не запущен")
@@ -784,6 +838,11 @@ object FlutterBridge {
                     }
                 }
                 "pendingMigrations" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные миграции не показываются
+                        result.success("[]")
+                        return
+                    }
                     val argAddr = call.argument<String?>("addr")
                     bg(result) {
                         val n = node() ?: throw Err("NONODE", "узел не запущен")

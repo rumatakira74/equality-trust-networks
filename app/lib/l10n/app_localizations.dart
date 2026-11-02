@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Wrong PIN'**
   String get errWrongPin;
 
+  /// No description provided for @lockTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many failed attempts. Try again in {seconds} s'**
+  String lockTooManyAttempts(int seconds);
+
   /// No description provided for @confirmOperation.
   ///
   /// In en, this message translates to:
@@ -721,6 +727,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transfer sent'**
   String get transferSent;
+
+  /// No description provided for @transferAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer sent — awaiting confirmation by the network'**
+  String get transferAwaiting;
 
   /// No description provided for @transferDelayed.
   ///

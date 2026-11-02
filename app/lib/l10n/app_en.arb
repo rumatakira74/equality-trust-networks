@@ -35,6 +35,14 @@
   "btnSignBiometric": "Sign (biometrics)",
   "enterPin": "Enter PIN",
   "errWrongPin": "Wrong PIN",
+  "lockTooManyAttempts": "Too many failed attempts. Try again in {seconds} s",
+  "@lockTooManyAttempts": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "confirmOperation": "Confirm operation",
   "keyUnlockTitle": "Unlock key",
   "rejectedWithCode": "Rejected: {code}",
@@ -252,6 +260,7 @@
   "transferConfirmTitle": "Confirm transfer",
   "btConfirmTitle": "Confirm Bluetooth payment",
   "transferSent": "Transfer sent",
+  "transferAwaiting": "Transfer sent — awaiting confirmation by the network",
   "transferDelayed": "Transfer delayed: execution in {hours} h, it can be cancelled during the delay",
   "@transferDelayed": {
     "placeholders": {
