@@ -729,6 +729,28 @@ func (t *Transaction) Encode() []byte {
 
 var errUnknownField = errors.New("wire: unknown field (canonical: unknown-поля запрещены)")
 
+// Лимиты декодирования недоверенных байтов (тема «Fuzz-долги»): decode-пути
+// обязаны возвращать ошибку, а не паниковать/зависать; заявленная структура
+// не должна разворачиваться в непропорциональные память/время.
+const (
+	// maxDecodeDepth — предел вложенности Transaction: evidence содержит
+	// конфликтующие транзакции целиком (spec/01 1.5.4), легитимная глубина
+	// 2; без лимита вложенность даёт O(n²) копирований (каждый уровень
+	// копирует остаток блоба). 16 — с многократным запасом.
+	maxDecodeDepth = 16
+	// maxPersonalGuardians — личные гардианы при register и смене:
+	// семантический максимум 3 (GuardianPersonalCount, раздел 4).
+	maxPersonalGuardians = 16
+	// maxApprovals — подписи гардианов (migrate/update_guardians):
+	// семантический максимум — число гардианов (3).
+	maxApprovals = 16
+)
+
+// errTooMany — превышен защитный лимит количества элементов.
+func errTooMany(what string, limit int) error {
+	return fmt.Errorf("wire: слишком много элементов %s (лимит %d)", what, limit)
+}
+
 type decoder struct {
 	b   []byte
 	pos int
@@ -854,6 +876,9 @@ func DecodeRegisterPayload(b []byte) (*RegisterPayload, error) {
 			v, err := d.bytes()
 			if err != nil {
 				return nil, err
+			}
+			if len(p.PersonalGuardians) >= maxPersonalGuardians {
+				return nil, errTooMany("personal_guardians", maxPersonalGuardians)
 			}
 			p.PersonalGuardians = append(p.PersonalGuardians, v)
 		case f == 6 && wt == 0:
@@ -1082,6 +1107,9 @@ func DecodeMigratePropose(b []byte) (*MigratePropose, error) {
 			if err != nil {
 				return nil, err
 			}
+			if len(p.Approvals) >= maxApprovals {
+				return nil, errTooMany("approvals (migrate)", maxApprovals)
+			}
 			p.Approvals = append(p.Approvals, *ap)
 		case f == 3 && wt == 0:
 			if p.Nonce, err = d.varint(); err != nil {
@@ -1175,6 +1203,9 @@ func DecodeUpdateGuardiansPropose(b []byte) (*UpdateGuardiansPropose, error) {
 			if err != nil {
 				return nil, err
 			}
+			if len(p.NewGuardians) >= maxPersonalGuardians {
+				return nil, errTooMany("new_guardians", maxPersonalGuardians)
+			}
 			p.NewGuardians = append(p.NewGuardians, v)
 		case f == 2 && wt == 2:
 			v, err := d.bytes()
@@ -1184,6 +1215,9 @@ func DecodeUpdateGuardiansPropose(b []byte) (*UpdateGuardiansPropose, error) {
 			ap, err := DecodeGuardianApproval(v)
 			if err != nil {
 				return nil, err
+			}
+			if len(p.Approvals) >= maxApprovals {
+				return nil, errTooMany("approvals (update_guardians)", maxApprovals)
 			}
 			p.Approvals = append(p.Approvals, *ap)
 		case f == 3 && wt == 0:
@@ -1264,6 +1298,10 @@ func DecodeUpdateGuardiansPayload(b []byte) (*UpdateGuardiansPayload, error) {
 
 // DecodeEvidencePayload разбирает evidence.
 func DecodeEvidencePayload(b []byte) (*EvidencePayload, error) {
+	return decodeEvidencePayload(b, 0)
+}
+
+func decodeEvidencePayload(b []byte, depth int) (*EvidencePayload, error) {
 	d := &decoder{b: b}
 	p := &EvidencePayload{}
 	for d.pos < len(d.b) {
@@ -1277,7 +1315,7 @@ func DecodeEvidencePayload(b []byte) (*EvidencePayload, error) {
 			if err != nil {
 				return nil, err
 			}
-			if p.TxA, err = DecodeTransaction(v); err != nil {
+			if p.TxA, err = decodeTransaction(v, depth+1); err != nil {
 				return nil, err
 			}
 		case f == 2 && wt == 2:
@@ -1285,7 +1323,7 @@ func DecodeEvidencePayload(b []byte) (*EvidencePayload, error) {
 			if err != nil {
 				return nil, err
 			}
-			if p.TxB, err = DecodeTransaction(v); err != nil {
+			if p.TxB, err = decodeTransaction(v, depth+1); err != nil {
 				return nil, err
 			}
 		case f == 3 && wt == 0:
@@ -1567,6 +1605,13 @@ func DecodeContributionConfirmPayload(b []byte) (*ContributionConfirmPayload, er
 
 // DecodeTransaction разбирает canonical-кодирование конверта.
 func DecodeTransaction(b []byte) (*Transaction, error) {
+	return decodeTransaction(b, 0)
+}
+
+func decodeTransaction(b []byte, depth int) (*Transaction, error) {
+	if depth > maxDecodeDepth {
+		return nil, fmt.Errorf("wire: вложенность транзакций глубже %d", maxDecodeDepth)
+	}
 	d := &decoder{b: b}
 	t := &Transaction{}
 	var powRaw, payloadRaw []byte
@@ -1637,7 +1682,7 @@ func DecodeTransaction(b []byte) (*Transaction, error) {
 		t.Pow = p
 	}
 	if payloadRaw != nil {
-		pl, err := decodePayload(payloadField, payloadRaw)
+		pl, err := decodePayload(payloadField, payloadRaw, depth)
 		if err != nil {
 			return nil, err
 		}
@@ -1646,7 +1691,7 @@ func DecodeTransaction(b []byte) (*Transaction, error) {
 	return t, nil
 }
 
-func decodePayload(field uint32, b []byte) (Payload, error) {
+func decodePayload(field uint32, b []byte, depth int) (Payload, error) {
 	switch field {
 	case 10:
 		return DecodeRegisterPayload(b)
@@ -1659,7 +1704,7 @@ func decodePayload(field uint32, b []byte) (Payload, error) {
 	case 14:
 		return DecodeMigratePayload(b)
 	case 15:
-		return DecodeEvidencePayload(b)
+		return decodeEvidencePayload(b, depth)
 	case 16:
 		return DecodeGuardianOfferPayload(b)
 	case 17:

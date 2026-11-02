@@ -97,10 +97,19 @@ func EncodeChain(certs ...[]byte) []byte {
 	return out
 }
 
+// maxChainCerts — защитный предел длины цепочки аттестации (тема
+// «Fuzz-долги»): передаются лист + промежуточные, корни зашиты в APK
+// (7.2); у Android это 2–4 сертификата. 16 — с многократным запасом;
+// без лимита пул промежуточных раздувает перебор цепочки x509.
+const maxChainCerts = 16
+
 // DecodeChain разбирает блоб цепочки.
 func DecodeChain(blob []byte) ([]*x509.Certificate, error) {
 	var certs []*x509.Certificate
 	for len(blob) > 0 {
+		if len(certs) >= maxChainCerts {
+			return nil, errors.New("attest: слишком длинная цепочка сертификатов")
+		}
 		if len(blob) < 4 {
 			return nil, errors.New("attest: обрезанный префикс длины")
 		}
