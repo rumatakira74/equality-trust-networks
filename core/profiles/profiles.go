@@ -93,7 +93,8 @@ func base() wire.ProfileParams {
 			Argon2MemoryKiB:   32768,
 			Argon2Iterations:  1,
 			Argon2Parallelism: 1,
-			TargetHard:        0x0040_0000_0000_0000,
+			// решение №9: 2^56 (правка A4 — ранее 0x0040... = 2^54)
+			TargetHard: 0x0100_0000_0000_0000,
 		},
 	}
 }
