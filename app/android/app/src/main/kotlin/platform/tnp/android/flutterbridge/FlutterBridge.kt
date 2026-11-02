@@ -92,6 +92,9 @@ object FlutterBridge {
         duress = DuressState(appContext)
         wallet = KeystoreWallet(appContext)
         ensureGenesis()
+        // подменной адрес легенды (F5): генерируется один раз и живёт в
+        // tnp_duress вместе с легендой (стабилен между сессиями/рестартами)
+        duress.ensureDecoyAddress(genesis!!.networkID(), address())
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result -> handle(call, result) }
     }
@@ -171,6 +174,17 @@ object FlutterBridge {
         return tnp.Tnp.addressFromPublicKey(pub, genesis!!.networkID())
     }
 
+    /**
+     * Адрес, который видит пользователь (8.2, F5): при активной приманке —
+     * подменной адрес легенды (валидный, стабильный, не связанный с
+     * реальным ключом), иначе — реальный адрес кошелька. Все точки выдачи
+     * адреса в UI идут через эту функцию.
+     */
+    private fun displayAddress(): ByteArray? {
+        if (!duress.active) return address()
+        return duress.decoyAddress(genesis!!.networkID(), address())
+    }
+
     private fun hex(b: ByteArray?): String =
         b?.joinToString("") { "%02x".format(it) } ?: ""
 
@@ -197,7 +211,8 @@ object FlutterBridge {
     /** Легенда приманки (8.2): правдоподобный остаток и история. */
     private fun decoyWalletJson(): String = JSONObject().apply {
         put("exists", true)
-        put("address", "")
+        // F5: адрес в приманке — подменной (согласован с walletAddress)
+        put("address", hex(displayAddress()))
         put("status", "ACTIVE")
         put("flagged", false)
         put("decoy", true)
@@ -285,6 +300,9 @@ object FlutterBridge {
                     bg(result) {
                         pin.setup(normal, duressPin)
                         duress.setLegend(decoyBalance, decoyHistory)
+                        // легенда создана — подменной адрес генерируется
+                        // при её создании и живёт с ней (F5)
+                        duress.ensureDecoyAddress(genesis!!.networkID(), address())
                         true
                     }
                 }
@@ -351,7 +369,8 @@ object FlutterBridge {
                 }
 
                 // -- кошелёк --
-                "walletAddress" -> result.success(hex(address()))
+                // F5: в режиме-приманки — подменной адрес легенды
+                "walletAddress" -> result.success(hex(displayAddress()))
                 "walletRegistered" -> result.success(wallet.isRegistered())
 
                 // -- сборка транзакций (PoW — в фон: Argon2id, tip по сети) --
@@ -692,7 +711,8 @@ object FlutterBridge {
                 }
                 "btSendAddress" -> {
                     val device = call.argument<String>("device")!!
-                    val addr = address()
+                    // F5: в режиме-приманки по Bluetooth уходит подменной адрес
+                    val addr = displayAddress()
                     if (addr == null) {
                         result.error("NOWALLET", "кошелёк не создан", null)
                         return

@@ -1,0 +1,22 @@
+жертва: handleTx: tx c8592ce8321d type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx 5f2c01417223 type=REGISTER seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx 894251b403dc type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx e3be8cbee105 type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: handleTx: tx b7b8f4e4ccbb type=MINT seq=1 от <peer.ID Qm*vtpVWc>
+жертва: чекпоинт эпохи 1 финализирован (2 подписей)
+жертва: handleTx: tx 0332ca15f438 type=TRANSFER seq=2 от <peer.ID Qm*h6GMeR>
+жертва: чекпоинт эпохи 2 финализирован (2 подписей)
+жертва: чекпоинт эпохи 3 финализирован (2 подписей)
+жертва: sync <peer.ID Qm*NTSqJJ>: received a stateless reset
+жертва: sync <peer.ID Qm*QsE3Ck>: received a stateless reset
+жертва: handleTx: tx 15b8fd19690d type=TRANSFER seq=2 от <peer.ID Qm*NTSqJJ>
+жертва: чекпоинт эпохи 4 финализирован (2 подписей)
+жертва: чекпоинт эпохи 5 финализирован (2 подписей)
+жертва: чекпоинт эпохи 6 финализирован (2 подписей)
+жертва: handleTx: tx 42bbcb16ddca type=TRANSFER seq=2 от <peer.ID Qm*vtpVWc>
+жертва: конфликтная ветка 42bbcb16ddca (seq=2) доставлена
+жертва: голосование: конфликт 5e25e68c| финализирован (ветка 15b8fd19690d)
+жертва: чекпоинт эпохи 7 финализирован (2 подписей)
+жертва: чекпоинт эпохи 8 финализирован (2 подписей)
+жертва: чекпоинт эпохи 9 финализирован (2 подписей)
+жертва: gossipLoop: выход: context canceled

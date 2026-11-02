@@ -55,6 +55,30 @@ func AddressFromPublicKey(pub, networkID []byte) ([]byte, error) {
 	return crypto.DeriveAddress(fp, networkID), nil
 }
 
+// GenerateDecoyAddress — подменной адрес режима-приманки (8.2, F5): адрес
+// деривируется обычным путём (как настоящий — синтаксически неотличим), но
+// от СЛУЧАЙНО сгенерированной ключевой пары, а не от реального ключа/
+// фингерпринта кошелька. Адрес ≠ real (перегенерация при совпадении).
+// Стабильность между сессиями — на стороне вызывающего (хранение в легенде
+// приманки tnp_duress); сам адрес детерминирован от сгенерированного ключа.
+func GenerateDecoyAddress(networkID, real []byte) ([]byte, error) {
+	if len(networkID) == 0 {
+		return nil, errors.New("пустой network_id")
+	}
+	for i := 0; i < 8; i++ {
+		k, err := crypto.GenerateKey()
+		if err != nil {
+			return nil, err
+		}
+		addr := crypto.AddressOfKey(crypto.MarshalPubKey(&k.PublicKey), networkID)
+		if len(real) == 32 && string(addr) == string(real) {
+			continue // (а) подменной адрес обязан отличаться от реального
+		}
+		return addr, nil
+	}
+	return nil, errors.New("decoy address: не удалось сгенерировать отличный от реального")
+}
+
 // FingerprintOf — фингерпринт публичного ключа (7.2).
 func FingerprintOf(pub []byte) []byte { return crypto.Fingerprint(pub) }
 

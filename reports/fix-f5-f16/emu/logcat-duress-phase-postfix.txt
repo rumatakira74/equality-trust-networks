@@ -1,0 +1,70 @@
+F5 emulator run AFTER FIX — logcat digest (duress phase)
+captured: 2026-11-02T20:11:58Z (UTC)
+device: emulator-5554 (stage12ga, API 36, x86_64)
+phase: duress PIN 9876 entered, before exit with normal PIN 1234
+
+== address presence check ==
+decoy cce61b359d201c0e99ae330464d56dce0a6f580d78c1cb2d6b1471ea138e775e occurrences: 0
+real  172c97e617704073a78798cba8b55c638df54613928cb52348f2ee565959d14a occurrences: 0
+
+== app-relevant lines (no addresses) ==
+11-02 21:10:08.778  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.788  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.815  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.824  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.902  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.903  7321  7321 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 21:10:08.915  2614  2614 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1293 onStartInput(EditorInfo{EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+11-02 21:10:08.916   700  1327 W PackageConfigPersister: App-specific configuration not found for packageName: platform.tnp.tnp_app and userId: 0
+11-02 21:10:08.917  2614  2614 I GoogleInputMethodService: GoogleInputMethodService.onStartInputView():1392 onStartInputView(EditorInfo{EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+11-02 21:10:08.919  2614  2614 I AndroidIME: AbstractIme.onActivate():90 PasswordIme.onActivate() : EditorInfo = EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}, IncognitoMode = false, DeviceLocked = false
+11-02 21:10:08.964  7321  7321 W FrameTracker: Missed App frame:JANK_APPLICATION, 117828, 208843549, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.964  7321  7321 W FrameTracker: Missed App frame:UNKNOWN: 3, 117858, 61700774, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.964  7321  7321 W FrameTracker: Missed SF frame:UNKNOWN: 3, 117858, 61700774, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.964  7321  7321 W FrameTracker: Missed App frame:UNKNOWN: 3, 117867, 23482411, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.964  7321  7321 W FrameTracker: Missed SF frame:UNKNOWN: 3, 117867, 23482411, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed App frame:UNKNOWN: 3, 117881, 128286931, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed SF frame:UNKNOWN: 3, 117881, 128286931, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed SF frame:JANK_COMPOSER, 117904, 5320369, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed SF frame:JANK_COMPOSER, 117926, 14570379, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed SF frame:JANK_COMPOSER, 117941, 7022087, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:08.965  7321  7321 W FrameTracker: Missed SF frame:JANK_COMPOSER, 117963, 72941706, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 21:10:09.640   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:10:09.728  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:465): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:11.845  8001  8001 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 21:10:14.724  7321  7321 W Thread-11: type=1400 audit(0.0:466): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:18.334   700   820 I ImeTracker: platform.tnp.tnp_app:5b4b53e3: setFinished at PHASE_CLIENT_ANIMATION_CANCEL with STATUS_TIMEOUT
+11-02 21:10:19.724  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:467): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:20.056  7321  7321 D TnpBridge: -> setSecureMode
+11-02 21:10:20.057  7321  7321 D TnpBridge: <- setSecureMode done
+11-02 21:10:23.102   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:10:24.686  8040  8040 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 21:10:24.728  7321  7321 W Thread-11: type=1400 audit(0.0:468): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:29.600  7321  7321 I orm.tnp.tnp_app: AssetManager2(0x7f5f26e65278) locale list changing from [] to [en-US]
+11-02 21:10:29.602   700   774 D CoreBackPreview: Window{a763b04 u0 platform.tnp.tnp_app/platform.tnp.tnp_app.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@e3ad481, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+11-02 21:10:29.728  7321  7321 W Thread-11: type=1400 audit(0.0:469): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:32.564   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:10:32.777  8072  8072 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 21:10:34.728  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:470): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:38.935   700  2915 D CoreBackPreview: Window{a763b04 u0 platform.tnp.tnp_app/platform.tnp.tnp_app.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@9ba9c29, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+11-02 21:10:39.732  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:471): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:44.004   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:10:44.210  8110  8110 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 21:10:44.732  7321  7321 W Thread-11: type=1400 audit(0.0:472): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:49.732  7321  7321 W Thread-11: type=1400 audit(0.0:473): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:52.270  2450  3291 I AiAiCaptions: updateTriggerState(): stopping trigger.
+11-02 21:10:53.117   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:10:53.244   700   764 I AppsFilter: interaction: PackageSetting{f274dca platform.tnp.tnp_app/10216} -> PackageSetting{bfc3072 com.google.android.as/10144} BLOCKED
+11-02 21:10:53.286  2450  8138 I AiAiEcho: AppIndexer Package:[com.google.android.as] UserProfile:[0] Enabled:[true].
+11-02 21:10:53.322  1070  1131 W AllAppsList: updatePackage: no Activities matched updated package, removing any AppInfo with package=com.google.android.as, user=UserHandle{0}
+11-02 21:10:53.377  8136  8136 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 21:10:53.385   700  1923 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.WALLET
+11-02 21:10:54.732  7321  7321 W Thread-10: type=1400 audit(0.0:474): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:10:58.123  2792  7691 D eatg    : Starting download: https://www.gstatic.com/messages/emoji/animated_emoji/animated_emojis_mapping.json_1742470951863
+11-02 21:10:58.123  2792  7691 V eatg    : Is http uri, downloading (uri: https://www.gstatic.com/messages/emoji/animated_emoji/animated_emojis_mapping.json_1742470951863)
+11-02 21:10:59.732  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:475): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:11:00.150  2792  3026 W LogUtil : GddFileGroupPopulator: Account was not provided, skipping private sync for corpus: GDD_BUGLE_EMOJIFY, configuration: GddBugleEmojify
+11-02 21:11:00.504  2792  2792 D WM-GreedyScheduler: Stopping tracking for WorkGenerationalId(workSpecId=11c63110-f436-4ac0-9e25-6da0b122fb11, generation=1)
+11-02 21:11:01.145   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 21:11:04.732  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:476): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 21:11:06.968  7321  7321 W orm.tnp.tnp_app: type=1400 audit(0.0:477): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app

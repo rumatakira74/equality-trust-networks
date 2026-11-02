@@ -1,0 +1,19 @@
+{
+  "network_id": "0c8204bbfc565b343a11a99ab5f7af8e3f9454231b2d1d53510ebfc6b94181c4",
+  "link_groups": true,
+  "attack_addrs": "127.0.0.1,127.0.1.1,127.0.2.1",
+  "victim_bin": "/tmp/tnp-testnet-pre",
+  "honest_c_latency_ms": 26564,
+  "honest_c_groups": 3,
+  "attack_a_groups_max": 3,
+  "attack_a_status_end_phase2": "finalized",
+  "attack_a_status_at_3groups_pre_finality": "finalized",
+  "final_a_status": "finalized",
+  "final_a_finalized": true,
+  "final_b_status": "published",
+  "final_b_finalized": false,
+  "checkpoints": 0,
+  "journal_len": 7,
+  "state_root": "159618166c9c64742dcd666606e235865367ba95d72f757acb7678fb018d4769",
+  "attack_a_finalized_pre_finality": true
+}

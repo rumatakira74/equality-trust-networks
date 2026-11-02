@@ -1,0 +1,70 @@
+F5 emulator run — logcat digest (duress phase)
+captured: 2026-11-02T19:59:03Z (UTC)
+device: emulator-5554 (stage12ga, API 36, x86_64)
+phase: duress PIN 9876 entered, before exit with normal PIN 1234
+
+== address presence check ==
+decoy 0930e9a0...b30c occurrences: 0
+real  85e4e22a...8e4c occurrences: 0
+
+== app-relevant lines (no addresses) ==
+11-02 20:56:55.644  6176  6176 D TnpBridge: -> pendingTransfers
+11-02 20:56:55.646  6176  6176 D TnpBridge: -> awaiting
+11-02 20:56:55.656  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.694  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.705  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.722  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.740  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.757  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.772  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.792  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.805  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.822  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.838  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.840  6176  6176 D FlutterJNI: Sending viewport metrics to the engine.
+11-02 20:56:55.852  2614  2614 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1293 onStartInput(EditorInfo{EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+11-02 20:56:55.853   700  2543 W PackageConfigPersister: App-specific configuration not found for packageName: platform.tnp.tnp_app and userId: 0
+11-02 20:56:55.855  2614  2614 I GoogleInputMethodService: GoogleInputMethodService.onStartInputView():1392 onStartInputView(EditorInfo{EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+11-02 20:56:55.871  2614  2614 I AndroidIME: AbstractIme.onActivate():90 PasswordIme.onActivate() : EditorInfo = EditorInfo{packageName=platform.tnp.tnp_app, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}, IncognitoMode = false, DeviceLocked = false
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed App frame:UNKNOWN: 3, 88974, 67660594, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:UNKNOWN: 3, 88974, 67660594, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 88998, 11355752, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed App frame:UNKNOWN: 3, 89013, 76044213, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:UNKNOWN: 3, 89013, 76044213, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89022, 6656820, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed App frame:UNKNOWN: 3, 89037, 28378254, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:UNKNOWN: 3, 89037, 28378254, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89045, 3236285, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89060, 4515362, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89075, 6042421, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89097, 11362320, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89112, 6817436, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89134, 8732439, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89149, 3154783, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89171, 3835744, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:55.902  6176  6176 W FrameTracker: Missed SF frame:JANK_COMPOSER, 89186, 6929514, CUJ=J<IME_INSETS_HIDE_ANIMATION::1@1@platform.tnp.tnp_app>
+11-02 20:56:56.877   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 20:56:58.052  6829  6829 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 20:56:58.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:287): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:03.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:288): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:05.439   700   820 I ImeTracker: platform.tnp.tnp_app:8cab92f5: setFinished at PHASE_CLIENT_ANIMATION_CANCEL with STATUS_TIMEOUT
+11-02 20:57:08.324  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:289): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:10.484  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:290): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:13.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:291): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:17.320  6176  6176 D TnpBridge: -> setSecureMode
+11-02 20:57:17.320  6176  6176 D TnpBridge: <- setSecureMode done
+11-02 20:57:18.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:292): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:19.547  6858  6858 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 20:57:20.380   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 20:57:23.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:293): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:25.787  6880  6880 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 20:57:28.328  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:294): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:29.500  6176  6176 I orm.tnp.tnp_app: AssetManager2(0x7f5f26e69a58) locale list changing from [] to [en-US]
+11-02 20:57:29.501   700   919 D CoreBackPreview: Window{14bbcb5 u0 platform.tnp.tnp_app/platform.tnp.tnp_app.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@8391217, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+11-02 20:57:32.464   496  1687 D android.hardware.audio@7.1-impl.ranchu: ~TinyalsaSink: stopping PCM stream
+11-02 20:57:32.613  6904  6904 I AconfigPackage: android.service.quickaccesswallet is mapped to system
+11-02 20:57:33.332  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:295): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:38.332  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:296): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:43.332  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:297): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:48.332  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:298): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app
+11-02 20:57:53.332  6176  6176 W orm.tnp.tnp_app: type=1400 audit(0.0:299): avc:  denied  { bind } for  scontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tcontext=u:r:untrusted_app:s0:c216,c256,c512,c768 tclass=netlink_route_socket permissive=0 bug=b/155595000 app=platform.tnp.tnp_app

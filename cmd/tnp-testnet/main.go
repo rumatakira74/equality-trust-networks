@@ -135,6 +135,8 @@ func main() {
 		err = fleetCmd(os.Args[2:])
 	case "flood":
 		err = floodCmd(os.Args[2:])
+	case "eclipse":
+		err = eclipseCmd(os.Args[2:])
 	case "export":
 		err = exportCmd(os.Args[2:])
 	case "configure":

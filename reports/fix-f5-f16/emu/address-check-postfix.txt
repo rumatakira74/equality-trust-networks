@@ -1,0 +1,26 @@
+F5 emulator run AFTER FIX — address check (behavioral)
+device: emulator-5554 (AVD stage12ga, API 36, x86_64), APK built from fix-f5-f16 + refreshAfterUnlock
+date: 2026-11-02 (UTC)
+
+Persisted legend address (tnp_duress.xml, decoy_address):
+  cce61b359d201c0e99ae330464d56dce0a6f580d78c1cb2d6b1471ea138e775e
+
+Duress phase (unlock with duress PIN 9876; wallet shows 100 = legend):
+  recovery card address (uiautomator text):
+  cce61b359d201c0e99ae330464d56dce0a6f580d78c1cb2d6b1471ea138e775e
+  screenshot: 02-duress-recovery-card-postfix.png
+  vouching QR: 05-duress-vouching-qr-postfix.png (data source app.address = same decoy)
+
+Normal phase (restart, unlock with normal PIN 1234; wallet shows 0 = real):
+  recovery card address (uiautomator text):
+  172c97e617704073a78798cba8b55c638df54613928cb52348f2ee565959d14a
+  screenshot: 04-normal-recovery-card-postfix.png
+
+Verdict:
+  duress card address == persisted decoy (cce61b359d201c0e99ae330464d56dce0a6f580d78c1cb2d6b1471ea138e775e)
+  duress card address != real address (172c97e617704073a78798cba8b55c638df54613928cb52348f2ee565959d14a)
+  normal card address == real address
+  => F5 works on the recovery card and vouching QR after the fix.
+  Wallet screenshots 01/03 are fully black (FLAG_SECURE on balance screens) — expected.
+  logcat (duress phase): decoy occurrences 0, real occurrences 0.
+  logcat (full session): decoy occurrences 0, real occurrences 0.

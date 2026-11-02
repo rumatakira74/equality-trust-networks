@@ -179,9 +179,14 @@ func TestEclipseIsolation(t *testing.T) {
 	if _, _, _, err := v.SyncJournalFrom(ctx, h.Host.ID(), 0, nil); err != nil {
 		t.Fatalf("сверка с честным узлом: %v", err)
 	}
-	if !v.Corroboration.Confirmed(txid[:]) {
-		count := v.Corroboration.Count(txid[:])
-		t.Fatalf("после постороннего источника подтверждение не достигло N: %d", count)
+	// F16: доставка от N несвязанных источников достигнута, но Confirmed
+	// («финализировано») дополнительно требует финализированную ветку —
+	// до чекпоинта/финализированного выбора txid окончательно не подтверждена
+	if peers, groups := v.Corroboration.LinkSpread(txid[:]); peers < 3 {
+		t.Fatalf("после постороннего источника доставка: пиры=%d группы=%d, ожидается >=3 пиров", peers, groups)
+	}
+	if v.Corroboration.Confirmed(txid[:]) {
+		t.Fatal("F16: до финальности Confirmed не должен достигаться (тест без чекпоинтов)")
 	}
 	// реестр жертвы не искажён: корень совпадает с честным узлом
 	rv, _ := v.StateRoot()

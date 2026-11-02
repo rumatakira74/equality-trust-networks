@@ -100,3 +100,46 @@ func TestBridgeGenesis(t *testing.T) {
 		t.Fatalf("network_id: %q", gen.gp.Genesis.NetworkID)
 	}
 }
+
+// TestGenerateDecoyAddress — подменной адрес приманки (8.2, F5): валидный
+// формат (32 байта, как настоящий), не равен реальному, не деривируется от
+// реального ключа (две генерации различны), деривация — обычная
+// (AddressOfKey от случайного публичного ключа).
+func TestGenerateDecoyAddress(t *testing.T) {
+	netID := []byte("tnp-decoy-test")
+	pair, err := SoftKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	real, err := AddressFromPublicKey(pair.Pub(), netID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d1, err := GenerateDecoyAddress(netID, real)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d1) != 32 {
+		t.Fatalf("подменной адрес: %d байт, ожидается 32 (формат как у настоящего)", len(d1))
+	}
+	if bytes.Equal(d1, real) {
+		t.Fatal("подменной адрес совпал с реальным")
+	}
+	d2, err := GenerateDecoyAddress(netID, real)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(d1, d2) {
+		t.Fatal("две генерации дали один адрес — адрес деривируется не от случайного ключа")
+	}
+	// адрес валиден синтаксически: это ровно тот адрес, что деривируется
+	// обычным путём от некоторого публичного ключа — проверяем, что он
+	// не вырожден (не нули) и детерминирован форматом 32 байта
+	if bytes.Equal(d1, make([]byte, 32)) {
+		t.Fatal("вырожденный адрес")
+	}
+	// пустой network_id — ошибка
+	if _, err := GenerateDecoyAddress(nil, real); err == nil {
+		t.Fatal("пустой network_id должен давать ошибку")
+	}
+}

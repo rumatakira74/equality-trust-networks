@@ -3,6 +3,11 @@
 // данными N пиров — единственный статус: единственная версия реестра от
 // одного источника не принимается как окончательная.
 //
+// F16: статус «финализировано» (Confirmed) дополнительно гейтится
+// финальностью — подтверждение засчитывается только для txid из
+// финализированной ветки (чекпоинт/финализированный выбор); соучастники до
+// финальности «финализировано» не дают (двойная трата офлайн-канала).
+//
 // Вопрос №35 (этап 6): несвязанность оценивается по группам связи —
 // IP-подсети (/24 для IPv4, /64 для IPv6; NodeConfig.LinkGroups).
 // Пиры одной подсети считаются связанными: подтверждением служат N
@@ -71,8 +76,12 @@ type Corroboration struct {
 	mu     sync.Mutex
 	n      int
 	linkOf LinkClassifier // nil — несвязанность = уникальные Peer ID
-	seen   map[string]map[peer.ID]struct{}
-	links  map[string]map[string]struct{} // txid -> группа -> кто доставил
+	// finalizedOf — предикат финальности txid (F16): подтверждение
+	// засчитывается только для txid из финализированной ветки
+	// (чекпоинт/финализированный выбор). nil — без гейта (старые тесты).
+	finalizedOf func(txid []byte) bool
+	seen        map[string]map[peer.ID]struct{}
+	links       map[string]map[string]struct{} // txid -> группа -> кто доставил
 }
 
 // NewCorroboration — трекер с порогом N; несвязанность — уникальные Peer ID.
@@ -143,12 +152,26 @@ func (c *Corroboration) LinkSpread(txid []byte) (peers, groups int) {
 	return len(c.seen[string(txid)]), len(c.links[string(txid)])
 }
 
+// SetFinalityCheck — предикат финальности txid (F16): Confirmed учитывает
+// подтверждение только для txid из финализированной ветки — «финализировано»
+// офлайн-требования достигается только подтверждениями из финализированных
+// веток (чекпоинтов), соучастники до финальности его не дают.
+func (c *Corroboration) SetFinalityCheck(f func(txid []byte) bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.finalizedOf = f
+}
+
 // Confirmed — данные подтверждены N несвязанными пирами (12.3): без
 // классификатора — N различных пиров, с классификатором — N различных
-// групп связи (подсетей).
+// групп связи (подсетей). F16: при заданном предикате финальности —
+// дополнительно txid обязан входить в финализированную ветку.
 func (c *Corroboration) Confirmed(txid []byte) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.finalizedOf != nil && !c.finalizedOf(txid) {
+		return false
+	}
 	if c.linkOf == nil {
 		return len(c.seen[string(txid)]) >= c.n
 	}

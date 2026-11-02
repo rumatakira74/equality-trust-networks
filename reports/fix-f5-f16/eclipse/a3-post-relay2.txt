@@ -1,0 +1,6 @@
+2026/11/02 19:28:26 [zeroconf] no suitable IPv4 interface: udp4: failed to join any of these interfaces: []
+2026/11/02 19:28:26 [zeroconf] no suitable IPv6 interface: udp6: failed to join any of these interfaces: []
+реле: <peer.ID Qm*5rq99Z> -> жертва /ip4/127.0.1.1/udp/4651/quic-v1/p2p/QmabkddP99q2atswJcuARpMUVCLtHzb1MXaNcCJwiR1XFm, tx 2fdf4d380d8a36ea (240 байт) на 60 с
+реле: отклонена 000000000000: E_DUP
+реле: отклонена 000000000000: E_DUP
+реле: отклонена 000000000000: E_DUP
