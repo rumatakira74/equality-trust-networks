@@ -728,6 +728,12 @@ abstract class AppLocalizations {
   /// **'Transfer sent'**
   String get transferSent;
 
+  /// No description provided for @transferAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer sent — awaiting confirmation by the network'**
+  String get transferAwaiting;
+
   /// No description provided for @transferDelayed.
   ///
   /// In en, this message translates to:

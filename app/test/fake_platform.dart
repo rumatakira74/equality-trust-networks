@@ -321,9 +321,10 @@ class FakePlatformService implements PlatformService {
   @override
   Future<SubmitResult> submitTx(String id) async {
     if (duress) {
-      // приманка (8.2): публикации нет, ответ как у обычного перевода
+      // приманка (8.2): публикации нет, ответ правдоподобен —
+      // «ожидает подтверждения» (A6), реестр не тронут
       calls.add('submitFake($id)');
-      return SubmitResult('accepted', 'OK');
+      return SubmitResult('accepted', 'OK', fake: true);
     }
     calls.add('submit($id)');
     return submitResult;

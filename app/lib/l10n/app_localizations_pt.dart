@@ -376,6 +376,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transferSent => 'Transferência enviada';
 
   @override
+  String get transferAwaiting =>
+      'Transferência enviada — aguardando confirmação';
+
+  @override
   String transferDelayed(int hours) {
     return 'Transferência diferida: execução em $hours h, pode ser cancelada durante o atraso';
   }

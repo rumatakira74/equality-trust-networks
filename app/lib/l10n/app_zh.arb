@@ -111,6 +111,7 @@
   "transferConfirmTitle": "确认转账",
   "btConfirmTitle": "确认蓝牙付款",
   "transferSent": "转账已发送",
+  "transferAwaiting": "转账已发送——等待确认",
   "transferDelayed": "转账已延迟：{hours} 小时后执行，延迟期间可以取消",
   "signNotConfirmed": "签名未确认",
   "btNoDevices": "没有已配对的设备",

@@ -111,6 +111,7 @@
   "transferConfirmTitle": "Confirme a transferência",
   "btConfirmTitle": "Confirme o pagamento por Bluetooth",
   "transferSent": "Transferência enviada",
+  "transferAwaiting": "Transferência enviada — aguardando confirmação",
   "transferDelayed": "Transferência diferida: execução em {hours} h, pode ser cancelada durante o atraso",
   "signNotConfirmed": "Assinatura não confirmada",
   "btNoDevices": "Não há dispositivos pareados",

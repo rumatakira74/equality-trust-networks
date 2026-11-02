@@ -37,15 +37,20 @@ object BiometricGate {
      * (PIN-промпт — точка входа в режим-приманку; биометрия принуждаема
      * физически). Отпечаток предлагается, только когда приманка не
      * активна (DuressState.biometricAllowed).
+     *
+     * Приманка (A6, тема UI-защиты владельца): тот же промпт, что у
+     * честной подписи (plain — ключ не используется), негативная
+     * кнопка — как у signWithBiometric, чтобы промпт был неотличим.
      */
     fun authenticatePlain(
         activity: FragmentActivity,
         title: String,
+        negativeButtonText: String = "PIN",
         onResult: (Boolean) -> Unit,
     ) {
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setNegativeButtonText("PIN")
+            .setNegativeButtonText(negativeButtonText)
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
         BiometricPrompt(

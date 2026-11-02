@@ -95,12 +95,16 @@ class _TransferScreenState extends State<TransferScreen> {
         return;
       }
       final res = await platform.submitTx(id);
-      // понятные ошибки по конвенции кодов (этап 12: сгоревшая единица)
+      // понятные ошибки по конвенции кодов (этап 12: сгоревшая единица);
+      // приманка (8.2, A6): публикации не было — ответ правдоподобен
+      // («ожидает подтверждения», спека 8.2)
       final txError = res.accepted ? null : localizedTxError(l, res.code);
       setState(() => _result = res.accepted
-          ? (_willBeDelayed
-              ? l.transferDelayed(_delayHours)
-              : l.transferSent)
+          ? (res.fake
+              ? l.transferAwaiting
+              : (_willBeDelayed
+                  ? l.transferDelayed(_delayHours)
+                  : l.transferSent))
           : (txError ?? l.rejectedWithCode(res.code)));
       await app.refreshWallet();
     } catch (e) {

@@ -111,6 +111,7 @@
   "transferConfirmTitle": "Подтвердите перевод",
   "btConfirmTitle": "Подтвердите Bluetooth-платёж",
   "transferSent": "Перевод отправлен",
+  "transferAwaiting": "Перевод отправлен — ожидает подтверждения",
   "transferDelayed": "Перевод отложен: исполнение через {hours} ч, отменить можно в течение задержки",
   "signNotConfirmed": "Подпись не подтверждена",
   "btNoDevices": "Нет сопряжённых устройств",

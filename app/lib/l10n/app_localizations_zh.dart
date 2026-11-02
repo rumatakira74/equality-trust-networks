@@ -367,6 +367,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transferSent => '转账已发送';
 
   @override
+  String get transferAwaiting => '转账已发送——等待确认';
+
+  @override
   String transferDelayed(int hours) {
     return '转账已延迟：$hours 小时后执行，延迟期间可以取消';
   }

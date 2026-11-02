@@ -125,8 +125,26 @@ class MainActivity : FragmentActivity() {
         gate { unlocked ->
             if (!unlocked) return@gate
             if (duress.active) {
-                // ключ подписи при приманке не используется (8.2)
-                appendStatus("перевод недоступен")
+                // приманка (8.2, A6): тот же путь и ритм, что у честного
+                // перевода — сборка (PoW) и биометрический промпт; ключ
+                // НЕ используется (plain-биометрия), публикации нет,
+                // ответ правдоподобен («ожидает подтверждения»)
+                val built = flow.buildTransferTx(
+                    genesis!!, flow.address(genesis!!.networkID())!!, 1,
+                )
+                if (built == null) {
+                    appendStatus("перевод: нет узла/пиров или seq")
+                    return@gate
+                }
+                BiometricGate.authenticatePlain(
+                    this, "Подтвердите перевод", "Отмена",
+                ) { ok ->
+                    if (!ok) {
+                        appendStatus("перевод: без подписи")
+                    } else {
+                        appendStatus("перевод: ожидает подтверждения")
+                    }
+                }
                 return@gate
             }
             val built = flow.buildTransferTx(

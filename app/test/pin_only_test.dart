@@ -103,8 +103,10 @@ void main() {
     await tester.enterText(find.byType(TextField).last, '9999');
     await tester.tap(find.text('Подтвердить'));
     await tester.pumpAndSettle();
-    // правдоподобный успех без реальной подписи и публикации
-    expect(find.text('Перевод отправлен'), findsOneWidget);
+    // правдоподобный успех без реальной подписи и публикации:
+    // ответ — «ожидает подтверждения» (A6, спека 8.2)
+    expect(find.text('Перевод отправлен — ожидает подтверждения'),
+        findsOneWidget);
     expect(fake.duress, isTrue);
     expect(fake.calls, contains('signFake(tx2)'));
     expect(fake.calls, contains('submitFake(tx2)'));

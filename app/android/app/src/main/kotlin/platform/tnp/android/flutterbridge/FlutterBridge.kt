@@ -171,6 +171,13 @@ object FlutterBridge {
     private fun hex(b: ByteArray?): String =
         b?.joinToString("") { "%02x".format(it) } ?: ""
 
+    /** Правдоподобная hex-подпись (64 байта) для приманки (A6). */
+    private fun fakeSigHex(): String {
+        val b = ByteArray(64)
+        java.security.SecureRandom().nextBytes(b)
+        return hex(b)
+    }
+
     private fun unhex(s: String): ByteArray =
         ByteArray(s.length / 2) { i ->
             ((Character.digit(s[i * 2], 16) shl 4) + Character.digit(s[i * 2 + 1], 16)).toByte()
@@ -489,8 +496,9 @@ object FlutterBridge {
                     val nonce = (call.argument<Any>("nonce") as Number).toLong()
                     val title = call.argument<String>("title") ?: "Подтвердите миграцию"
                     if (duress.active) {
-                        // приманка: ключ не используется (8.2)
-                        result.success(mapOf("sig" to "", "fake" to true))
+                        // приманка: ключ не используется (8.2); пустая
+                        // строка — видимый признак, ответ правдоподобен
+                        result.success(mapOf("sig" to fakeSigHex(), "fake" to true))
                         return
                     }
                     // хеш (эпоха — из узла) — в фон; биометрия — в главном
@@ -568,8 +576,9 @@ object FlutterBridge {
                     val title = call.argument<String>("title")
                         ?: "Подтвердите смену гардианов подопечного"
                     if (duress.active) {
-                        // приманка: ключ не используется (8.2)
-                        result.success(mapOf("sig" to "", "fake" to true))
+                        // приманка: ключ не используется (8.2); пустая
+                        // строка — видимый признак, ответ правдоподобен
+                        result.success(mapOf("sig" to fakeSigHex(), "fake" to true))
                         return
                     }
                     BiometricGate.signWithBiometric(
@@ -603,10 +612,12 @@ object FlutterBridge {
                         return
                     }
                     if (duress.active) {
-                        // приманка (8.2): подпись НЕ выполняется, ответ
-                        // правдоподобен («ожидает подтверждения» ниже)
-                        Thread.sleep(400)
-                        result.success(mapOf("ok" to true, "fake" to true))
+                        // приманка (8.2, A6): тот же биометрический
+                        // промпт, что у честной подписи (plain — ключ
+                        // не используется), подписи и публикации нет
+                        BiometricGate.authenticatePlain(activity, title, "Отмена") { ok ->
+                            result.success(mapOf("ok" to ok, "fake" to true))
+                        }
                         return
                     }
                     BiometricGate.signWithBiometric(activity, wallet, title, tx.signingHash()) { sig ->
@@ -745,7 +756,15 @@ object FlutterBridge {
                     val txid = unhex(call.argument<String>("txid")!!)
                     bg(result) { node()?.offlineStatus(txid) ?: "unknown" }
                 }
-                "awaiting" -> bg(result) { node()?.awaitingJSON() ?: "[]" }
+                "awaiting" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные офлайн-платежи
+                        // (суммы) не показываются
+                        result.success("[]")
+                        return
+                    }
+                    bg(result) { node()?.awaitingJSON() ?: "[]" }
+                }
 
                 // -- запросы состояния (net/query.go через мост) — в фон --
                 "balanceWithProof" -> {
@@ -802,6 +821,12 @@ object FlutterBridge {
                     }
                 }
                 "pendingTransfers" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные отложенные переводы
+                        // (суммы) не показываются — легенда без них
+                        result.success("[]")
+                        return
+                    }
                     val argAddr = call.argument<String?>("addr")
                     bg(result) {
                         val n = node() ?: throw Err("NONODE", "узел не запущен")
@@ -810,6 +835,11 @@ object FlutterBridge {
                     }
                 }
                 "pendingMigrations" -> {
+                    if (duress.active) {
+                        // приманка (A6): реальные миграции не показываются
+                        result.success("[]")
+                        return
+                    }
                     val argAddr = call.argument<String?>("addr")
                     bg(result) {
                         val n = node() ?: throw Err("NONODE", "узел не запущен")

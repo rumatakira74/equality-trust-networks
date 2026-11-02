@@ -260,6 +260,7 @@
   "transferConfirmTitle": "Confirm transfer",
   "btConfirmTitle": "Confirm Bluetooth payment",
   "transferSent": "Transfer sent",
+  "transferAwaiting": "Transfer sent — awaiting confirmation by the network",
   "transferDelayed": "Transfer delayed: execution in {hours} h, it can be cancelled during the delay",
   "@transferDelayed": {
     "placeholders": {

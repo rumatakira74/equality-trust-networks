@@ -375,6 +375,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get transferSent => 'Перевод отправлен';
 
   @override
+  String get transferAwaiting => 'Перевод отправлен — ожидает подтверждения';
+
+  @override
   String transferDelayed(int hours) {
     return 'Перевод отложен: исполнение через $hours ч, отменить можно в течение задержки';
   }
