@@ -304,6 +304,24 @@ object FlutterBridge {
                     }
                 }
                 "pinLockRemaining" -> result.success(pin.lockRemainingMs())
+                // FLAG_SECURE (тема UI-защиты владельца, п.2): пометка
+                // окна — экраны с балансом/суммами не попадают в
+                // системные скриншоты и превью «недавних» (пустой
+                // скриншот — доказательство работы флага)
+                "setSecureMode" -> {
+                    val on = call.argument<Boolean>("on") ?: false
+                    if (on) {
+                        activity.window.setFlags(
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        )
+                    } else {
+                        activity.window.clearFlags(
+                            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+                        )
+                    }
+                    result.success(null)
+                }
                 "duressActive" -> result.success(duress.active)
                 "exitDuress" -> {
                     duress.exit()

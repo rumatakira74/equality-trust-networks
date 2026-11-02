@@ -170,6 +170,15 @@ class FakePlatformService implements PlatformService {
   @override
   Future<int> pinLockRemaining() async => pinFailures >= 5 ? pinLockMs : 0;
 
+  /// Журнал пометок FLAG_SECURE (п.2): последовательность true/false.
+  final List<bool> secureModeCalls = [];
+
+  @override
+  Future<void> setSecureMode(bool on) async {
+    calls.add('setSecureMode($on)');
+    secureModeCalls.add(on);
+  }
+
   @override
   Future<bool> duressActive() async => duress;
 

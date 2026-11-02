@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
+import '../../services/secure_mode.dart';
 import '../../state/app_state.dart';
 
 class PendingScreen extends StatefulWidget {
@@ -22,10 +23,22 @@ class _PendingScreenState extends State<PendingScreen> {
   final _newP = TextEditingController();
   String? _result;
 
+  late final PlatformService _platform;
+
   @override
   void initState() {
     super.initState();
+    // FLAG_SECURE (п.2): суммы отложенных переводов — окно помечено
+    _platform = context.read<PlatformService>();
+    SecureMode.set(_platform, 'screen:pending', true);
     _refresh();
+  }
+
+  @override
+  void dispose() {
+    SecureMode.set(_platform, 'screen:pending', false);
+    _newP.dispose();
+    super.dispose();
   }
 
   Future<void> _refresh() async {

@@ -30,6 +30,7 @@ abstract class PlatformService {
       List<String> decoyHistory);
   Future<String> verifyPin(String pin); // normal | none | locked (неотличимо)
   Future<int> pinLockRemaining(); // мс остатка блокировки (лимит попыток)
+  Future<void> setSecureMode(bool on); // FLAG_SECURE на окне (п.2)
   Future<bool> duressActive();
   Future<void> exitDuress();
   Future<bool> biometricLoginAllowed();
@@ -159,6 +160,10 @@ class MethodChannelPlatformService implements PlatformService {
   @override
   Future<int> pinLockRemaining() async =>
       (await _call('pinLockRemaining') as num?)?.toInt() ?? 0;
+
+  @override
+  Future<void> setSecureMode(bool on) =>
+      _call('setSecureMode', {'on': on});
 
   @override
   Future<bool> duressActive() async => await _call('duressActive') as bool;

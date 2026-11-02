@@ -39,6 +39,12 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // FLAG_SECURE (тема UI-защиты владельца, п.2): экран показывает
+        // баланс/статус — системные скриншоты и превью «недавних» пусты
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+        )
         pin = PinManager(this)
         duress = DuressState(this)
         flow = WalletFlow(this)
