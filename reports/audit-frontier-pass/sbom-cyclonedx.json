@@ -1,0 +1,4079 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:53d669b6b2abb8194c841b4d86812a0e",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-02T00:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "equality-trust-networks",
+      "version": "audit-frontier-pass",
+      "description": "Trust Networks Platform — Go core + Kotlin platform layer + Flutter UI. SBOM of contour-1 supply-chain inventory (read-only audit, no network access)."
+    },
+    "tools": [
+      {
+        "vendor": "audit-frontier-pass",
+        "name": "gen_sbom.py",
+        "version": "1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "filippo.io/bigmod",
+      "version": "v0.1.1-0.20260103110540-f8a47775ebe5",
+      "purl": "pkg:golang/filippo.io/bigmod@v0.1.1-0.20260103110540-f8a47775ebe5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "filippo.io/keygen",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/filippo.io/keygen@v1.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/benbjohnson/clock",
+      "version": "v1.3.5",
+      "purl": "pkg:golang/github.com/benbjohnson/clock@v1.3.5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/beorn7/perks",
+      "version": "v1.0.1",
+      "purl": "pkg:golang/github.com/beorn7/perks@v1.0.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/cespare/xxhash/v2",
+      "version": "v2.3.0",
+      "purl": "pkg:golang/github.com/cespare/xxhash/v2@v2.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/davidlazar/go-crypto",
+      "version": "v0.0.0-20200604182044-b73af7476f6c",
+      "purl": "pkg:golang/github.com/davidlazar/go-crypto@v0.0.0-20200604182044-b73af7476f6c",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/decred/dcrd/dcrec/secp256k1/v4",
+      "version": "v4.4.1",
+      "purl": "pkg:golang/github.com/decred/dcrd/dcrec/secp256k1/v4@v4.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/dunglas/httpsfv",
+      "version": "v1.1.1",
+      "purl": "pkg:golang/github.com/dunglas/httpsfv@v1.1.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/filecoin-project/go-clock",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/filecoin-project/go-clock@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/flynn/noise",
+      "version": "v1.1.0",
+      "purl": "pkg:golang/github.com/flynn/noise@v1.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-logr/logr",
+      "version": "v1.4.3",
+      "purl": "pkg:golang/github.com/go-logr/logr@v1.4.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/go-logr/stdr",
+      "version": "v1.2.2",
+      "purl": "pkg:golang/github.com/go-logr/stdr@v1.2.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/gopacket",
+      "version": "v1.1.19",
+      "purl": "pkg:golang/github.com/google/gopacket@v1.1.19",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/google/uuid",
+      "version": "v1.6.0",
+      "purl": "pkg:golang/github.com/google/uuid@v1.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/gorilla/websocket",
+      "version": "v1.5.3",
+      "purl": "pkg:golang/github.com/gorilla/websocket@v1.5.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/hashicorp/golang-lru",
+      "version": "v1.0.2",
+      "purl": "pkg:golang/github.com/hashicorp/golang-lru@v1.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/hashicorp/golang-lru/v2",
+      "version": "v2.0.7",
+      "purl": "pkg:golang/github.com/hashicorp/golang-lru/v2@v2.0.7",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/huin/goupnp",
+      "version": "v1.3.0",
+      "purl": "pkg:golang/github.com/huin/goupnp@v1.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ipfs/boxo",
+      "version": "v0.41.0",
+      "purl": "pkg:golang/github.com/ipfs/boxo@v0.41.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ipfs/go-cid",
+      "version": "v0.6.2",
+      "purl": "pkg:golang/github.com/ipfs/go-cid@v0.6.2",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ipfs/go-datastore",
+      "version": "v0.9.2",
+      "purl": "pkg:golang/github.com/ipfs/go-datastore@v0.9.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ipfs/go-log/v2",
+      "version": "v2.9.2",
+      "purl": "pkg:golang/github.com/ipfs/go-log/v2@v2.9.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ipld/go-ipld-prime",
+      "version": "v0.24.0",
+      "purl": "pkg:golang/github.com/ipld/go-ipld-prime@v0.24.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jackpal/go-nat-pmp",
+      "version": "v1.0.2",
+      "purl": "pkg:golang/github.com/jackpal/go-nat-pmp@v1.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/jbenet/go-temp-err-catcher",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/jbenet/go-temp-err-catcher@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/klauspost/cpuid/v2",
+      "version": "v2.4.0",
+      "purl": "pkg:golang/github.com/klauspost/cpuid/v2@v2.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/koron/go-ssdp",
+      "version": "v0.9.1",
+      "purl": "pkg:golang/github.com/koron/go-ssdp@v0.9.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-buffer-pool",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/libp2p/go-buffer-pool@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-cidranger",
+      "version": "v1.1.0",
+      "purl": "pkg:golang/github.com/libp2p/go-cidranger@v1.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-flow-metrics",
+      "version": "v0.3.0",
+      "purl": "pkg:golang/github.com/libp2p/go-flow-metrics@v0.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p",
+      "version": "v0.50.0",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p@v0.50.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-asn-util",
+      "version": "v0.4.1",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-asn-util@v0.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-kad-dht",
+      "version": "v0.42.2",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-kad-dht@v0.42.2",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-kbucket",
+      "version": "v0.9.0",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-kbucket@v0.9.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-pubsub",
+      "version": "v0.18.0",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-pubsub@v0.18.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-record",
+      "version": "v0.3.1",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-record@v0.3.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-libp2p-routing-helpers",
+      "version": "v0.7.5",
+      "purl": "pkg:golang/github.com/libp2p/go-libp2p-routing-helpers@v0.7.5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-msgio",
+      "version": "v0.3.0",
+      "purl": "pkg:golang/github.com/libp2p/go-msgio@v0.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-netroute",
+      "version": "v0.4.0",
+      "purl": "pkg:golang/github.com/libp2p/go-netroute@v0.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-reuseport",
+      "version": "v0.4.0",
+      "purl": "pkg:golang/github.com/libp2p/go-reuseport@v0.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/go-yamux/v5",
+      "version": "v5.1.0",
+      "purl": "pkg:golang/github.com/libp2p/go-yamux/v5@v5.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/libp2p/zeroconf/v2",
+      "version": "v2.2.0",
+      "purl": "pkg:golang/github.com/libp2p/zeroconf/v2@v2.2.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/marten-seemann/tcp",
+      "version": "v0.0.0-20210406111302-dfbc87cc63fd",
+      "purl": "pkg:golang/github.com/marten-seemann/tcp@v0.0.0-20210406111302-dfbc87cc63fd",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mattn/go-isatty",
+      "version": "v0.0.24",
+      "purl": "pkg:golang/github.com/mattn/go-isatty@v0.0.24",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/miekg/dns",
+      "version": "v1.1.72",
+      "purl": "pkg:golang/github.com/miekg/dns@v1.1.72",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mikioh/tcpinfo",
+      "version": "v0.0.0-20190314235526-30a79bb1804b",
+      "purl": "pkg:golang/github.com/mikioh/tcpinfo@v0.0.0-20190314235526-30a79bb1804b",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mikioh/tcpopt",
+      "version": "v0.0.0-20190314235656-172688c1accc",
+      "purl": "pkg:golang/github.com/mikioh/tcpopt@v0.0.0-20190314235656-172688c1accc",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/minio/sha256-simd",
+      "version": "v1.0.1",
+      "purl": "pkg:golang/github.com/minio/sha256-simd@v1.0.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/mr-tron/base58",
+      "version": "v1.3.0",
+      "purl": "pkg:golang/github.com/mr-tron/base58@v1.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-base32",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/multiformats/go-base32@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-base36",
+      "version": "v0.2.0",
+      "purl": "pkg:golang/github.com/multiformats/go-base36@v0.2.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multiaddr",
+      "version": "v0.16.1",
+      "purl": "pkg:golang/github.com/multiformats/go-multiaddr@v0.16.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multiaddr-dns",
+      "version": "v0.6.0",
+      "purl": "pkg:golang/github.com/multiformats/go-multiaddr-dns@v0.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multiaddr-fmt",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/multiformats/go-multiaddr-fmt@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multibase",
+      "version": "v0.3.0",
+      "purl": "pkg:golang/github.com/multiformats/go-multibase@v0.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multicodec",
+      "version": "v0.10.0",
+      "purl": "pkg:golang/github.com/multiformats/go-multicodec@v0.10.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multihash",
+      "version": "v0.2.3",
+      "purl": "pkg:golang/github.com/multiformats/go-multihash@v0.2.3",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-multistream",
+      "version": "v0.6.1",
+      "purl": "pkg:golang/github.com/multiformats/go-multistream@v0.6.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/multiformats/go-varint",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/multiformats/go-varint@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/munnerz/goautoneg",
+      "version": "v0.0.0-20191010083416-a7dc8b61c822",
+      "purl": "pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ncruces/go-sqlite3",
+      "version": "v0.36.0",
+      "purl": "pkg:golang/github.com/ncruces/go-sqlite3@v0.36.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ncruces/go-sqlite3-wasm/v6",
+      "version": "v6.4.35401",
+      "purl": "pkg:golang/github.com/ncruces/go-sqlite3-wasm/v6@v6.4.35401",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/ncruces/julianday",
+      "version": "v1.0.0",
+      "purl": "pkg:golang/github.com/ncruces/julianday@v1.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pbnjay/memory",
+      "version": "v0.0.0-20210728143218-7b4eea64cf58",
+      "purl": "pkg:golang/github.com/pbnjay/memory@v0.0.0-20210728143218-7b4eea64cf58",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/datachannel",
+      "version": "v1.5.10",
+      "purl": "pkg:golang/github.com/pion/datachannel@v1.5.10",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/dtls/v3",
+      "version": "v3.1.4",
+      "purl": "pkg:golang/github.com/pion/dtls/v3@v3.1.4",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/ice/v4",
+      "version": "v4.0.10",
+      "purl": "pkg:golang/github.com/pion/ice/v4@v4.0.10",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/interceptor",
+      "version": "v0.1.40",
+      "purl": "pkg:golang/github.com/pion/interceptor@v0.1.40",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/logging",
+      "version": "v0.2.4",
+      "purl": "pkg:golang/github.com/pion/logging@v0.2.4",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/mdns/v2",
+      "version": "v2.0.7",
+      "purl": "pkg:golang/github.com/pion/mdns/v2@v2.0.7",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/randutil",
+      "version": "v0.1.0",
+      "purl": "pkg:golang/github.com/pion/randutil@v0.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/rtcp",
+      "version": "v1.2.16",
+      "purl": "pkg:golang/github.com/pion/rtcp@v1.2.16",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/rtp",
+      "version": "v1.8.19",
+      "purl": "pkg:golang/github.com/pion/rtp@v1.8.19",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/sctp",
+      "version": "v1.8.39",
+      "purl": "pkg:golang/github.com/pion/sctp@v1.8.39",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/sdp/v3",
+      "version": "v3.0.18",
+      "purl": "pkg:golang/github.com/pion/sdp/v3@v3.0.18",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/srtp/v3",
+      "version": "v3.0.6",
+      "purl": "pkg:golang/github.com/pion/srtp/v3@v3.0.6",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/stun/v3",
+      "version": "v3.1.5",
+      "purl": "pkg:golang/github.com/pion/stun/v3@v3.1.5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/transport/v3",
+      "version": "v3.0.7",
+      "purl": "pkg:golang/github.com/pion/transport/v3@v3.0.7",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/transport/v4",
+      "version": "v4.0.2",
+      "purl": "pkg:golang/github.com/pion/transport/v4@v4.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/turn/v4",
+      "version": "v4.0.2",
+      "purl": "pkg:golang/github.com/pion/turn/v4@v4.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/pion/webrtc/v4",
+      "version": "v4.1.2",
+      "purl": "pkg:golang/github.com/pion/webrtc/v4@v4.1.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/polydawn/refmt",
+      "version": "v0.90.0",
+      "purl": "pkg:golang/github.com/polydawn/refmt@v0.90.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/client_golang",
+      "version": "v1.24.1",
+      "purl": "pkg:golang/github.com/prometheus/client_golang@v1.24.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/client_model",
+      "version": "v0.6.2",
+      "purl": "pkg:golang/github.com/prometheus/client_model@v0.6.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/common",
+      "version": "v0.70.1",
+      "purl": "pkg:golang/github.com/prometheus/common@v0.70.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/prometheus/procfs",
+      "version": "v0.21.1",
+      "purl": "pkg:golang/github.com/prometheus/procfs@v0.21.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/quic-go/qpack",
+      "version": "v0.6.0",
+      "purl": "pkg:golang/github.com/quic-go/qpack@v0.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/quic-go/quic-go",
+      "version": "v0.62.0",
+      "purl": "pkg:golang/github.com/quic-go/quic-go@v0.62.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/quic-go/webtransport-go",
+      "version": "v0.13.0",
+      "purl": "pkg:golang/github.com/quic-go/webtransport-go@v0.13.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/spaolacci/murmur3",
+      "version": "v1.1.0",
+      "purl": "pkg:golang/github.com/spaolacci/murmur3@v1.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/whyrusleeping/go-keyspace",
+      "version": "v0.0.0-20160322163242-5b898ac5add1",
+      "purl": "pkg:golang/github.com/whyrusleeping/go-keyspace@v0.0.0-20160322163242-5b898ac5add1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "github.com/wlynxg/anet",
+      "version": "v0.0.5",
+      "purl": "pkg:golang/github.com/wlynxg/anet@v0.0.5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/auto/sdk",
+      "version": "v1.2.1",
+      "purl": "pkg:golang/go.opentelemetry.io/auto/sdk@v1.2.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel",
+      "version": "v1.44.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel@v1.44.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/metric",
+      "version": "v1.44.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/metric@v1.44.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.opentelemetry.io/otel/trace",
+      "version": "v1.44.0",
+      "purl": "pkg:golang/go.opentelemetry.io/otel/trace@v1.44.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/dig",
+      "version": "v1.19.0",
+      "purl": "pkg:golang/go.uber.org/dig@v1.19.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/fx",
+      "version": "v1.24.0",
+      "purl": "pkg:golang/go.uber.org/fx@v1.24.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/mock",
+      "version": "v0.6.0",
+      "purl": "pkg:golang/go.uber.org/mock@v0.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/multierr",
+      "version": "v1.11.0",
+      "purl": "pkg:golang/go.uber.org/multierr@v1.11.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "go.uber.org/zap",
+      "version": "v1.28.0",
+      "purl": "pkg:golang/go.uber.org/zap@v1.28.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/crypto",
+      "version": "v0.58.0",
+      "purl": "pkg:golang/golang.org/x/crypto@v0.58.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/exp",
+      "version": "v0.0.0-20260718201538-764159d718ef",
+      "purl": "pkg:golang/golang.org/x/exp@v0.0.0-20260718201538-764159d718ef",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/mobile",
+      "version": "v0.0.0-20261011034528-197770444867",
+      "purl": "pkg:golang/golang.org/x/mobile@v0.0.0-20261011034528-197770444867",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/mod",
+      "version": "v0.42.0",
+      "purl": "pkg:golang/golang.org/x/mod@v0.42.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/net",
+      "version": "v0.61.0",
+      "purl": "pkg:golang/golang.org/x/net@v0.61.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/sync",
+      "version": "v0.24.0",
+      "purl": "pkg:golang/golang.org/x/sync@v0.24.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/sys",
+      "version": "v0.49.0",
+      "purl": "pkg:golang/golang.org/x/sys@v0.49.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/telemetry",
+      "version": "v0.0.0-20261009151841-97e8ea77aa2a",
+      "purl": "pkg:golang/golang.org/x/telemetry@v0.0.0-20261009151841-97e8ea77aa2a",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/text",
+      "version": "v0.43.0",
+      "purl": "pkg:golang/golang.org/x/text@v0.43.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/time",
+      "version": "v0.15.0",
+      "purl": "pkg:golang/golang.org/x/time@v0.15.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "golang.org/x/tools",
+      "version": "v0.52.0",
+      "purl": "pkg:golang/golang.org/x/tools@v0.52.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gonum.org/v1/gonum",
+      "version": "v0.17.0",
+      "purl": "pkg:golang/gonum.org/v1/gonum@v0.17.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "google.golang.org/protobuf",
+      "version": "v1.36.11",
+      "purl": "pkg:golang/google.golang.org/protobuf@v1.36.11",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "lukechampine.com/blake3",
+      "version": "v1.4.1",
+      "purl": "pkg:golang/lukechampine.com/blake3@v1.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "indirect"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "go"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.appcompat:appcompat",
+      "version": "1.7.0",
+      "purl": "pkg:maven/androidx.appcompat/appcompat@1.7.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.biometric:biometric",
+      "version": "1.4.0-alpha07",
+      "purl": "pkg:maven/androidx.biometric/biometric@1.4.0-alpha07",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app + app/android/app"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.constraintlayout:constraintlayout",
+      "version": "2.1.4",
+      "purl": "pkg:maven/androidx.constraintlayout/constraintlayout@2.1.4",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.core:core-ktx",
+      "version": "1.13.1",
+      "purl": "pkg:maven/androidx.core/core-ktx@1.13.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app + app/android/app"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.test.ext:junit",
+      "version": "1.2.1",
+      "purl": "pkg:maven/androidx.test.ext/junit@1.2.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app (androidTestImplementation)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.test:rules",
+      "version": "1.6.1",
+      "purl": "pkg:maven/androidx.test/rules@1.6.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app (androidTestImplementation)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "androidx.test:runner",
+      "version": "1.6.2",
+      "purl": "pkg:maven/androidx.test/runner@1.6.2",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app (androidTestImplementation)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "com.android.tools.build:gradle",
+      "version": "8.9.1",
+      "purl": "pkg:maven/com.android.tools.build/gradle@8.9.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/ (build.gradle.kts, AGP)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "com.android.tools.build:gradle",
+      "version": "9.1.0",
+      "purl": "pkg:maven/com.android.tools.build/gradle@9.1.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "app/android/settings.gradle.kts (AGP)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "com.google.android.material:material",
+      "version": "1.12.0",
+      "purl": "pkg:maven/com.google.android.material/material@1.12.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "dev.flutter.flutter-plugin-loader",
+      "version": "1.0.0",
+      "purl": "pkg:maven/dev.flutter.flutter-plugin-loader/@1.0.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "app/android/settings.gradle.kts"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "junit:junit",
+      "version": "4.13.2",
+      "purl": "pkg:maven/junit/junit@4.13.2",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/app (testImplementation)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "org.gradle:gradle",
+      "version": "8.11.1",
+      "purl": "pkg:maven/org.gradle/gradle@8.11.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/gradle/wrapper (distributionSha256Sum pinned)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "org.gradle:gradle",
+      "version": "9.3.1",
+      "purl": "pkg:maven/org.gradle/gradle@9.3.1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "app/android/gradle/wrapper (distributionSha256Sum pinned)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "org.jetbrains.kotlin:kotlin-gradle-plugin",
+      "version": "2.0.20",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-gradle-plugin@2.0.20",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "android/ (build.gradle.kts)"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "org.jetbrains.kotlin:kotlin-gradle-plugin",
+      "version": "2.4.0",
+      "purl": "pkg:maven/org.jetbrains.kotlin/kotlin-gradle-plugin@2.4.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "maven"
+        },
+        {
+          "name": "tnp:declared_in",
+          "value": "app/android/settings.gradle.kts"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "args",
+      "version": "2.7.0",
+      "purl": "pkg:pub/args@2.7.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d0481093c50b1da8910eb0bb301626d4d8eb7284aa739614d2b394ee09e3ea04"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "async",
+      "version": "2.13.1",
+      "purl": "pkg:pub/async@2.13.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e2eb0491ba5ddb6177742d2da23904574082139b07c1e33b8503b9f46f3e1a37"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "boolean_selector",
+      "version": "2.1.2",
+      "purl": "pkg:pub/boolean_selector@2.1.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8aab1771e1243a5063b8b0ff68042d67334e3feab9e95b9490f9a6ebf73b42ea"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "characters",
+      "version": "1.4.1",
+      "purl": "pkg:pub/characters@1.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "faf38497bda5ead2a8c7615f4f7939df04333478bf32e4173fcb06d428b5716b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "clock",
+      "version": "1.1.3",
+      "purl": "pkg:pub/clock@1.1.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e51d50bca3217c9a9fa2b41a30e4a38971133f5f9ec7a3d57bae095007f1d28e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "code_assets",
+      "version": "1.2.1",
+      "purl": "pkg:pub/code_assets@1.2.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf394f466ba9205f1812a0433b392d6af280f155f56651eda7c18cc32ed493b8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "collection",
+      "version": "1.19.1",
+      "purl": "pkg:pub/collection@1.19.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "cross_file",
+      "version": "0.3.5+5",
+      "purl": "pkg:pub/cross_file@0.3.5+5",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f141ea4f277af142a0356955707f6556f37b03947d39d55585981a06ca437bd6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "crypto",
+      "version": "3.0.7",
+      "purl": "pkg:pub/crypto@3.0.7",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "cupertino_icons",
+      "version": "1.0.9",
+      "purl": "pkg:pub/cupertino_icons@1.0.9",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "fake_async",
+      "version": "1.3.3",
+      "purl": "pkg:pub/fake_async@1.3.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5368f224a74523e8d2e7399ea1638b37aecfca824a3cc4dfdf77bf1fa905ac44"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "ffi",
+      "version": "2.2.0",
+      "purl": "pkg:pub/ffi@2.2.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6d7fd89431262d8f3125e81b50d3847a091d846eafcd4fdb88dd06f36d705a45"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "file",
+      "version": "7.0.1",
+      "purl": "pkg:pub/file@7.0.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a3b4f84adafef897088c160faf7dfffb7696046cb13ae90b508c2cbc95d3b8d4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "fixnum",
+      "version": "1.1.1",
+      "purl": "pkg:pub/fixnum@1.1.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6dc7065e46c974bc7c5f143080a6764ec7a4be6da1285ececdc37be96de53be"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "flutter",
+      "version": "0.0.0",
+      "purl": "pkg:pub/flutter@0.0.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "flutter_lints",
+      "version": "6.0.0",
+      "purl": "pkg:pub/flutter_lints@6.0.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3105dc8492f6183fb076ccf1f351ac3d60564bff92e20bfc4af9cc1651f4e7e1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "flutter_localizations",
+      "version": "0.0.0",
+      "purl": "pkg:pub/flutter_localizations@0.0.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "flutter_test",
+      "version": "0.0.0",
+      "purl": "pkg:pub/flutter_test@0.0.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "purl": "pkg:pub/flutter_web_plugins@0.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "hooks",
+      "version": "2.0.2",
+      "purl": "pkg:pub/hooks@2.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9a62a50b50b769a737bc0a8ff381f333529df3ab746b2f6b02e83760231455ba"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "intl",
+      "version": "0.20.3",
+      "purl": "pkg:pub/intl@0.20.3",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jni",
+      "version": "1.1.0",
+      "purl": "pkg:pub/jni@1.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6b9ca0602fef0230e83149afbe3f9f8227e94f2bbe84a1da4f14d699742f402d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jni_flutter",
+      "version": "1.0.4+1",
+      "purl": "pkg:pub/jni_flutter@1.0.4+1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0dd33d67797560f66e961a6053882d4df54bd345bf063b8fe7ea133f7ad8b191"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "jni_util",
+      "version": "1.0.0",
+      "purl": "pkg:pub/jni_util@1.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1ba86da04a5f2bf18fde2edb235587e70c5b0fc5bd4ba955f46b00942c3fc35f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "leak_tracker",
+      "version": "11.0.2",
+      "purl": "pkg:pub/leak_tracker@11.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33e2e26bdd85a0112ec15400c8cbffea70d0f9c3407491f672a2fad47915e2de"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "leak_tracker_flutter_testing",
+      "version": "3.0.10",
+      "purl": "pkg:pub/leak_tracker_flutter_testing@3.0.10",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1dbc140bb5a23c75ea9c4811222756104fbcd1a27173f0c34ca01e16bea473c1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "leak_tracker_testing",
+      "version": "3.0.2",
+      "purl": "pkg:pub/leak_tracker_testing@3.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8d5a2d49f4a66b49744b23b018848400d23e54caf9463f4eb20df3eb8acb2eb1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "lints",
+      "version": "6.1.0",
+      "purl": "pkg:pub/lints@6.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "logging",
+      "version": "1.3.0",
+      "purl": "pkg:pub/logging@1.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "matcher",
+      "version": "0.12.20",
+      "purl": "pkg:pub/matcher@0.12.20",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "31bd099b47c10cd1aeb55146a2d46ce0277630ecef3f7dae54ad7873f36696cd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "material_color_utilities",
+      "version": "0.13.0",
+      "purl": "pkg:pub/material_color_utilities@0.13.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9c337007e82b1889149c82ed242ed1cb24a66044e30979c44912381e9be4c48b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "meta",
+      "version": "1.18.3",
+      "purl": "pkg:pub/meta@1.18.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c82594181e3312f3d0695fc95aaaf7758d75b8d4ae2bbecf223b9fd5109a059d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "mime",
+      "version": "2.1.0",
+      "purl": "pkg:pub/mime@2.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bd47de35f07e27267e69c8c8b22edf9473bfee170a60d60fcc93730c5144b7f6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "nested",
+      "version": "1.0.0",
+      "purl": "pkg:pub/nested@1.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "objective_c",
+      "version": "9.5.0",
+      "purl": "pkg:pub/objective_c@9.5.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b7fb95a6d9a4f009edd63dc5ac69f07420b23a16161c6dd8660290b59c602e8e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "package_config",
+      "version": "3.0.0",
+      "purl": "pkg:pub/package_config@3.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ffcf4cf3d6c0b74ac43708d9f56625506e8a68aa935abe9d267a7330f320eb5d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path",
+      "version": "1.9.1",
+      "purl": "pkg:pub/path@1.9.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider",
+      "version": "2.1.6",
+      "purl": "pkg:pub/path_provider@2.1.6",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider_android",
+      "version": "2.3.1",
+      "purl": "pkg:pub/path_provider_android@2.3.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "69cbd515a62b94d32a7944f086b2f82b4ac40a1d45bebfc00813a430ab2dabcd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider_foundation",
+      "version": "2.6.0",
+      "purl": "pkg:pub/path_provider_foundation@2.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2a376b7d6392d80cd3705782d2caa734ca4727776db0b6ec36ef3f1855197699"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider_linux",
+      "version": "2.2.2",
+      "purl": "pkg:pub/path_provider_linux@2.2.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "58c2005f147315b11e9b4a7bc889cd5203e250cba8e3f012dae259b4972b5c16"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider_platform_interface",
+      "version": "2.1.3",
+      "purl": "pkg:pub/path_provider_platform_interface@2.1.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "484838772624c3a4b94f1e44a3e19897fee738f2d5c4ce448443b0417f7c9dda"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "path_provider_windows",
+      "version": "2.3.0",
+      "purl": "pkg:pub/path_provider_windows@2.3.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bd6f00dbd873bfb70d0761682da2b3a2c2fccc2b9e84c495821639601d81afe7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "platform",
+      "version": "3.2.0",
+      "purl": "pkg:pub/platform@3.2.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a36d119c13416516a7b5913fbe8af8531e11633d784c550b2125f76c758524ec"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "plugin_platform_interface",
+      "version": "2.1.8",
+      "purl": "pkg:pub/plugin_platform_interface@2.1.8",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "provider",
+      "version": "6.1.5+1",
+      "purl": "pkg:pub/provider@6.1.5+1",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4e82183fa20e5ca25703ead7e05de9e4cceed1fbd1eadc1ac3cb6f565a09f272"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "pub_semver",
+      "version": "2.2.1",
+      "purl": "pkg:pub/pub_semver@2.2.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "261236774e8b1d69cfc6b9eabbc96c40f25e7a2d6b171f3385d4f65d5734fb24"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "qr",
+      "version": "3.0.2",
+      "purl": "pkg:pub/qr@3.0.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "qr_flutter",
+      "version": "4.1.0",
+      "purl": "pkg:pub/qr_flutter@4.1.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5095f0fc6e3f71d08adef8feccc8cea4f12eec18a2e31c2e8d82cb6019f4b097"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "record_use",
+      "version": "0.6.0",
+      "purl": "pkg:pub/record_use@0.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2551bd8eecfe95d14ae75f6021ad0248be5c27f138c2ec12fcb52b500b3ba1ed"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "share_plus",
+      "version": "11.1.0",
+      "purl": "pkg:pub/share_plus@11.1.0",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d7dc0630a923883c6328ca31b89aa682bacbf2f8304162d29f7c6aaff03a27a1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "share_plus_platform_interface",
+      "version": "6.1.0",
+      "purl": "pkg:pub/share_plus_platform_interface@6.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "88023e53a13429bd65d8e85e11a9b484f49d4c190abbd96c7932b74d6927cc9a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences",
+      "version": "2.5.6",
+      "purl": "pkg:pub/shared_preferences@2.5.6",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "direct"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1e85e0dccf5b4a016077fea7dfbb4a7cb39c759ac1596fcf60c06deadb7da91f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_android",
+      "version": "2.5.1",
+      "purl": "pkg:pub/shared_preferences_android@2.5.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a67a1a6a62b241ad4ddd8a97f5a12bb547c445190930233b63cd28cc0a104a76"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_foundation",
+      "version": "2.5.7",
+      "purl": "pkg:pub/shared_preferences_foundation@2.5.7",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2ec3934efa51e46117f23031cc141b8fc878e8525b94ec1ea4f7f586cf1b47ea"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_linux",
+      "version": "2.4.1",
+      "purl": "pkg:pub/shared_preferences_linux@2.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "580abfd40f415611503cae30adf626e6656dfb2f0cee8f465ece7b6defb40f2f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_platform_interface",
+      "version": "2.4.2",
+      "purl": "pkg:pub/shared_preferences_platform_interface@2.4.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "649dc798a33931919ea356c4305c2d1f81619ea6e92244070b520187b5140ef9"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_web",
+      "version": "2.4.3",
+      "purl": "pkg:pub/shared_preferences_web@2.4.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "shared_preferences_windows",
+      "version": "2.4.1",
+      "purl": "pkg:pub/shared_preferences_windows@2.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "94ef0f72b2d71bc3e700e025db3710911bd51a71cefb65cc609dd0d9a982e3c1"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "sky_engine",
+      "version": "0.0.0",
+      "purl": "pkg:pub/sky_engine@0.0.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "source_span",
+      "version": "1.10.2",
+      "purl": "pkg:pub/source_span@1.10.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "56a02f1f4cd1a2d96303c0144c93bd6d909eea6bee6bf5a0e0b685edbd4c47ab"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "stack_trace",
+      "version": "1.12.2",
+      "purl": "pkg:pub/stack_trace@1.12.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "277654b3034d17ac6f9f1cb5595db011b1d5d41e8806866db28e0abaa101c490"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "stream_channel",
+      "version": "2.1.4",
+      "purl": "pkg:pub/stream_channel@2.1.4",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "969e04c80b8bcdf826f8f16579c7b14d780458bd97f56d107d3950fdbeef059d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "string_scanner",
+      "version": "1.4.1",
+      "purl": "pkg:pub/string_scanner@1.4.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "921cd31725b72fe181906c6a94d987c78e3b98c2e205b397ea399d4054872b43"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "term_glyph",
+      "version": "1.2.2",
+      "purl": "pkg:pub/term_glyph@1.2.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7f554798625ea768a7518313e58f83891c7f5024f88e46e7182a4558850a4b8e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "test_api",
+      "version": "0.7.12",
+      "purl": "pkg:pub/test_api@0.7.12",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2a122cbe059f8b610d3a5415f42e255b6c17b1f21eee1d960f31080237fb4f11"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "typed_data",
+      "version": "1.4.0",
+      "purl": "pkg:pub/typed_data@1.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f9049c039ebfeb4cf7a7104a675823cd72dba8297f264b6637062516699fa006"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "url_launcher_linux",
+      "version": "3.2.3",
+      "purl": "pkg:pub/url_launcher_linux@3.2.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "10f86fef4c2c43563fa6c211ff9cf757adf4d3ab762c56bd430664a947d70cd0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "url_launcher_platform_interface",
+      "version": "2.3.2",
+      "purl": "pkg:pub/url_launcher_platform_interface@2.3.2",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "552f8a1e663569be95a8190206a38187b531910283c3e982193e4f2733f01029"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "url_launcher_web",
+      "version": "2.4.3",
+      "purl": "pkg:pub/url_launcher_web@2.4.3",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "85c81589622fbc87c1c683aaea164d3604a7777495a79d91e39ffcdec39ddb34"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "url_launcher_windows",
+      "version": "3.1.6",
+      "purl": "pkg:pub/url_launcher_windows@3.1.6",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6c5ad3f22cd4c38e089b81963b3cd7bb83b111b2df5dce008bb066162f42e429"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "uuid",
+      "version": "4.6.0",
+      "purl": "pkg:pub/uuid@4.6.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b129329f58692f6e6578329498a8fe9fbe98f090beb764ffbb8ee2eadd01dcd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "vector_math",
+      "version": "2.4.0",
+      "purl": "pkg:pub/vector_math@2.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1d774bbdf6b72a0b12122fc1560c9c2d2a67db5a4a4cc2bd8a5c990ab20e3188"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "vm_service",
+      "version": "15.4.0",
+      "purl": "pkg:pub/vm_service@15.4.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "89b11d62e1040ee681af3b4f1c97a803ecbf010c6e8b9c5896ee5b08c3bf7b78"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "web",
+      "version": "1.1.1",
+      "purl": "pkg:pub/web@1.1.1",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "win32",
+      "version": "5.15.0",
+      "purl": "pkg:pub/win32@5.15.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "xdg_directories",
+      "version": "1.1.0",
+      "purl": "pkg:pub/xdg_directories@1.1.0",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7a3f37b05d989967cdddcbb571f1ea834867ae2faa29725fd085180e0883aa15"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "yaml",
+      "version": "3.1.4",
+      "purl": "pkg:pub/yaml@3.1.4",
+      "scope": "optional",
+      "properties": [
+        {
+          "name": "tnp:scope",
+          "value": "transitive"
+        },
+        {
+          "name": "tnp:ecosystem",
+          "value": "pub"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f67cdd8e07d3c6329146aaef1ba043542b3134c12489f553ca9a7435d1068aea"
+        }
+      ]
+    }
+  ]
+}
