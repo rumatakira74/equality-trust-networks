@@ -361,7 +361,7 @@ func TestJournalTxGossipDedup(t *testing.T) {
 
 	// повторная доставка (эхо/рестарт): тихий пропуск до cheapCheck,
 	// журнал не растёт и повторного apply не происходит
-	n1.handleTxFromPeer(tx, n1.Host.ID())
+	n1.handleTxFromPeer(tx, n1.Host.ID(), false)
 	if got := len(n1.journalSnapshot()); got != 1 {
 		t.Fatalf("журнал вырос при повторной доставке: %d", got)
 	}

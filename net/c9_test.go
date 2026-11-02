@@ -35,11 +35,11 @@ func TestC9AdmissionLayer(t *testing.T) {
 
 	// приём от пира: stale не применяется (журнал не растёт), fresh — да
 	from := peer.ID("c9-test-peer")
-	n1.handleTxFromPeer(stale, from)
+	n1.handleTxFromPeer(stale, from, false)
 	if got := len(n1.journalSnapshot()); got != 0 {
 		t.Fatalf("tx вне допуска C9 применена: журнал %d", got)
 	}
-	n1.handleTxFromPeer(fresh, from)
+	n1.handleTxFromPeer(fresh, from, false)
 	if got := len(n1.journalSnapshot()); got != 1 {
 		t.Fatalf("tx в допуске не применена: журнал %d", got)
 	}
@@ -76,7 +76,7 @@ func TestC9SandboxManaged(t *testing.T) {
 	if err := n1.cheapCheck(stale); err != nil {
 		t.Fatalf("sandbox: C9 сломал прогон с короткими period_seconds: %v", err)
 	}
-	n1.handleTxFromPeer(stale, peer.ID("c9-sandbox-peer"))
+	n1.handleTxFromPeer(stale, peer.ID("c9-sandbox-peer"), false)
 	if got := len(n1.journalSnapshot()); got != 1 {
 		t.Fatalf("sandbox: tx вне допуска не применена: журнал %d", got)
 	}

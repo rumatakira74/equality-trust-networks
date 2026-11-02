@@ -1,0 +1,119 @@
+жертва: bootstrap: нет источников пиров — ожидаю входящих
+жертва: handleTx: tx 5d8eb7af7a32 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 089304b68ff1 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 433d2eccccd9 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx ad4f90d573de type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a22f249ccf52 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 1d770bf15ff1 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 3d28bbfd65b9 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 1ac14e0521ad type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 5673c31f70bd type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 3c4e99178f0e type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a8ab83059ebf type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 037974198c10 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 557e528ad297 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx b83cbeb7bc8a type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx e3e24dcb948e type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx fd5d8f80f29a type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 6307de0da3cb type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 71c7feb11770 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: sync <peer.ID 12*MWYLdz>: failed to negotiate protocol: protocols not supported: [/tnp/6f179397a5fee91200d4290575e51361d491b2f6a40a30a9b11ebdacb1c93e0a/sync/1.0.0]
+жертва: handleTx: tx 37cd9777574e type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx e44aa59147ad type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 3c39e6ff3532 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 030c79507ce6 type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 8b9e4f071caf type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a211e45fdd15 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx c5049eaa1221 type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: handleTx: tx 4a68988d1d70 type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx fa369dcfac30 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 274b6a9931e4 type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 652d540a1786 type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 3198989de5f1 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx aeefe4180293 type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 2479d82da826 type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 4a0da385e2ee type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: handleTx: tx 8d660226528b type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: dos: разрыв соединения с <peer.ID 12*MWYLdz> (счёт -64.5)
+жертва: спам от <peer.ID 12*MWYLdz>: кошелёк не известен узлу
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: отклонена 000000000000: E_DUP
+жертва: handleTx: tx 918b65f3014e type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx d94251ec234b type=VOUCH seq=4 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 50178cdde344 type=VOUCH seq=5 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 5042610ff9be type=VOUCH seq=5 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a76305362624 type=VOUCH seq=5 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx e47c18f68de6 type=VOUCH seq=6 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 38fbcc3a8c2d type=VOUCH seq=6 от <peer.ID Qm*72Zuik>
+жертва: gossipLoop: выход: context canceled

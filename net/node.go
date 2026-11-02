@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/cons"
@@ -103,6 +104,13 @@ type Node struct {
 
 	relayReserved int
 
+	// net-DoS (A3, тема net-dos-a3): бюджет дорогих операций на пира
+	// + счёт пира; семафор параллельных Argon2id; счётчики пути приёма
+	dos             *dosTracker
+	hardSem         chan struct{}
+	expensiveChecks atomic.Uint64
+	budgetRejected  atomic.Uint64
+
 	// applyMu — сериализация Apply (ядро этапа 3 без мьютексов).
 	// RWMutex — read-only запросы UI (net/query.go, этап 7; исключение
 	// из правила 3 промпта этапа 7, авторизовано 19.10.2026):
@@ -182,8 +190,14 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		CpProposals:   make(map[string]*wire.Checkpoint),
 		CpCollectors:  make(map[string]*cons.Collector),
 		ConsParams:    cons.FromProfile(cfg.Genesis.Manifest.Profile),
+		dos:           newDosTracker(cfg.DosExpensiveBudget, cfg.DosExpensiveWindow),
 		log:           cfg.Log,
 	}
+	hardLim := cfg.DosMaxConcurrentHard
+	if hardLim <= 0 {
+		hardLim = DosMaxConcurrentHard
+	}
+	n.hardSem = make(chan struct{}, hardLim)
 	if cfg.ConsensusEpochSeconds > 0 {
 		n.ConsParams.EpochSeconds = cfg.ConsensusEpochSeconds
 		n.ConsParams.MaxTimeShift = cfg.ConsensusEpochSeconds / 4
@@ -555,8 +569,10 @@ func (n *Node) countSpam() {
 }
 
 // handleTxFromPeer — дедупликация по txid, corroboration (eclipse, 12.3),
-// дешёвая проверка, применение в фоне.
-func (n *Node) handleTxFromPeer(tx *wire.Transaction, from peer.ID) {
+// путь приёма (A3: дешёвое → подпись → бюджет → Argon2id/PoW), применение
+// в фоне. verified = true — валидатор темы уже прогнал полный путь
+// (relayAdmit), повторно проверки не выполняются.
+func (n *Node) handleTxFromPeer(tx *wire.Transaction, from peer.ID, verified bool) {
 	txid := tx.TxID()
 	n.Corroboration.Add(txid[:], from)
 	n.mu.Lock()
@@ -569,10 +585,12 @@ func (n *Node) handleTxFromPeer(tx *wire.Transaction, from peer.ID) {
 		return
 	}
 	n.logf("handleTx: tx %s type=%s seq=%d от %s", hex12(tx), tx.Type, tx.Seq, from.ShortString())
-	if err := n.cheapCheck(tx); err != nil {
-		n.countSpam()
-		n.logf("спам от %s: %v", from.ShortString(), err)
-		return
+	if !verified {
+		if err := n.relayAdmit(tx, from); err != nil {
+			n.countSpam()
+			n.logf("спам от %s: %v", from.ShortString(), err)
+			return
+		}
 	}
 	n.applyLive(tx)
 }
@@ -987,19 +1005,25 @@ type Stats struct {
 	PendingN     int    `json:"pending"`
 	AwaitingN    int    `json:"awaiting"`
 	Conflicts    int    `json:"conflicts"`
+	// net-DoS (A3): выполненные дорогие проверки (Argon2id) и отказы
+	// по бюджету пира — метрики пути приёма (прогон с флудером)
+	ExpensiveChecks uint64 `json:"expensive_checks"`
+	BudgetRejected  uint64 `json:"budget_rejected"`
 }
 
 func (n *Node) Stats() Stats {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	st := Stats{
-		Level:        n.Cfg.Level.String(),
-		PeerID:       "",
-		Peers:        len(n.connectedPeers()),
-		JournalLen:   len(n.journal),
-		SpamRejected: n.spamCount,
-		PendingN:     n.pendingN,
-		AwaitingN:    len(n.awaiting),
+		Level:           n.Cfg.Level.String(),
+		PeerID:          "",
+		Peers:           len(n.connectedPeers()),
+		JournalLen:      len(n.journal),
+		SpamRejected:    n.spamCount,
+		PendingN:        n.pendingN,
+		AwaitingN:       len(n.awaiting),
+		ExpensiveChecks: n.expensiveChecks.Load(),
+		BudgetRejected:  n.budgetRejected.Load(),
 	}
 	if n.Host != nil {
 		st.PeerID = n.Host.ID().String()

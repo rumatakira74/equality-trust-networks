@@ -133,6 +133,8 @@ type nodeOpts struct {
 	corroN      int
 	linkGroups  bool // оценка несвязанности по подсетям (№35, этап 6)
 	log         bool
+	dosBudget   int           // A3: бюджет дорогих операций на пира (0 — константа)
+	dosWindow   time.Duration // A3: окно бюджета (0 — константа)
 }
 
 // newNode — узел в окружении (эмерджентные localhost-порты).
@@ -159,6 +161,8 @@ func (e *testEnv) newNode(o nodeOpts) *Node {
 		// обход запрета синтетических корней вне песочницы.
 		AllowSyntheticRoots: true,
 		PollInterval:        500 * time.Millisecond,
+		DosExpensiveBudget:  o.dosBudget,
+		DosExpensiveWindow:  o.dosWindow,
 	}
 	if o.walletID != "" {
 		cfg.WalletKey = e.key(o.walletID)

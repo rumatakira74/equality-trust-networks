@@ -77,6 +77,12 @@ const usage = `tnp-testnet — утилита закрытой тестовой 
   state     -genesis Ф [-watch-seeds М] [-watch-wallets М] [-peer M]...
   fleet     -genesis Ф -out КАТ -nodes N [-seeds М,М] [-wallets М,М]
             [-base-port 4100] [-bin ПУТЬ] [-duration СЕК] [-poll СЕК]
+  flood     -role driver -genesis Ф -out КАТ [-duration СЕК] [-rate N]
+            [-valid-every СЕК] [-baseline СЕК] [-candidates N]
+            [-victim-port N] [-link-groups Б]
+            (net-DoS A3: честная жертва отдельным процессом + флудер
+            raw gossipsub; замер CPU/RSS жертвы и латентности валидных
+            tx до/во время флуда; артефакты — CSV/JSON в -out)
   export    -genesis Ф [-out ФАЙЛ] [-format json|csv] [-peer M]...
             (6.5: экспорт реестра для анализа — оборот, предложение,
             неравенство считаются из публичного реестра)
@@ -127,6 +133,8 @@ func main() {
 		err = stateCmd(os.Args[2:])
 	case "fleet":
 		err = fleetCmd(os.Args[2:])
+	case "flood":
+		err = floodCmd(os.Args[2:])
 	case "export":
 		err = exportCmd(os.Args[2:])
 	case "configure":
@@ -350,6 +358,7 @@ func generate(args []string) error {
 	inviteHex := fs.String("invite-key-hex", "", "ключ приглашения (hex; по умолчанию детерминирован от имени)")
 	epochSeconds := fs.Uint64("epoch-seconds", 0, "epoch_seconds профиля (0 — 86400, №16); симуляция: 90/300")
 	smallPow := fs.Bool("small-pow", false, "малые PoW-таргеты и Argon2 (тестовый оверрайд симуляции 8.1)")
+	argon2Mib := fs.Int("argon2-mib", 0, "Argon2-память, МиБ (с -small-pow: таргеты перебора малы, память настоящая — прогон net-DoS A3; 0 — 8 КиБ как в -small-pow)")
 	freshWindow := fs.Int("fresh-window", -1, "окно переводимости свежих выпусков (периодов; -1 — из KNOWLEDGE 4/17 = 3, №11); 0 — учебный оверрайд песочницы: за один прогон когорта не созревает")
 	anchorEpochZero := fs.Bool("anchor-epoch-zero", false, "EpochZero = текущая эпоха от genesis; DeadlineEpoch seed_sunset = EpochZero+24 (закат через 24 эпохи от generate)")
 	var peers peerList
@@ -389,6 +398,15 @@ func generate(args []string) error {
 			TargetLight: 0x0010_0000_0000_0000, TargetHard: 0x0010_0000_0000_0000,
 			Argon2MemoryKiB: 8, Argon2Iterations: 1, Argon2Parallelism: 1,
 		}
+	}
+	// net-DoS (A3): изоляция стоимости Argon2id — память настоящая
+	// (прод-параметр решения №9, 32 МиБ), таргет перебора мал (быстрый
+	// solve register у честных драйверов); проверка мусорного PoW на
+	// жертве до фикса выполняет Argon2id с этой памятью независимо
+	// от таргета — измеримый CPU/RSS-эффект флуда
+	if *smallPow && *argon2Mib > 0 {
+		prof.Pow.Argon2MemoryKiB = uint32(*argon2Mib) * 1024
+		prof.Pow.TargetHard = 0xC000_0000_0000_0000 // ~2 итерации перебора
 	}
 	// учебный оверрайд окна переводимости (как в песочнице этапа 7):
 	// когорта выпуска зреет 3 периода (№11) — в прогоне на живых часах
