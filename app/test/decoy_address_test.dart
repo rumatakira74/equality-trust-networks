@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tnp_app/l10n/app_localizations.dart';
 import 'package:tnp_app/screens/recovery/recovery_card_screen.dart';
+import 'package:tnp_app/screens/vouching/vouching_screen.dart';
 import 'package:tnp_app/services/platform_service.dart';
 import 'package:tnp_app/state/app_state.dart';
 
@@ -20,6 +22,26 @@ Widget _wrap(Widget child, FakePlatformService fake) {
     providers: [
       Provider<PlatformService>.value(value: fake),
       ChangeNotifierProvider(create: (_) => AppState(fake)..load()),
+    ],
+    child: MaterialApp(
+      locale: const Locale('ru'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: child,
+    ),
+  );
+}
+
+Widget _wrapWith(Widget child, FakePlatformService fake, AppState app) {
+  return MultiProvider(
+    providers: [
+      Provider<PlatformService>.value(value: fake),
+      ChangeNotifierProvider<AppState>.value(value: app),
     ],
     child: MaterialApp(
       locale: const Locale('ru'),
@@ -110,5 +132,71 @@ void main() {
         app.address, const [], 'TNP Test Genesis', '4e465553');
     expect(payload, contains('addr=$decoy'));
     expect(payload, isNot(contains(real)));
+  });
+
+  testWidgets('F5: реальная последовательность — load() под замком кэширует '
+      'реальный адрес, вход тревожным PIN + refreshAfterUnlock — приманка '
+      'во всех точках (карточка, QR), выход обычным PIN — реальный',
+      (tester) async {
+    // поверхность как у устройства: кнопка QR ниже дефолтных 600 px
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final fake = FakePlatformService()
+      ..pinSet = true
+      ..registered = true
+      ..setupPin('1234', '9876', 100, []);
+    final real = fake.wallet.address;
+
+    // старт приложения под замком: снапшот кэширует реальный адрес
+    final app = AppState(fake);
+    await app.load();
+    expect(fake.duress, isFalse);
+    expect(app.address, real);
+
+    // вход тревожным PIN: мост активирует приманку, ответ неотличим
+    expect(await fake.verifyPin('9876'), 'normal');
+    expect(fake.duress, isTrue);
+
+    // разблокировка перечитывает адрес и снапшот кошелька (фикс F5)
+    await app.refreshAfterUnlock();
+    final decoy = app.address;
+    expect(decoy, isNot(real));
+    expect(RegExp(r'^[0-9a-f]{64}$').hasMatch(decoy), isTrue);
+    expect(app.wallet?.address, decoy,
+        reason: 'снапшот кошелька должен быть перечитан в режиме приманки');
+
+    // карточка восстановления: текст и QR — подменной, реального нет
+    await tester.pumpWidget(_wrapWith(const RecoveryCardScreen(), fake, app));
+    await tester.pumpAndSettle();
+    expect(find.text(decoy), findsOneWidget);
+    expect(find.text(real), findsNothing);
+    final payload = recoveryCardPayload(
+        app.address, const [], 'TNP Test Genesis', '4e465553');
+    expect(payload, contains('addr=$decoy'));
+    expect(payload, isNot(contains(real)));
+
+    // QR ваучинга: рендерится из app.address (vouching_screen.dart:220) —
+    // тот же подменной адрес, реального нет
+    await tester.pumpWidget(_wrapWith(const VouchingScreen(), fake, app));
+    await tester.pumpAndSettle();
+    // вкладка «Поручиться»: QR-кнопка живёт там
+    await tester.tap(find.text('Поручиться'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byIcon(Icons.qr_code));
+    await tester.tap(find.byIcon(Icons.qr_code));
+    await tester.pumpAndSettle();
+    expect(find.byType(QrImageView), findsOneWidget);
+    expect(app.address, decoy);
+    expect(app.address, isNot(real));
+
+    // выход обычным PIN: снова реальный адрес
+    expect(await fake.verifyPin('1234'), 'normal');
+    expect(fake.duress, isFalse);
+    await app.refreshAfterUnlock();
+    expect(app.address, real);
+    expect(app.wallet?.address, real);
   });
 }

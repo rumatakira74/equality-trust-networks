@@ -1,0 +1,23 @@
+F5 emulator run — address check (behavioral)
+device: emulator-5554 (AVD stage12ga, API 36, x86_64), build with F5 code
+date: 2026-11-02 (UTC)
+
+Persisted legend address (tnp_duress.xml, decoy_address):
+  0930e9a09678141784bd379257a2e4424163621536d0495ebf77ae77e268b30c
+
+Duress phase (unlock with duress PIN 9876; wallet shows 100 = legend):
+  recovery card address (uiautomator text):
+  85e4e22aa00696175acb07a836f878f8e0b409736590f4b863e0301853e68e4c
+  screenshot: 02-duress-recovery-card.png
+
+Normal phase (restart, unlock with normal PIN 1234; wallet shows 0 = real):
+  recovery card address (uiautomator text):
+  85e4e22aa00696175acb07a836f878f8e0b409736590f4b863e0301853e68e4c
+  screenshot: 04-normal-recovery-card.png
+
+Verdict:
+  duress card address == normal card address (85e4e22a...) == REAL address
+  duress card address != persisted decoy (0930e9a0...)
+  => in duress mode the recovery card displays the REAL address, not the decoy.
+  Wallet screenshots 01/03 are fully black (FLAG_SECURE on balance screens) — expected.
+  logcat (duress phase): decoy occurrences 0, real occurrences 0 — no address in logs.

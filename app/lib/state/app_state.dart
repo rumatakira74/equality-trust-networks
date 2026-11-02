@@ -105,6 +105,20 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Перечитать адрес и снапшот кошелька после разблокировки (F5):
+  /// при входе тревожным PIN мост уже активировал приманку, поэтому
+  /// адрес и кошелёк должны быть перечитаны — иначе экраны покажут
+  /// значения, закэшированные при старте под замком (реальный адрес).
+  Future<void> refreshAfterUnlock() async {
+    try {
+      _address = await platform.walletAddress();
+    } on TnpPlatformException {
+      // адрес не перечитан — экраны покажут прежний; вход не блокируется
+    }
+    await refreshWallet();
+    notifyListeners();
+  }
+
   /// Запуск узла (12.2) и обновление состояния.
   Future<void> startNode() async {
     await platform.nodeStart();

@@ -1,20 +1,23 @@
 # Отчёт темы фиксов F5 и F16 — ветка `fix-f5-f16`
 
-Мандат: `prompts/fix-f5-f16-prompt.md`. Основание: находки высокой значимости аудита
-контура 1 (`reports/REPORT-AUDIT-FRONTIER-PASS.md`, F5 — п.2, F16 — п.5). Дата: 2026-11-02.
-Статус: **F5 и F16 реализованы, протестированы, доказаны контрольным прогоном; ветка
-запушена, CI pending. Эмуляторный прогон приманки (F5) — НЕ завершён, остаток ниже.**
+Мандат: `prompts/fix-f5-f16-prompt.md` + продление (эмуляторный прогон приманки F5).
+Основание: находки высокой значимости аудита контура 1 (`reports/REPORT-AUDIT-FRONTIER-PASS.md`,
+F5 — п.2, F16 — п.5). Дата: 2026-11-02.
+Статус: **F5 и F16 реализованы, протестированы, доказаны контрольным прогоном. Эмуляторный
+прогон приманки (F5) выполнен: он вскрыл находку высокой значимости (карточка восстановления
+в приманке показывала реальный адрес) — находка исправлена, покрыта регресс-тестом и доказана
+повторным прогоном. Ветка запушена, CI pending.**
 
 ## (а) Чек-лист мандата
 
 | Пункт mandate | Статус |
 | --- | --- |
-| 1. F5 — подменной адрес во всех точках выдачи приманки | ✅ код (a8c16f2): `walletAddress`, decoy-кошелёк (`walletInfo`), `btSendAddress` → `displayAddress()`; персистентный адрес легенды в `tnp_duress`; генерация при создании легенды (`mobile.GenerateDecoyAddress`); тесты Go+Dart зелёные. ❌ эмуляторный прогон (скриншоты) — остаток |
+| 1. F5 — подменной адрес во всех точках выдачи приманки | ✅ код (a8c16f2): `walletAddress`, decoy-кошелёк (`walletInfo`), `btSendAddress` → `displayAddress()`; персистентный адрес легенды в `tnp_duress`; генерация при создании легенды (`mobile.GenerateDecoyAddress`); тесты Go+Dart зелёные. ✅ эмуляторный прогон: приманка — карточка и QR с подменным адресом, обычный PIN — реальный, logcat без адресов; FINDING прогона (кэш адреса при старте) исправлен, регресс-тест, повторный прогон — `reports/fix-f5-f16/emu/*-postfix.*` |
 | 2. F16 — Corroboration только из финализированных веток | ✅ код (53bb8bd): `Corroboration.Confirmed` гейтится предикатом финальности (`isFinalizedTx` = чекпоинты + Snowball-finals); тесты зелёные; контрольный прогон доказал; `protocolVersion` НЕ поднят, wire не тронут |
 | 3. Тесты (двойная трата / честный путь / F5 / регресс, -race) | ✅ `net/f16_finality_test.go` (unit-гейт + интеграция двойной траты), `mobile` TestGenerateDecoyAddress, `app/test/decoy_address_test.dart`; регресс — полный `go test ./...` и `flutter test` зелёные; `-race ./net/ ./mobile/` зелёные |
-| 4. Контрольный прогон eclipse headless + эмуляторный прогон приманки | ✅ headless (матрица v3, ниже); ❌ эмуляторный — остаток (блокер ниже) |
+| 4. Контрольный прогон eclipse headless + эмуляторный прогон приманки | ✅ headless (матрица v3, ниже); ✅ эмуляторный — сценарий (б).1 пройден после фикса, артефакты `reports/fix-f5-f16/emu/` (pre-fix — доказательство FINDING, `-postfix` — доказательство фикса) |
 | 5. Документация и отчёт | ✅ этот отчёт; F5/F16 → «Решено» в `REPORT-AUDIT-FRONTIER-PASS.md`; README 8.2 не тронут; спека не расходится (12.3/12.4/8.2 уже описывают целевую семантику — правки RU+ENG не нужны) |
-| Предкоммитная проверка | ✅ gofmt/vet/build чисты; go test ./... зелёный; -race net+mobile зелёный; flutter analyze чист; flutter test 56/56; AAR+APK собраны |
+| Предкоммитная проверка | ✅ gofmt/vet/build чисты; go test ./... зелёный; -race net+mobile зелёный; flutter analyze чист; flutter test 57/57; AAR+APK собраны (APK пересобран после фикса) |
 | Финализация: промежуточные коммиты, чистое дерево, пуш ветки, CI не ждать | ✅ коммиты a8c16f2, 53bb8bd, 4194589 + финальный коммит (этот отчёт + артефакты); пуш `fix-f5-f16`; CI pending |
 
 ## Механика F5 (кратко)
@@ -32,8 +35,8 @@
   `btSendAddress` (уходит по Bluetooth — тоже подменной). `btReceiveAddress` — чужой адрес, не тронут.
 - Гардианы в приманке: легенда уже подменяет их (пустой список в decoy-кошельке) — согласовано,
   скоуп не расширялся (стоп-вопрос не потребовался).
-- Реальный адрес не попадает в UI приманки; в логах/артефактах прогона — проверка на эмуляторе
-  (остаток).
+- Реальный адрес не попадает в UI приманки; в логах/артефактах прогона — проверено на
+  эмуляторе (0 вхождений в logcat, см. раздел прогона).
 
 ## Механика F16 (кратко)
 
@@ -61,6 +64,30 @@
 | F5 (Dart): адрес стабилен между «рестартами» AppState, 64-hex, ≠ реальному; карточка восстановления в приманке — подменной адрес в тексте и QR; выход обычным PIN → реальный; реестр не тронут | `app/test/decoy_address_test.dart` | PASS |
 | Регресс: полный честный путь (перевод/офлайн-платёж без приманки и конфликтов) | весь `go test ./...`, `flutter test` 56/56, sidechannel/eclipse тесты | PASS |
 | -race по задетым пакетам | `go test -race ./net/ ./mobile/` (147 с) | PASS |
+
+### Эмуляторный прогон приманки (F5) — итог
+
+AVD `stage12ga` (API 36, x86_64), `-gpu host`; amd64-пиры песочницы (4001/4002) detached
+в эмуляторе; APK debug из ветки (AAR с F5-кодом). Онбординг: PIN 1234, тревожный 9876,
+легенда 100; отпечаток enrolled (`adb emu finger touch 1`).
+
+1. **Pre-fix прогон (FINDING):** вход тревожным PIN 9876 → кошелёк 100 (легенда), карточка
+   восстановления показала **реальный** адрес `85e4e22a…8e4c` вместо подменного
+   `0930e9a0…b30c`; после выхода обычным PIN 1234 карточка показала тот же `85e4e22a…8e4c`.
+   Причина — `AppState._address` кэшируется при старте под замком и не перечитывается при
+   разблокировке. Артефакты: `reports/fix-f5-f16/emu/01..04-*.png`, `address-check.txt`,
+   `logcat-duress-phase.txt`.
+2. **Фикс:** `AppState.refreshAfterUnlock()` (перечитывает `walletAddress()` и `refreshWallet()`)
+   вызывается из `lock_screen` после успешной разблокировки — и по PIN (`res == 'normal'`),
+   и по отпечатку. Регресс-тест `app/test/decoy_address_test.dart` — реальная последовательность:
+   `load()` до входа → вход тревожным PIN → `refreshAfterUnlock()` → карточка/QR с подменным
+   адресом → выход обычным PIN → реальный.
+3. **Post-fix прогон:** приманка — кошелёк 100, карточка `cce61b35…775e` (совпадает с
+   `decoy_address` в `tnp_duress`), QR ваучинга из того же `app.address`; обычный PIN —
+   кошелёк 0, карточка `172c97e6…d14a` (реальный), адреса различны. logcat (приманка и полный):
+   0 вхождений decoy и реального адреса. Артефакты: `reports/fix-f5-f16/emu/*-postfix.png`,
+   `address-check-postfix.txt`, `logcat-duress-phase-postfix.txt`.
+   Кошельковые PNG чёрные — FLAG_SECURE (штатно, экраны с балансом).
 
 ### Контрольный прогон eclipse (headless) — итог
 
@@ -94,36 +121,12 @@ link-groups=true) группы=1 — поведение объяснено: /24-
 финализирована на жертве за **26 564 мс (pre)** / **30 334 мс (post)** — рост в пределах одной
 эпохи, узкое место — 30-с тик syncLoop доставки, а не чекпоинт; неприемлемого роста нет.
 
-## (б) Точный остаток работы (для продолжения другим исполнителем)
+## (б) Остаток работы
 
-1. **Эмуляторный прогон приманки (F5), единственный незакрытый пункт mandate п.4/п.1:**
-   - AVD `stage12ga`, запускать с **`-gpu host`** (со swiftshader qemu падает SIGSEGV в этом
-     окружении; `-accel off`/TCG и `-gpu off` тоже падают).
-   - Пиры песочницы внутри эмулятора: бинарь **amd64** (arm64 идёт через
-     ndk_translation и падает): сборка в worktree с `go 1.26` и replace wlynxg/anet на
-     пропатченную копию (см. ниже), `CC=$NDK/.../x86_64-linux-android21-clang CGO_ENABLED=1
-     GOOS=android GOARCH=amd64 go build ./cmd/tnp-sandbox-peer`; push в /data/local/tmp;
-     запуск detached: `adb shell "setsid /data/local/tmp/tnp-sandbox-peer -port 4001 -nodeseed
-     tnp-sandbox-peer-node-key > /data/local/tmp/peer1.log 2>&1 < /dev/null &"` (peer1 =
-     QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP) и порт 4002 с
-     `-nodeseed tnp-sandbox-peer-node-key-2 -peers /ip4/127.0.0.1/udp/4001/quic-v1/p2p/QmNPJien...`
-     (peer2 = QmNXG1JRSkhWPzc8QzkiDm2mBFniQni9vSwW9BCM8JBtJC).
-   - APK: `cd app && flutter build apk --debug` (AAR в `android/libs/tnp.aar` пересобирать:
-     `GOFLAGS=-ldflags=-checklinkname=0 gomobile bind -target android -androidapi 26 -o android/libs/tnp.aar ./mobile`;
-     без флага link падает на wlynxg/anet vs go1.27), `adb install -r`, `pm clear platform.tnp.tnp_app`.
-   - Enroll отпечатка: app → «Set up fingerprint» → Settings → «Pixel Imprint + PIN» → PIN 1234
-     (ввести дважды, `input text 1234` + NEXT/ENTER) → Lock screen → Done → «Set up Pixel
-     Imprint» → MORE; затем `adb -s emulator-5554 emu finger touch 1`; проверка:
-     `adb shell dumpsys fingerprint | grep prints` (должен быть `id:0`). Если app всё ещё
-     «No fingerprint configured» — force-stop + перезапуск app (на момент остановки сессии
-     print был enrolled, но экран не обновился — проверить заново).
-   - Сценарий: онбординг (PIN 1234 + тревожный 9876 + легенда 100) → регистрация кошелька →
-     вход тревожным PIN → скриншоты кошелёк + карточка восстановления (должен быть подменной
-     адрес) → `adb logcat` не содержит реального адреса → выход обычным PIN → реальный адрес.
-     Артефакты → `reports/fix-f5-f16/emu/` (скриншоты PNG + logcat-выжимка .txt).
-2. Дописать в этот отчёт результаты эмуляторного прогона (раздел (а) пункт 1 → ✅).
-3. Прогнать CI-verify (владелец, `prompts/ci-verify-prompt.md` с веткой fix-f5-f16), затем merge
+1. CI-verify (владелец, `prompts/ci-verify-prompt.md` с веткой fix-f5-f16), затем merge
    по подтверждению владельца. Номера прогонов CI на момент пуша — см. (д), «CI pending».
+2. Эмуляторный прогон приманки (F5) завершён (раздел «Эмуляторный прогон приманки (F5) — итог»);
+   инструкции прогона сохранены в (в) как воспроизводимые приёмы.
 
 ## (в) «Как делать»-приёмы, найденные за сессию (обязательно)
 
@@ -169,33 +172,50 @@ link-groups=true) группы=1 — поведение объяснено: /24-
    genesis-time = now − 90 сут, чтобы окно было открыто).
 10. **pkill/pgrep -f с паттерном в собственной команде убивает свой shell** — паттерны класть
     в файл/готовить через base64, или kill по PID из `ps aux | grep "[p]attern"`.
+11. **Полный узел на эмуляторе требует Wi-Fi + зарядки** (`NodeController.shouldBeFull`):
+    без Wi-Fi при онбординге узел стартует лёгким и падает с «лёгкому узлу нужен адрес
+    кошелька» → регистрация отвечает `NONODE`. Перед прогоном:
+    `adb shell "cmd wifi connect-network AndroidWifi open"` (эмуляторный AP; `dumpsys battery`
+    — `AC powered: true`), затем повторить «Register wallet».
 
 ## (г) FINDING / блокеры / наблюдения
 
-- **Блокер (эмуляторный прогон F5, частично снят):** qemu эмулятора падал SIGSEGV со
-  swiftshader — решено флагом `-gpu host`. Далее: peer-бинарь arm64 падал под трансляцией —
-  решено amd64-сборкой. Enroll отпечатка прошёл (prints id:0), но экран app на момент остановки
-  сессии всё ещё показывал «No fingerprint configured» — требуется повторная проверка
-  (force-stop/restart app) перед сценарием приманки. Скриншотов приманки нет — прогон не завершён.
-- **Наблюдение (не блокер):** `TestEclipseIsolation` обновлён под семантику F16 (доставка N
-  источниками ≠ финальность; позитивный кейс — в TestF16OfflineDoubleSpend).
-- **Наблюдение:** в прогонах v1/v2 с короткой эпохой чекпоинт мог покрыть A до того, как sync-доставка
-  довела группы до 3 — pre-finality окно не ловилось; решено длинной эпохой (300 s) в матрице v3.
-- **Наблюдение:** при link-groups=false группы считаются по peer ID — 3 реле в одной /24 дают
-  3 «группы» (ожидаемо, это негативный контроль классификатора).
-- Спека (RU+ENG) не расходится с фиксами: 8.2 уже требует подмены адреса, 12.3/12.4 — финальность
-  решает конфликт; README 8.2 не тронут. Правок спеки/README не потребовалось.
-- Находок вне mandate за сессию не зафиксировано отдельных (FINDING-*.txt не создавались);
-  замечания об окружении (qemu/anet/go1.27) — в разделе (в).
+- **FINDING (высокая значимость, F5) → «Решено»:** в приманке карточка восстановления
+  показывала **реальный** адрес вместо подменного. Механика: `AppState._address` кэшируется
+  один раз в `load()` при старте приложения — ещё под замком, когда `duress.active == false`
+  (`main.dart:29`); `lock_screen` после успешного входа (и PIN, и отпечаток) только ставил
+  `_unlocked`, адрес не перечитывал. Точки выдачи, читающие `app.address`: карточка
+  восстановления (`recovery_card_screen.dart:82`), QR ваучинга (`vouching_screen.dart:220`);
+  кошелёк показывает decoy-снапшот через `walletInfo`, но адрес в состоянии оставался реальным.
+  Pre-fix прогон: приманка — карточка `85e4e22a…8e4c` (реальный), decoy в `tnp_duress` —
+  `0930e9a0…b30c`; обычный PIN — тот же `85e4e22a…8e4c`. **Фикс:** `AppState.refreshAfterUnlock()`
+  перечитывает `walletAddress()` и `refreshWallet()`; вызывается из `lock_screen` после
+  `_unlocked = true` в обоих путях (PIN `res == 'normal'`, биометрия). **Тесты:** новый
+  регресс-тест в `app/test/decoy_address_test.dart` — реальная последовательность (`load()` до
+  входа → тревожный PIN → `refreshAfterUnlock()` → карточка/QR с подменным → обычный PIN →
+  реальный); прежний тест этот порядок не покрывал, т.к. вызывал `load()` уже после входа.
+  **Повторный прогон:** приманка — карточка `cce61b35…775e` == `decoy_address`, QR из того же
+  `app.address`; обычный PIN — `172c97e6…d14a` (реальный); адреса различны; logcat без адресов.
+  Артефакты: `reports/fix-f5-f16/emu/` (pre-fix — доказательство находки, `-postfix` — фикса).
+- **Блокер (снят):** qemu падал SIGSEGV со swiftshader — `-gpu host`; peer-бинарь arm64 падал
+  под трансляцией — amd64-сборка; «No fingerprint configured» — force-stop/restart app после
+  enroll. Эмуляторный прогон завершён.
+- **Наблюдение (мандат):** файл `prompts/fix-f5-f16-continue-prompt.md` в репозитории
+  отсутствует; продление мандата (эмуляторный прогон, FINDING → фикс в этой теме, требования
+  к `refreshAfterUnlock`, регресс-тесту и повторному прогону) дано владельцем в сессии.
+  Промпт не создавался (правило «промпт не редактировать»).
 
 ## (д) Состояние на момент пуша
 
 - Ветка `fix-f5-f16`, tip: см. `git log` (коммиты: a8c16f2 F5, 53bb8bd F16, 4194589 tooling
-  прогона, финальный — отчёт+артефакты+конспект сессии).
+  прогона, adc1b67 отчёт+артефакты eclipse, финальный — фикс F5 по FINDING + регресс-тест +
+  артефакты эмуляторного прогона + этот отчёт).
 - Тесты зелёные: `go test ./...` (все пакеты), `go test -race ./net/ ./mobile/`,
-  `flutter analyze` чист, `flutter test` 56/56, `go vet ./...` чист, `gofmt -l .` пуст,
-  `go build ./...` OK; AAR (gomobile) и APK debug собраны.
+  `flutter analyze` чист, `flutter test` 57/57, `go vet ./...` чист, `gofmt -l .` пуст,
+  `go build ./...` OK; AAR (gomobile) и APK debug собраны (APK пересобран после фикса).
 - Контрольный прогон: матрица v3 — см. таблицу выше; артефакты `reports/fix-f5-f16/eclipse/`.
+- Эмуляторный прогон приманки: pre-fix FINDING и post-fix доказательство — см. раздел выше;
+  артефакты `reports/fix-f5-f16/emu/` (pre-fix + `-postfix`, ≤1 МБ).
 - CI: **pending** — номера прогонов workflows будут известны после пуша; сессия CI не ждёт
   (правило mandate). Merge в main — только после CI-verify владельцем и подтверждения.
 - Уборка после прогонов: эмулятор остановлен (`adb emu kill`), пиры внутри эмулятора завершены,
@@ -208,10 +228,16 @@ link-groups=true) группы=1 — поведение объяснено: /24-
   подменной адрес легенды (F5).
 - `app/android/app/src/main/kotlin/platform/tnp/android/flutterbridge/FlutterBridge.kt` —
   `displayAddress()` и точки выдачи (F5).
-- `app/test/fake_platform.dart`, `app/test/decoy_address_test.dart` — контракт и тесты (F5).
+- `app/test/fake_platform.dart`, `app/test/decoy_address_test.dart` — контракт и тесты (F5),
+  включая регресс-тест реальной последовательности «load() до входа → приманка → обычный PIN».
+- `app/lib/state/app_state.dart` — `refreshAfterUnlock()`: перечитывает адрес и снапшот
+  кошелька при разблокировке (F5-фикс по FINDING).
+- `app/lib/screens/lock_screen.dart` — вызов `refreshAfterUnlock()` после успешного входа
+  по PIN (`res == 'normal'`) и по отпечатку (F5-фикс).
 - `net/eclipse.go`, `net/node.go`, `net/cons.go`, `net/sidechannel.go` — гейт финальности (F16).
 - `net/f16_finality_test.go` (новый), `net/eclipse_test.go` — тесты (F16).
 - `cmd/tnp-testnet/eclipse.go` (новый), `cmd/tnp-testnet/main.go` — драйвер контрольного прогона.
 - `reports/REPORT-FIX-F5-F16.md` (этот), `reports/fix-f5-f16/` (артефакты+REPRODUCE),
+  `reports/fix-f5-f16/emu/` (pre-fix FINDING и `-postfix` доказательство F5),
   `reports/REPORT-AUDIT-FRONTIER-PASS.md` (F5/F16 → «Решено"),
   `SESSION-FIX-F5-F16-CONSPEKT.txt` (конспект сессии по запросу владельца).

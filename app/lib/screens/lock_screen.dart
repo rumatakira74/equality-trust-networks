@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/platform_service.dart';
+import '../state/app_state.dart';
 
 class LockScreen extends StatefulWidget {
   final Widget child;
@@ -56,7 +57,11 @@ class _LockScreenState extends State<LockScreen> {
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     if (res == 'normal') {
+      // F5: мост уже учёл режим (приманка/обычный) — перечитать адрес
+      // и снапшот кошелька до показа экранов.
+      final app = context.read<AppState>();
       setState(() => _unlocked = true);
+      await app.refreshAfterUnlock();
     } else if (res == 'locked') {
       // лимит попыток (тема UI-защиты, п.1): блокировка ввода
       final rem = await platform.pinLockRemaining();
@@ -86,7 +91,9 @@ class _LockScreenState extends State<LockScreen> {
     final ok = await platform.biometricLogin();
     if (!mounted) return;
     if (ok) {
+      final app = context.read<AppState>();
       setState(() => _unlocked = true);
+      await app.refreshAfterUnlock();
     } else {
       setState(() => _busy = false);
     }
