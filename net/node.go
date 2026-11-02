@@ -982,6 +982,16 @@ func (n *Node) PublishAwaiting(ctx context.Context) {
 	}
 }
 
+// TxCorroboration — диагностика corroboration txid для прогонов (F16):
+// сколько пиров и различных групп связи доставили txid, статус офлайн-
+// канала и входит ли txid в финализированную ветку.
+func (n *Node) TxCorroboration(txid [32]byte) (peers, groups int, status OfflineStatus, finalized bool) {
+	peers, groups = n.Corroboration.LinkSpread(txid[:])
+	status = n.OfflineStatus(txid)
+	finalized = n.isFinalizedTx(txid[:])
+	return
+}
+
 // OfflineStatus — статус транзакции офлайн-канала (12.4). «Финализировано»
 // (F16) = подтверждено N несвязанными пирами (net/eclipse) И txid входит в
 // финализированную ветку (чекпоинт/финализированный выбор) — до финальности
