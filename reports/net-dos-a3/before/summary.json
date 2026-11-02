@@ -1,0 +1,21 @@
+{
+  "network_id": "6f179397a5fee91200d4290575e51361d491b2f6a40a30a9b11ebdacb1c93e0a",
+  "rate_tx_per_s": 50,
+  "duration_sec": 60,
+  "baseline_sec": 15,
+  "candidates": 12,
+  "garbage_total": 3000,
+  "valid_total": 9,
+  "cpu_ms_baseline": 30,
+  "cpu_ms_flood": 203870,
+  "rss_max_kb_baseline": 99732,
+  "rss_max_kb_flood": 413316,
+  "latency_avg_ms_baseline": 482,
+  "latency_avg_ms_flood": 15163,
+  "latency_max_ms_baseline": 503,
+  "latency_max_ms_flood": 20064,
+  "spam_rejected": 773,
+  "expensive_checks": 0,
+  "budget_rejected": 0,
+  "journal_len": 24
+}
