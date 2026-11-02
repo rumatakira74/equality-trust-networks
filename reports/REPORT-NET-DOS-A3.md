@@ -150,7 +150,7 @@ Argon2id 32 МиБ независимо от таргета. Посевной к
 Артефакты: `reports/net-dos-a3/{before,after}/` (summary.json,
 samples.csv — посекундный CPU/RSS/журнал/спам, latency.csv, логи;
 жертва «до» — выжимка лога). Бинарники и БД прогона — вне репо
-(/tmp/netdos). Воспроизведение: команды в `driver.log` + флаги режима
+(/tmp/netdos). Воспроизведение: команды в `driver.txt` + флаги режима
 `flood` (usage утилиты).
 
 Замечание: «до» — жертва из неизменённого main (git worktree,

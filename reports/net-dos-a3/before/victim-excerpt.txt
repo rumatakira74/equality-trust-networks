@@ -1,0 +1,68 @@
+== victim.log (жертва из main, «до фикса») — выжимка: 3680 строк; ==
+== спам-отказы валидатора повторяются строкой «спам от …» ==
+жертва: bootstrap: нет источников пиров — ожидаю входящих
+жертва: handleTx: tx 7887902c55fa type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx b6742f70a12f type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 967f5638af6f type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 44fc95e25ae2 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a588d2fd6ed3 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a60e5524126a type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 75614acd854a type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx e710c64782d3 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx dbdc6d2aa5a2 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx c822497e7d4b type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 9d92cdf5a917 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 2e8419ec03e4 type=REGISTER seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 3595b8f46ae8 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx dc58ca3d74e4 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx ee563dfd6a0f type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 64cc6c9f58c0 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 4bcca88b3920 type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx c269dfbb612e type=MINT seq=1 от <peer.ID Qm*72Zuik>
+жертва: sync <peer.ID 12*iEvD2a>: failed to negotiate protocol: protocols not supported: [/tnp/6f179397a5fee91200d4290575e51361d491b2f6a40a30a9b11ebdacb1c93e0a/sync/1.0.0]
+жертва: handleTx: tx 0c8747360768 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 7bf9ba11d7a0 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 1ef3216d5e49 type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 985fcb5c358d type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 875cc906d7b2 type=VOUCH seq=3 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx 37d69afa21ad type=VOUCH seq=2 от <peer.ID Qm*72Zuik>
+жертва: handleTx: tx a435c891f489 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: спам от <peer.ID 12*iEvD2a>: усиленный PoW не сходится
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx a5874a734a03 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: спам от <peer.ID 12*iEvD2a>: усиленный PoW не сходится
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 2e0826b1b674 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 6d67e16878d5 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx c6f339877364 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 9691edf8eda8 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+... (773 спам-отказов, 3680 строк всего) ...
+жертва: handleTx: tx 964f719bb256 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 724195a64a16 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 8afb9ae070f7 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx eb46f6c34934 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx e859330e14ab type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx d717c21fcc01 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 79c940733209 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 299a0c400156 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 99840e94e4c3 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 4d4648711839 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 1feea93e1281 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: handleTx: tx 91faceb9a839 type=MINT seq=1 от <peer.ID 12*iEvD2a>
+жертва: отклонена 000000000000: E_UNKNOWN_WALLET
+жертва: gossipLoop: выход: context canceled
