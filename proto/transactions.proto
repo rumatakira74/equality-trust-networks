@@ -47,6 +47,8 @@ message Transaction {
     ReceiptPayload receipt = 22;
     ContributionClaimPayload contribution_claim = 23;
     ContributionConfirmPayload contribution_confirm = 24;
+    UpdateGuardiansPayload update_guardians = 25; // перевыбор личных
+                                                 // гардианов (11)
   }
 }
 
@@ -177,6 +179,40 @@ message MigrateCancel {
 }
 
 // ---------------------------------------------------------------------------
+// UPDATE_GUARDIANS — перевыбор личных гардианов (11, решение владельца
+// 21.10.2026): новый список (≤ 3, как при register) + согласие каждого
+// нового гардиана (подпись хеша смены — передаётся вручную, как approve
+// миграции). Отмена — подписью владельца в окне 48 ч.
+// ---------------------------------------------------------------------------
+message UpdateGuardiansPayload {
+  oneof action {
+    UpdateGuardiansPropose propose = 1;
+    UpdateGuardiansCancel cancel = 2;
+  }
+}
+
+message UpdateGuardiansPropose {
+  repeated bytes new_guardians = 1; // новый список личных гардианов (≤ 3)
+  repeated GuardianApproval approvals = 2; // подпись каждым новым гардианом
+                                           // SHA-256(GuardianChangeStatement)
+  uint64 nonce = 3;                  // связывает approvals с попыткой
+}
+
+message UpdateGuardiansCancel {
+  uint64 propose_seq = 1; // seq предложения в цепочке кошелька
+}
+
+// Каноническое утверждение смены гардианов, подписываемое каждым новым
+// гардианом (не транзакция). Эпоха не входит: окно смены 48 ч может
+// пересекать границу эпохи, подпись не должна протухать на ней.
+message GuardianChangeStatement {
+  bytes network_id = 1;
+  bytes ward = 2;               // адрес кошелька, чьи гардианы меняются
+  repeated bytes new_guardians = 3;
+  uint64 nonce = 4;
+}
+
+// ---------------------------------------------------------------------------
 // EVIDENCE — доказательство нарушения (7.5, закрытый перечень).
 // Подаёт любой узел; проверяют все узлы одинаково и независимо.
 // ---------------------------------------------------------------------------
@@ -250,8 +286,8 @@ message RedeemPayload {
   bytes provider = 1;    // кошелёк-поставщик; адрес обязан быть указан
                          // в параметрах сети (иначе E_REDEEM_PROVIDER)
   string resource_id = 2; // идентификатор ресурса
-  TimeSlot slot = 3;      // необязательный временной слот
-  uint64 amount = 4;      // сумма погашения
+  uint64 amount = 3;      // сумма погашения
+  TimeSlot slot = 4;      // необязательный временной слот
 }
 
 // Подписывается поставщиком; публикуется в цепочке поставщика.
@@ -266,9 +302,11 @@ message ReceiptPayload {
 // CONTRIBUTION — учёт вклада (6.4).
 // ---------------------------------------------------------------------------
 message ContributionClaimPayload {
-  bytes description_hash = 1; // хеш описания вклада
-  uint64 size = 2;            // размер: часы или баллы
-  uint64 period = 3;          // период, за который заявлен вклад
+  bytes pool_id = 1; // пул программы для выплаты вклада (6.4; рекомендуется,
+                     // инфляции нет); 0x.. — пул по умолчанию
+  bytes description_hash = 2; // хеш описания вклада
+  uint64 size = 3;            // размер: часы или баллы
+  uint64 period = 4;          // период, за который заявлен вклад
 }
 
 message ContributionConfirmPayload {

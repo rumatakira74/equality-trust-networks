@@ -10,6 +10,24 @@ import (
 	"fmt"
 )
 
+// Лимиты декодирования genesis-пакета (недоверенные байты чужой сети;
+// тема «Fuzz-долги»). Значения — защитные пределы декодера с запасом
+// над семантическими максимумами параметров (раздел 4).
+const (
+	// maxSeedCircle — посевной круг: рекомендация ≥ 300 кошельков (7.7);
+	// 1024 — верхняя граница разумной сети.
+	maxSeedCircle = 1024
+	// maxSlotTiers — ярусы слотов поручителя: в профилях 2 (7.4).
+	maxSlotTiers = 16
+	// maxMutableBounds — границы изменяемых [M]-параметров: порядка
+	// двух десятков (13).
+	maxMutableBounds = 64
+	// maxProviders — поставщики ресурсов (6.2): список сети.
+	maxProviders = 256
+	// maxModules — модули профиля: закрытый перечень из 5 (раздел 6).
+	maxModules = 16
+)
+
 // DecodeSlotTier — ярус пула слотов поручителя (7.4).
 func DecodeSlotTier(b []byte) (*SlotTier, error) {
 	d := &decoder{b: b}
@@ -188,14 +206,23 @@ func DecodeProfileParams(b []byte) (*ProfileParams, error) {
 				if err != nil {
 					return nil, err
 				}
+				if len(p.SlotTiers) >= maxSlotTiers {
+					return nil, errTooMany("slot_tiers", maxSlotTiers)
+				}
 				p.SlotTiers = append(p.SlotTiers, *tier)
 			case 32:
 				mb, err := DecodeMutableBound(v)
 				if err != nil {
 					return nil, err
 				}
+				if len(p.MutableBounds) >= maxMutableBounds {
+					return nil, errTooMany("mutable_bounds", maxMutableBounds)
+				}
 				p.MutableBounds = append(p.MutableBounds, *mb)
 			case 34:
+				if len(p.Providers) >= maxProviders {
+					return nil, errTooMany("providers", maxProviders)
+				}
 				p.Providers = append(p.Providers, v)
 			case 52:
 				pw, err := DecodePowParams(v)
@@ -275,6 +302,9 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 	case 31:
 		p.ParamsMutable = v != 0
 	case 33:
+		if len(p.Modules) >= maxModules {
+			return errTooMany("modules", maxModules)
+		}
 		p.Modules = append(p.Modules, uint32(v))
 	case 35:
 		p.TransferMoratoriumDays = v
@@ -378,6 +408,9 @@ func DecodeManifest(b []byte) (*Manifest, error) {
 			sm, err := DecodeSeedMember(v)
 			if err != nil {
 				return nil, err
+			}
+			if len(m.SeedCircle) >= maxSeedCircle {
+				return nil, errTooMany("seed_circle", maxSeedCircle)
 			}
 			m.SeedCircle = append(m.SeedCircle, *sm)
 		case f == 5 && wt == 2:

@@ -37,3 +37,20 @@ message Attestation {
 // Вычисляемый идентификатор субъекта для стороннего приложения (6.1).
 // Не передаётся, вычисляется проверяющим:
 //   app_subject_id = SHA-256(address || app_id)
+
+// Каноническое утверждение предъявления, подписываемое кошельком (6.1):
+// подпись ставится над этим сообщением (SHA-256(canonical(AttestStatement))),
+// затем оно упаковывается в Attestation вместе с доказательством.
+message AttestStatement {
+  bytes network_id = 1;
+  bytes address = 2;
+  WalletStatus status = 3;
+  uint64 age_days = 4;
+  int64 vouch_depth = 5;    // глубина графа поручительств; < 0 не кодируется
+  bool flagged = 6;         // метка из доказуемого состояния
+  bytes manifest_hash = 7;  // с какими гарантиями
+  uint64 epoch = 8;         // эпоха чекпоинта, из которого доказательство
+  bytes challenge = 9;      // challenge проверяющего
+  uint64 expires_at = 10;   // срок годности, Unix-секунды, UTC
+  bytes app_id = 11;        // стороннее приложение (для H(address || app_id))
+}
