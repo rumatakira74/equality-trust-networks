@@ -388,8 +388,9 @@ func generate(args []string) error {
 	}
 	gp.Genesis.GenesisTime = uint64(*genesisTime)
 	gp.Genesis.EpochZero = 0
-	// v9.13: protocolVersion 2 (txNow-семантика валидации/сеттлемента)
-	gp.Genesis.ProtocolVersion = 2
+	// v9.13: protocolVersion 2 (txNow-семантика валидации/сеттлемента);
+	// mint-fix: 3 — якорь слота челленджа M7 на текущий период выпуска
+	gp.Genesis.ProtocolVersion = 3
 	// симуляция 8.1: эпоха короче суток (№16 — сетевые параметры теста);
 	// малые PoW-таргеты (прогон без десятков секунд на транзакцию)
 	if *epochSeconds > 0 {
@@ -649,7 +650,9 @@ func appendBlob(b, v []byte) []byte {
 // challengeSlot — слот челленджа (7.6). Дублирует mintChallengeSlot
 // (core/ledger, не экспортирован — правило 3): genesis_time + period×период
 // сети + SHA-256(addr‖period) mod период сети (конвенция 30 сут; genesis-поле
-// 61 задаёт длину — тестовые сети живого прогона).
+// 61 задаёт длину — тестовые сети живого прогона). После фикса M7 окно
+// сверяется со слотом ТЕКУЩЕГО периода выпуска — для живого прогона
+// запрашивайте слот текущего периода (флаг -periods).
 func challengeSlot(genesisTime uint64, addr []byte, period, periodSecs uint64) uint64 {
 	var pb [8]byte
 	binary.BigEndian.PutUint64(pb[:], period)

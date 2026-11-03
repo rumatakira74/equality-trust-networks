@@ -208,7 +208,10 @@ func (n *Node) QueryPendingGuardianUpdates(addr []byte) []ledger.PendingGuardian
 }
 
 // QueryMintWindowOpen — открыто ли окно челленджа выпуска для периода
-// (7.6: слот внутри месяца, окно ±48 ч). Точный момент слота не
+// (7.6: слот внутри месяца, окно ±48 ч). Период-якорь передаёт
+// вызывающий: после фикса M7 ядро проверяет окно ТЕКУЩЕГО периода
+// выпуска (период txNow) — mobile-мост передаёт текущий период живых
+// часов, чтобы UI сходился с apply. Точный момент слота не
 // раскрывается (см. шапку файла).
 func (n *Node) QueryMintWindowOpen(addr []byte, period, now uint64) bool {
 	if n.Ledger == nil {

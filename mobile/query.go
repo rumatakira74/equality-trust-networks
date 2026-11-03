@@ -905,10 +905,10 @@ func (nd *Node) PendingGuardianUpdatesJSON(addr []byte) string {
 // и сумма по M6 (amount = эмиссия × diff; diff от base: для первого
 // выпуска base = activated_period − 1, вопрос №24) — UI не дублирует
 // формулу ядра. claim_period = 0 — заявлять нечего.
-// open — окно заявляемого периода (M7, №39: ядро проверяет слот
-// периода из Mint-транзакции, т.е. claim_period; находка №2 прогона
-// stage11-prep — ранее передавался текущий период, и кнопка Mint была
-// отключена при фактически открытом окне).
+// open — окно ТЕКУЩЕГО периода (фикс M7, вариант A, 03.11.2026): ядро
+// проверяет слот текущего периода выпуска (период txNow), не заявляемого
+// — находка №2 прогона stage11-prep отменена решением владельца
+// (семантика M7 изменена, protocolVersion 3).
 func (nd *Node) MintWindowJSON(addr []byte) string {
 	w := nd.n.QueryWallet(addr)
 	_, now, _ := nd.n.QueryClock()
@@ -931,9 +931,10 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 	if claim <= last {
 		claim = 0
 	}
-	// окно заявляемого периода: слот челленджа привязан к периоду из
-	// Mint-транзакции (claim), не к текущему (находка №2)
-	open := claim > 0 && nd.n.QueryMintWindowOpen(addr, claim, now)
+	// окно ТЕКУЩЕГО периода: ядро (фикс M7) проверяет слот текущего
+	// периода выпуска (период txNow будущей Mint-транзакции), не
+	// заявляемого — UI и apply сходятся к одному вердикту
+	open := claim > 0 && nd.n.QueryMintWindowOpen(addr, period, now)
 	var amount uint64
 	if claim > 0 {
 		base := last

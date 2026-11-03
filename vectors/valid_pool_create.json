@@ -15,7 +15,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_ORG", "seq": 9, "prev": "txid:W_ORG:8", "type": "POOL_CREATE",
-      "timestamp_claim": 1790000100, "protocol_version": 2,
+      "timestamp_claim": 1790000100, "protocol_version": 3,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "pool_create": {

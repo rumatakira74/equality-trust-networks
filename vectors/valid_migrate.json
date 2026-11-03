@@ -22,7 +22,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_NEW", "seq": 2, "prev": "txid:W_NEW:1", "type": "MIGRATE",
-      "timestamp_claim": 1790000100, "protocol_version": 2,
+      "timestamp_claim": 1790000100, "protocol_version": 3,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "migrate": {
