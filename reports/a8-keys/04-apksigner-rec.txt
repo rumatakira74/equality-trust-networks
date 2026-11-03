@@ -1,0 +1,4 @@
+Signer #1 certificate DN: CN=Equality rec release key, O=Equality Project
+Signer #1 certificate SHA-256 digest: fa35d49d234d67a7b07fe873da7d9de5db3ea177335fe9b73c371868822aea39
+Signer #1 certificate SHA-1 digest: 0053d0ed363c657b43ff62e5912faa5b46af6694
+Signer #1 certificate MD5 digest: fcdbf56a2de6d68d57d5fec9678ef0e6

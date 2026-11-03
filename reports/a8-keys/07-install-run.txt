@@ -1,0 +1,17 @@
+# Установка и запуск release-APK std-сети в эмуляторе (тема A8, 03.11.2026)
+
+APK: equality-stdnet-std-v1.0.0.apk (175.2 МБ, подпись tnp-std)
+AVD: stage12ga (API 36 google_apis x86_64), -wipe-data, запуск под Xvfb
+(headless -no-window падает SIGSEGV в SwiftShader — известная особенность
+среды, тот же обход использовал прогон ui-owner-protection 02.11).
+
+adb install -r:
+Performing Streamed Install
+Success
+
+launcher: io.equality.stdnet.x24b5f628/platform.tnp.tnp_app.MainActivity
+am start: Starting: Intent { cmp=io.equality.stdnet.x24b5f628/platform.tnp.tnp_app.MainActivity }
+focus: mCurrentFocus=Window{... io.equality.stdnet.x24b5f628/platform.tnp.tnp_app.MainActivity}
+
+Скриншот 08-emulator-onboarding.png: онбординг виден (фон 246,251,244 +
+зелёный акцент 38,106,74 — совпадение с эталоном reports/ui-owner-protection/01-onboarding-ru.png).

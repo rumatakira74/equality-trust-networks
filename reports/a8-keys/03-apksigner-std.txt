@@ -1,0 +1,4 @@
+Signer #1 certificate DN: CN=Equality std release key, O=Equality Project
+Signer #1 certificate SHA-256 digest: deb05e1f59843a676bb15c6782919af6d418240a2cf2ffa5b6b989b9e9efc9f4
+Signer #1 certificate SHA-1 digest: 916f6a2f6d81f0d3f2b09adac2c97892cea082dd
+Signer #1 certificate MD5 digest: 8ac293f5cb85f083b1767f6d640409bc

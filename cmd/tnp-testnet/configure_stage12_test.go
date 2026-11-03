@@ -14,11 +14,13 @@ import (
 )
 
 // configureRun — сборка сети configure с шаблоном и оверрайдами;
-// возвращает genesis-пакет и android.json.
+// возвращает genesis-пакет и android.json. Signing-каталог — временный
+// (тесты герметичны: боевых ключей и паролей в тестах нет).
 func configureRun(t *testing.T, extra ...string) (*wire.GenesisPackage, map[string]any, string) {
 	t.Helper()
 	out := filepath.Join(t.TempDir(), "net")
-	args := append([]string{"-template", "8", "-out", out}, extra...)
+	args := append([]string{"-template", "8", "-out", out,
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")}, extra...)
 	err := configureCmd(args)
 	if err != nil {
 		t.Fatalf("configure: %v", err)

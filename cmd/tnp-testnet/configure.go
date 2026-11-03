@@ -30,6 +30,7 @@ func configureCmd(args []string) error {
 	displayName := fs.String("display-name", "", "отображаемое имя сети (по умолчанию slug, до ~24 символов; только внутри приложения, всегда в паре с Eq-хешем)")
 	logo := fs.String("logo", "", "логотип организатора для foreground иконки (PNG, необязательно; без него — идентикон из network_id)")
 	appVersion := fs.String("app-version", "1.0.0", "версия приложения для имени APK")
+	signingDir := fs.String("signing-dir", "", "каталог боевых ключей подписи (по умолчанию $TNP_SIGNING_DIR или ~/.tnp-signing; вне git, тема A8)")
 	out := fs.String("out", "", "каталог артефактов (по умолчанию network-<шаблон>)")
 	genesisTime := fs.Int64("genesis-time", 0, "genesis-время, unix (0 = сейчас)")
 	seeds := fs.String("seeds", "V1,V2,V3", "метки посевного круга, через запятую")
@@ -300,11 +301,19 @@ func configureCmd(args []string) error {
 	apk := APKName(slugComponent, prof.Recurring, *appVersion)
 	appID := ApplicationID(networkID, slugComponent)
 	label := wire.EqLabel(networkID)
+	// точка конфигурации подписи (тема A8): вид ключа по типу сети
+	// (std → tnp-std, rec → tnp-rec; глобальная сеть — std), signing-конфиг
+	// генерируется в локальном каталоге вне git
+	sgnDir := *signingDir
+	if sgnDir == "" {
+		sgnDir = signingDirDefault()
+	}
+	keyKind, sgnProps, sgnOK, sgnDiag := setupSigning(sgnDir, prof.Recurring)
 	spec := iconSpec(networkID, *logo != "", prof.Recurring)
 	if err := writeIconAssets(outDir+"/icon", networkID, spec, *logo); err != nil {
 		return err
 	}
-	aj, err := json.MarshalIndent(map[string]any{
+	androidArtifacts := map[string]any{
 		"apk_name":       apk,
 		"application_id": appID,
 		"label":          label,
@@ -312,6 +321,7 @@ func configureCmd(args []string) error {
 		"slug":           slugName,
 		"recurring":      prof.Recurring,
 		"network_id":     hex.EncodeToString(networkID),
+		"key_kind":       keyKind,
 		"icon": map[string]any{
 			"background":      spec.Background,
 			"palette_index":   spec.PaletteIndex,
@@ -319,7 +329,11 @@ func configureCmd(args []string) error {
 			"badge":           spec.Badge,
 			"adaptive_layers": []string{"icon/background.png", "icon/foreground.png"},
 		},
-	}, "", "  ")
+	}
+	if sgnOK {
+		androidArtifacts["signing_properties"] = sgnProps
+	}
+	aj, err := json.MarshalIndent(androidArtifacts, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -363,6 +377,16 @@ func configureCmd(args []string) error {
 	}
 	fmt.Printf(" APK: %s\n applicationId: %s\n label: %s\n display_name: %q · %s\n",
 		apk, appID, label, dn, label)
+	// подпись (тема A8): вид ключа и готовая команда release-сборки;
+	// пароли не печатаются — они в signing.properties (chmod 600, вне git)
+	if sgnOK {
+		fmt.Printf(" release-подпись: tnp-%s — signing.properties: %s\n", keyKind, sgnProps)
+		fmt.Printf(" сборка release: TNP_SIGNING_PROPERTIES=%s TNP_KEY_KIND=%s "+
+			"ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=%s ORG_GRADLE_PROJECT_TNP_APP_LABEL=%s flutter build apk --release\n",
+			sgnProps, keyKind, appID, label)
+	} else {
+		fmt.Printf(" внимание (release-подпись): %s\n", sgnDiag)
+	}
 	return nil
 }
 

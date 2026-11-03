@@ -229,7 +229,7 @@ govulncheck/osv-scanner — контур 2» относятся ко всем с
 | `junit` / `androidx.test.*` | 4.13.2 / 1.2.1 / 1.6.2 / 1.6.1 | `android/app` (test) | — |
 | `android/libs/tnp.aar`, `tnp-sources.jar` | сборка `gomobile bind` | на диске, в `.gitignore` | В git не попадают — **хорошо** |
 | `gradle-wrapper.jar` | бинарник | **в git**: `android/gradle/wrapper/gradle-wrapper.jar`, при этом `.gitignore:36` его исключает | Целостность jar не проверяется (F15) |
-| Release-подпись Flutter-хоста | `signingConfigs.getByName("debug")` | `app/android/app/build.gradle.kts:45` | Release-APK подписан debug-ключом (F13) |
+| Release-подпись Flutter-хоста | `signingConfigs.getByName("debug")` | `app/android/app/build.gradle.kts:45` | Release-APK подписан debug-ключом (F13) — **решено** (тема A8, ветка `a8-keys`, 03.11.2026: боевые ключи std/rec, отпечатки `docs/RELEASE-KEYS.md`) |
 
 ### 3d. CI и политика обновлений
 
@@ -305,7 +305,7 @@ govulncheck/osv-scanner — контур 2» относятся ко всем с
 | F10 | 2b | ENG-спека отстаёт от RU: история версий без 9.4–9.7; §8.2 без «UI safety rules»; §8.3 с открытым «❓ P/P_max» против «✅ 3000/30000»; §11 без карточки восстановления | `docs/KNOWLEDGE-ENG.md:25→27`; `KNOWLEDGE-ENG-3.md:148-158,165`; `KNOWLEDGE-ENG-4.md:88-100` | низкая |
 | F11 | 2 | Комментарий кода всё ещё «PENDING: вопрос №2 — точная деривация не определена Документом», хотя v9.11 её зафиксировала | `core/crypto/address.go:1-11` | низкая |
 | F12 | 3 | `androidx.biometric:biometric:1.4.0-alpha07` — alpha-версия в критичном пути (биометрический промпт и `CryptoObject`-подпись), в двух модулях | `android/app/build.gradle.kts:46`; `app/android/app/build.gradle.kts:84` | средняя |
-| F13 | 3 | Release-сборка Flutter-хоста подписана debug-ключом | `app/android/app/build.gradle.kts:45` | средняя |
+| F13 | 3 | Release-сборка Flutter-хоста подписана debug-ключом | `app/android/app/build.gradle.kts:45` | средняя — **решено** (тема A8, ветка `a8-keys`, 03.11.2026) |
 | F14 | 3 | Два разных тулчейна Gradle в одном репозитории: AGP 8.9.1/Kotlin 2.0.20/Gradle 8.11.1 и AGP 9.1.0/Kotlin 2.4.0/Gradle 9.3.1 — двойная поверхность supply-chain | `android/build.gradle.kts:4-5`; `app/android/settings.gradle.kts:22-23` | низкая |
 | F15 | 3 | `gradle-wrapper.jar` в git (при исключении в `.gitignore:36`); целостность jar не проверяется (пиннинг есть только для `distributionUrl`) | `android/gradle/wrapper/gradle-wrapper.jar`; `android/gradle/wrapper/gradle-wrapper.properties:4` | низкая |
 | F16 | 5 | Порог `eclipse_n` гейтит только `OfflineStatus`; `Corroboration.Add` идёт до финальности → 3 соучастника в 3 `/24` дают «финализировано» для tx, которая проиграет конфликт (двойная трата офлайн-канала) | `net/node.go:988, 577`; `net/sync.go:387` | **высокая** → **Решено** (тема fix-f5-f16, коммит 53bb8bd; отчёт `reports/REPORT-FIX-F5-F16.md`) |
