@@ -1,0 +1,44 @@
+# Аудит A8: configure — путь параметров до сборки (std-сеть, global, шаблон 7)
+# команда: tnp-testnet configure -template 7 -global -out /tmp/audit-a8/net-std
+
+сеть global по шаблону 7 (Касса взаимопомощи)
+ network_id: 676c6f62616c
+ manifest_hash: 800845d911770d30ce03b6676109522ff9947696b8de435becba50dd529e6ed5
+ genesis_time: 1793703600 (2026-11-03T11:00:00Z)
+ уровень гарантий: высокий (strict + decentralized + open_vouch (3.3))
+ единица: currency, выпуск: 1000/1 мес., передача: free, вход: open_vouch, K=3
+ модули: [pool attest]
+ посевной круг: 3
+ артефакты: /tmp/audit-a8/net-std2
+ посевной V1: адрес 29d11850a2b9fb75ce5ef13b1a406f6f95b4de93d48ba775bb440ddeecad5c67 (выведен из network_id)
+ посевной V2: адрес d17c4c24aac8d7862a83809a250798e5dd02782868bb9068e77448f1ff0e179e (выведен из network_id)
+ посевной V3: адрес cfff0af7f44d868d971513a6c9402e7c12d7b2afcdee510fcffa60cb4c093e2f (выведен из network_id)
+ APK: equality-global-std-v1.0.0.apk
+ applicationId: io.equality.global.x8001c274
+ label: Eq-8001c274
+ display_name: "global" · Eq-8001c274
+ release-подпись: tnp-std — signing.properties: /home/kira/.tnp-signing/signing.properties
+ сборка release: TNP_SIGNING_PROPERTIES=/home/kira/.tnp-signing/signing.properties TNP_KEY_KIND=std ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.global.x8001c274 ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-8001c274 flutter build apk --release
+
+== android.json ==
+{
+  "apk_name": "equality-global-std-v1.0.0.apk",
+  "application_id": "io.equality.global.x8001c274",
+  "display_name": "global",
+  "icon": {
+    "adaptive_layers": [
+      "icon/background.png",
+      "icon/foreground.png"
+    ],
+    "background": "#F44336",
+    "badge": false,
+    "foreground": "identicon",
+    "palette_index": 0
+  },
+  "key_kind": "std",
+  "label": "Eq-8001c274",
+  "network_id": "676c6f62616c",
+  "recurring": false,
+  "signing_properties": "/home/kira/.tnp-signing/signing.properties",
+  "slug": "global"
+}

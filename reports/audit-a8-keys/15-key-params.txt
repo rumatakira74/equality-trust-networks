@@ -1,0 +1,33 @@
+# Аудит A8: параметры боевых ключей (keytool -list -v; пароли через stdin, не печатаются)
+# каталог: ~/.tnp-signing (700), файлы 600; содержимое credentials.txt не выводится
+
+== tnp-std ==
+Alias name: tnp-std
+Entry type: PrivateKeyEntry
+Owner: CN=Equality std release key, O=Equality Project
+Valid from: Tue Nov 03 09:33:34 CET 2026 until: Sat Mar 21 09:33:34 CET 2054
+	 SHA256: DE:B0:5E:1F:59:84:3A:67:6B:B1:5C:67:82:91:9A:F6:D4:18:24:0A:2C:F2:FF:A5:B6:B9:89:B9:E9:EF:C9:F4
+Signature algorithm name: SHA384withRSA
+Subject Public Key Algorithm: 4096-bit RSA key
+
+== tnp-rec ==
+Alias name: tnp-rec
+Entry type: PrivateKeyEntry
+Owner: CN=Equality rec release key, O=Equality Project
+Valid from: Tue Nov 03 09:33:35 CET 2026 until: Sat Mar 21 09:33:35 CET 2054
+	 SHA256: FA:35:D4:9D:23:4D:67:A7:B0:7F:E8:73:DA:7D:9D:E5:DB:3E:A1:77:33:5F:E9:B7:3C:37:18:68:82:2A:EA:39
+Signature algorithm name: SHA384withRSA
+Subject Public Key Algorithm: 4096-bit RSA key
+
+== различимость паролей (сравнение, значения не печатаются) ==
+std.store != rec.store: 1
+std.key   != rec.key:   1
+std.store != std.key:   1
+rec.store != rec.key:   1
+
+== права доступа ==
+700 /home/kira/.tnp-signing
+600 /home/kira/.tnp-signing/credentials.txt
+600 /home/kira/.tnp-signing/signing.properties
+600 /home/kira/.tnp-signing/tnp-rec.jks
+600 /home/kira/.tnp-signing/tnp-std.jks

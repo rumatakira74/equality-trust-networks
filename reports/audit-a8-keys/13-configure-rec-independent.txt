@@ -1,0 +1,45 @@
+# Аудит A8: configure — путь параметров до сборки (rec-сеть, шаблон 8)
+# команда: tnp-testnet configure -template 8 -slug monte-cloud -out /tmp/audit-a8/net-rec
+
+сеть monte-cloud по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 7d17b5c233f4b76c18b586b0d659b582113fe0c8ec0c9b1377396dc74f7e5a87
+ manifest_hash: e532bd55ff11f8a9f902c9fbdb85e0ad7b07e18c028ea5998a563fa7ebfea131
+ genesis_time: 1793703600 (2026-11-03T11:00:00Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/audit-a8/net-rec2
+ посевной V1: адрес 37dea50717375317d9044ca9919567a122d401d17eba68932ab91ce67fd00390 (выведен из network_id)
+ посевной V2: адрес 88242a1800d6b65b6fd6d6f9f95fa39e8df7b46f3f85d1b4e5e74e30f1fb606b (выведен из network_id)
+ посевной V3: адрес 8b3f9943069ae7da2ba61c68c2fcefb84478df42212d7fa5dec031d9d1c69e63 (выведен из network_id)
+ APK: equality-monte-cloud-rec-v1.0.0.apk
+ applicationId: io.equality.monte_cloud.x44abc8ce
+ label: Eq-44abc8ce
+ display_name: "monte-cloud" · Eq-44abc8ce
+ release-подпись: tnp-rec — signing.properties: /home/kira/.tnp-signing/signing.properties
+ сборка release: TNP_SIGNING_PROPERTIES=/home/kira/.tnp-signing/signing.properties TNP_KEY_KIND=rec ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.monte_cloud.x44abc8ce ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-44abc8ce flutter build apk --release
+
+== android.json ==
+{
+  "apk_name": "equality-monte-cloud-rec-v1.0.0.apk",
+  "application_id": "io.equality.monte_cloud.x44abc8ce",
+  "display_name": "monte-cloud",
+  "icon": {
+    "adaptive_layers": [
+      "icon/background.png",
+      "icon/foreground.png"
+    ],
+    "background": "#3F51B5",
+    "badge": true,
+    "foreground": "identicon",
+    "palette_index": 4
+  },
+  "key_kind": "rec",
+  "label": "Eq-44abc8ce",
+  "network_id": "7d17b5c233f4b76c18b586b0d659b582113fe0c8ec0c9b1377396dc74f7e5a87",
+  "recurring": true,
+  "signing_properties": "/home/kira/.tnp-signing/signing.properties",
+  "slug": "monte-cloud"
+}

@@ -1,0 +1,22 @@
+# Аудит A8: независимая сборка release-APK std-сети (global, шаблон 7)
+# команда: TNP_SIGNING_PROPERTIES=~/.tnp-signing/signing.properties TNP_KEY_KIND=std
+#          ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.global.x8001c274 ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-8001c274 flutter build apk --release
+# apksigner: 0.9 (build-tools 36.0.0)
+
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Equality std release key, O=Equality Project
+Signer #1 certificate SHA-256 digest: deb05e1f59843a676bb15c6782919af6d418240a2cf2ffa5b6b989b9e9efc9f4
+Signer #1 certificate SHA-1 digest: 916f6a2f6d81f0d3f2b09adac2c97892cea082dd
+Signer #1 certificate MD5 digest: 8ac293f5cb85f083b1767f6d640409bc
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 4096
+Signer #1 public key SHA-256 digest: e61e057b5e7612028af2929c829317785f9b17e7481d717438a8e95a58db1607
+Signer #1 public key SHA-1 digest: 83270242e54a68ff5cb0ae4ddb80720bdcae7974
+Signer #1 public key MD5 digest: 39f721a87c98a7cad00d75e08c0e351b

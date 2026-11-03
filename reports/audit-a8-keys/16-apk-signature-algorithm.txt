@@ -1,0 +1,16 @@
+# Аудит A8: фактический алгоритм подписи APK Signature Scheme v2
+# (разбор APK Signing Block; ID по спецификации Android)
+
+== equality-global-std-v1.0.0.apk (tnp-std) ==
+digest alg: 0x0104 RSASSA-PSS with SHA-512
+signature alg: 0x0104 RSASSA-PSS with SHA-512 (sig len 516)
+
+== equality-monte-cloud-rec-v1.0.0.apk (tnp-rec) ==
+digest alg: 0x0104 RSASSA-PSS with SHA-512
+signature alg: 0x0104 RSASSA-PSS with SHA-512 (sig len 516)
+
+== сертификат (keytool -list -v) ==
+Signature algorithm name: SHA384withRSA (самоподпись сертификата), Subject Public Key Algorithm: 4096-bit RSA
+
+Отчёт исполнителя (REPORT-A8-KEYS.md, раздел 3) утверждает «SHA256withRSA при подписи APK» —
+факт: RSASSA-PSS with SHA-512 (0x0104) для схемы v2. См. таблицу сверки в отчёте аудита.

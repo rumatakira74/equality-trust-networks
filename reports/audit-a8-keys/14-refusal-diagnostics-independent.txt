@@ -1,0 +1,17 @@
+# Аудит A8: отказ release-сборки без боевых ключей (gradlew :app:assembleRelease --dry-run --no-daemon)
+
+== TNP_SIGNING_PROPERTIES указывает на несуществующий файл ==
+FAILURE: Build failed with an exception.
+* What went wrong:
+release-сборка требует боевой signing-конфиг: /tmp/audit-a8/nonexistent/signing.properties не найден. Сгенерируйте ключи и запустите cmd/tnp-testnet configure (см. docs/RELEASE-KEYS.md); путь — env TNP_SIGNING_PROPERTIES.
+
+== signing-конфиг есть, TNP_KEY_KIND не задан ==
+FAILURE: Build failed with an exception.
+* What went wrong:
+release-сборка требует вид боевого ключа: env TNP_KEY_KIND=std|rec (std — все std-сети, rec — rec-сети; вид печатает configure).
+
+== debug-сборка не затронута: :app:assembleDebug --dry-run ==
+:app:packageDebug SKIPPED
+:app:createDebugApkListingFileRedirect SKIPPED
+:app:assembleDebug SKIPPED
+(ошибок подписи нет)

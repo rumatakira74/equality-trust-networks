@@ -1,0 +1,21 @@
+# Аудит A8: независимая сборка release-APK rec-сети (monte-cloud, шаблон 8)
+# команда: TNP_SIGNING_PROPERTIES=~/.tnp-signing/signing.properties TNP_KEY_KIND=rec
+#          ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.monte_cloud.x44abc8ce ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-44abc8ce flutter build apk --release
+
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Equality rec release key, O=Equality Project
+Signer #1 certificate SHA-256 digest: fa35d49d234d67a7b07fe873da7d9de5db3ea177335fe9b73c371868822aea39
+Signer #1 certificate SHA-1 digest: 0053d0ed363c657b43ff62e5912faa5b46af6694
+Signer #1 certificate MD5 digest: fcdbf56a2de6d68d57d5fec9678ef0e6
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 4096
+Signer #1 public key SHA-256 digest: f501dcd74eaf17f8c1e03d788f7daf98f3c8642a65d8aba612f202752e5d2808
+Signer #1 public key SHA-1 digest: b3190e19913df339c1d3a216f7f05128d5507c50
+Signer #1 public key MD5 digest: 93ff10d3f8d279a763e82ba966335316

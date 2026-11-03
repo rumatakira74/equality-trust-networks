@@ -1,0 +1,11 @@
+# Аудит A8: граница гарантии «явный отказ release без ключей»
+# build.gradle.kts определяет release по подстроке 'elease' в ИМЕНАХ задач (gradle.startParameter.taskNames),
+# а не по графу задач. Проверка: :app:build содержит :app:assembleRelease в графе,
+# но ошибки подписи не возникает — release-APK соберётся БЕЗ подписи, молча.
+
+== ./gradlew :app:build --dry-run --no-daemon (signing-конфига нет, TNP_KEY_KIND не задан) ==
+строк с ошибкой подписи: 0
+задачи release в графе:
+:app:packageReleaseResources SKIPPED
+:app:packageRelease SKIPPED
+:app:assembleRelease SKIPPED
