@@ -5,13 +5,16 @@ package tnp
 import (
 	"bytes"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
@@ -336,15 +339,15 @@ func submitRegister(t *testing.T, node *Node, gen *Genesis, addr, pub, priv []by
 	return ""
 }
 
-// TestMintWindowClaimedPeriod — окно челленджа в MintWindowJSON
-// считается для ЗАЯВЛЯЕМОГО периода (находка №2 прогона stage11-prep):
-// ядро (M7, №39) проверяет слот периода из Mint-транзакции, а мост
-// передавал текущий — кнопка Mint была отключена при фактически
-// открытом окне заявляемого периода.
-func TestMintWindowClaimedPeriod(t *testing.T) {
+// TestMintWindowCurrentPeriod — окно челленджа в MintWindowJSON
+// считается для ТЕКУЩЕГО периода выпуска (фикс M7, вариант A,
+// 03.11.2026): ядро проверяет слот текущего периода (период txNow),
+// не заявляемого — находка №2 прогона stage11-prep отменена вместе
+// с изменением семантики M7 (protocolVersion 3).
+func TestMintWindowCurrentPeriod(t *testing.T) {
 	gen := testGenesis7(t)
 	// реальное окно ±48 ч (7.6): SandboxGenesis в песочнице открывает
-	// весь период (учебный оверрайд) — здесь проверяем именно слот №39
+	// весь период (учебный оверрайд) — здесь проверяем именно слот M7
 	gen.gp.Manifest.Profile.MintChallengeWindowHours = 48
 	wire.SetManifestHash(gen.gp)
 	// genesis 60 суток назад: текущий период 2, заявляемый 1
@@ -352,8 +355,7 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 
 	// слот челленджа (та же деривация, что core/ledger.hashThree):
 	// slot(p) = genesis + p×30 сут + H(addr‖p) mod 30 сут; при genesis
-	// = now − 60 сут: slot(1) − now = H1 mod 30сут − 30 сут,
-	// slot(2) − now = H2 mod 30 сут
+	// = now − 60 сут: slot(2) − now ≈ H2 mod 30 сут
 	const day = 24 * 3600
 	slotOff := func(addr []byte, period uint64) uint64 {
 		var pb [8]byte
@@ -365,30 +367,47 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 		}
 		return out % (30 * day)
 	}
-	// addrOpen: слот периода 1 в последних 24 ч периода (окно ±48 ч
-	// открыто с запасом), слот периода 2 ≥ 96 ч от now (окно текущего
-	// периода закрыто с запасом — старый код давал open=false)
+	// детерминированный подбор адресов (репродуцируемость):
+	// ключи — crypto.DeterministicKey, условия — по слоту периода 2
+	softRegisterDet := func(seed string) (addr []byte, pub, priv []byte) {
+		k := crypto.DeterministicKey(seed)
+		pub = crypto.MarshalPubKey(&k.PublicKey)
+		var err error
+		priv, err = x509.MarshalECPrivateKey(k)
+		if err != nil {
+			t.Fatal(err)
+		}
+		addr, err = AddressFromPublicKey(pub, gen.NetworkID())
+		if err != nil {
+			t.Fatal(err)
+		}
+		return addr, pub, priv
+	}
+	// addrOpen: слот текущего периода 2 в ±24 ч от now (окно ±48 ч
+	// открыто с запасом); слот заявляемого периода 1 далеко — окно
+	// заявляемого периода закрыто (старая семантика дала бы open=false)
 	var addrOpen, pubOpen, privOpen []byte
-	for i := 0; i < 10000 && addrOpen == nil; i++ {
-		a, p, v := softRegister(t, gen)
-		if slotOff(a, 1) >= uint64(30*day-24*3600) && slotOff(a, 2) >= uint64(96*3600) {
+	for i := 0; i < 100000 && addrOpen == nil; i++ {
+		a, p, v := softRegisterDet(fmt.Sprintf("mint-window-open:%d", i))
+		if slotOff(a, 2) <= 24*3600 && slotOff(a, 1) <= uint64(30*day-96*3600) {
 			addrOpen, pubOpen, privOpen = a, p, v
 		}
 	}
 	if addrOpen == nil {
-		t.Fatal("не подобран адрес с открытым окном заявляемого периода")
+		t.Fatal("не подобран адрес с открытым окном текущего периода")
 	}
-	// addrClosed: слот периода 1 ≥ 96 ч от now — окно заявляемого
-	// периода закрыто с запасом
+	// addrClosed: слот текущего периода 2 ≥ 96 ч от now — окно
+	// текущего периода закрыто с запасом; слот заявляемого периода 1
+	// в последних 24 ч (старая семантика дала бы open=true)
 	var addrClosed, pubClosed, privClosed []byte
-	for i := 0; i < 10000 && addrClosed == nil; i++ {
-		a, p, v := softRegister(t, gen)
-		if slotOff(a, 1) <= uint64(30*day-96*3600) {
+	for i := 0; i < 100000 && addrClosed == nil; i++ {
+		a, p, v := softRegisterDet(fmt.Sprintf("mint-window-closed:%d", i))
+		if slotOff(a, 2) >= 96*3600 && slotOff(a, 1) >= uint64(30*day-24*3600) {
 			addrClosed, pubClosed, privClosed = a, p, v
 		}
 	}
 	if addrClosed == nil {
-		t.Fatal("не подобран адрес с закрытым окном заявляемого периода")
+		t.Fatal("не подобран адрес с закрытым окном текущего периода")
 	}
 
 	node, err := StartNode(gen, "full", "", nil, "", nil)
@@ -409,8 +428,8 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 		t.Fatalf("register (closed): %s", res)
 	}
 
-	// открытый случай: заявляемый период 1, окно открыто — несмотря на
-	// закрытое окно текущего периода 2 (регрессия находки №2)
+	// открытый случай: окно ТЕКУЩЕГО периода 2 открыто (слот в ±24 ч) —
+	// даже при закрытом окне заявляемого периода 1
 	var mwOpen map[string]any
 	if err := json.Unmarshal([]byte(node.MintWindowJSON(addrOpen)), &mwOpen); err != nil {
 		t.Fatal(err)
@@ -418,17 +437,20 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 	if mwOpen["claim_period"] != float64(1) {
 		t.Fatalf("claim_period = %v, хочу 1", mwOpen["claim_period"])
 	}
-	if mwOpen["open"] != true {
-		t.Errorf("окно заявляемого периода 1 закрыто (слот в ±24 ч), " +
-			"хотя окно текущего периода 2 закрыто — регресс находки №2")
+	if mwOpen["current_period"] != float64(2) {
+		t.Fatalf("current_period = %v, хочу 2", mwOpen["current_period"])
 	}
-	// сверка с ядром: open == CheckMintChallengeWindow(claim_period)
+	if mwOpen["open"] != true {
+		t.Errorf("окно текущего периода 2 закрыто (слот в ±24 ч от now)")
+	}
+	// сверка с ядром: open == окно текущего периода (фикс M7)
 	now := uint64(mwOpen["now"].(float64))
-	if want := node.n.QueryMintWindowOpen(addrOpen, 1, now); mwOpen["open"] != want {
-		t.Errorf("open = %v, ядро для периода 1 говорит %v", mwOpen["open"], want)
+	if want := node.n.QueryMintWindowOpen(addrOpen, 2, now); mwOpen["open"] != want {
+		t.Errorf("open = %v, ядро для периода 2 говорит %v", mwOpen["open"], want)
 	}
 
-	// закрытый случай: слот заявляемого периода далеко от now
+	// закрытый случай: слот текущего периода 2 далеко от now — окно
+	// закрыто, даже при открытом окне заявляемого периода 1
 	var mwClosed map[string]any
 	if err := json.Unmarshal([]byte(node.MintWindowJSON(addrClosed)), &mwClosed); err != nil {
 		t.Fatal(err)
@@ -437,6 +459,6 @@ func TestMintWindowClaimedPeriod(t *testing.T) {
 		t.Fatalf("claim_period = %v, хочу 1", mwClosed["claim_period"])
 	}
 	if mwClosed["open"] != false {
-		t.Errorf("окно заявляемого периода 1 открыто вне ±48 ч от слота")
+		t.Errorf("окно текущего периода 2 открыто вне ±48 ч от слота")
 	}
 }

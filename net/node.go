@@ -259,7 +259,8 @@ func (n *Node) initLedger() error {
 	// закрыт (раньше SkipMintChallengeWindow=true — сетевой узёл не проверял
 	// окно). v9.13: ядро валидирует от txNow = timestamp_claim самой tx —
 	// live и replay применяют журнал одним механизмом, отдельного режима
-	// часов нет; окно челленджа сверяется с claim.
+	// часов нет; окно челленджа сверяется с claim. Фикс M7 (тема mint-fix):
+	// якорь слота — текущий период выпуска (период txNow), не заявленный.
 	l, err := ledger.New(gp, ledger.Options{})
 	if err != nil {
 		return fmt.Errorf("net: genesis: %w", err)

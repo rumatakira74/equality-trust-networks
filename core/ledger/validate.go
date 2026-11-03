@@ -147,14 +147,22 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 		}) {
 			return reject("E_POW_HARD")
 		}
-		// M7: окно челленджа выпуска (7.6). Отклонение D-1 (см. отчёт):
-		// векторы этапа 0 не моделируют слот челленджа; проверка вынесена
-		// в CheckMintChallengeWindow и включается опцией. Окно сверяется
-		// с txNow (v9.13): слот period_start + H mod period_seconds
-		// (поле 61) обязан накрывать claim самой tx.
+		// M7: окно челленджа выпуска (7.6). Фикс темы mint-fix (вариант A,
+		// решение владельца 03.11.2026): якорь слота — ТЕКУЩИЙ период
+		// выпуска (l.tt.period от txNow), а не заявленный mp.Period.
+		// Ранее окно ±48 ч считалось вокруг слота заявленного периода:
+		// заявка периода P возможна только после конца P (M4), поэтому
+		// окно пересекалось с допустимым временем подачи лишь при слоте
+		// в последних 48 ч периода — достижимость 1/15 за период, шесть
+		// пропусков подряд давали diff > accrual_window навсегда
+		// (поглощающее состояние, симуляция A9). Теперь слот лежит
+		// внутри текущего периода: пересечение окна ±48 ч с текущим
+		// периодом всегда >= 48 ч — у каждого кошелька каждый период
+		// есть достижимое окно; слот публично вычислим заранее.
+		// Проверка вынесена в CheckMintChallengeWindow и включается
+		// опцией (SkipMintChallengeWindow — только песочница).
 		if tx.Type == wire.Mint && !l.Opts.SkipMintChallengeWindow {
-			mp := tx.Payload.(*wire.MintPayload)
-			if !l.CheckMintChallengeWindow(tx.Wallet, mp.Period, l.tt.now) {
+			if !l.CheckMintChallengeWindow(tx.Wallet, l.tt.period, l.tt.now) {
 				return reject("E_POW_HARD")
 			}
 		}
@@ -169,9 +177,12 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 	return Result{}
 }
 
-// CheckMintChallengeWindow: слот H(address || period || checkpoint_hash(prev epoch))
-// и окно ±48 ч (7.6). В headless-ядре checkpoint_hash = 0^32 (genesis),
-// сетевая реализация — этап 5.
+// CheckMintChallengeWindow: слот H(address || period) внутри периода
+// (period_start + H mod period_seconds) и окно ±48 ч (7.6). Якорь —
+// период момента подачи (после фикса M7 — текущий период выпуска,
+// см. applySigPowTime). Включение hash(чекпоинта предыдущей эпохи)
+// в формулу слота — открытый вопрос, PENDING за владельцем; сейчас
+// код считает H(address || period) (hashThree).
 func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool {
 	win := l.State.Net.Profile.MintChallengeWindowHours * 3600
 	if win == 0 {
@@ -187,6 +198,8 @@ func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool 
 // от genesis (9.2): period_start = genesis_time + period × период сети
 // (конвенция headless-ядра — 30 сут; genesis-поле 61 задаёт длину —
 // тестовые сети живого прогона). Та же конвенция в net.RealClock.
+// Какой период передать (якорь слота) — решает вызывающий: после фикса
+// M7 окно челленджа сверяется со слотом ТЕКУЩЕГО периода выпуска.
 // Правка этапа 8 (долг этапа 7): раньше отсчёт шёл от 1970 г. — при
 // genesis-времени близком к текущему слот выпадал в далёкое будущее/прошлое
 // и окно челленджа всегда было закрыто.

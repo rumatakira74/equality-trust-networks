@@ -20,7 +20,7 @@
   "transactions": [
     {
       "id": "T1", "wallet": "W_PROVIDER", "seq": 22, "prev": "txid:W_PROVIDER:21", "type": "RECEIPT",
-      "timestamp_claim": 1790900100, "protocol_version": 2,
+      "timestamp_claim": 1790900100, "protocol_version": 3,
       "pow": { "algorithm": "POW_LIGHT", "nonce": "POW_NONCE_PLACEHOLDER" },
       "payload": {
         "receipt": {

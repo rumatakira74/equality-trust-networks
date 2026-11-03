@@ -17,7 +17,7 @@ func benchTx(seq uint64) *wire.Transaction {
 		Seq:             seq,
 		Prev:            make([]byte, 32),
 		Type:            wire.Transfer,
-		ProtocolVersion: 2,
+		ProtocolVersion: 3,
 		TimestampClaim:  1760000000 + seq,
 		Payload: &wire.TransferPayload{Send: &wire.TransferSend{
 			Recipient: []byte("bench-recipient-address-32-bytes00"), Amount: 100,

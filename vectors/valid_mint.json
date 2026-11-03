@@ -92,7 +92,7 @@
       "prev": "txid:W_ALICE:8",
       "type": "MINT",
       "timestamp_claim": 1790000100,
-      "protocol_version": 2,
+      "protocol_version": 3,
       "pow": {
         "algorithm": "POW_ARGON2ID",
         "nonce": "POW_NONCE_PLACEHOLDER"

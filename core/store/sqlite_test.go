@@ -19,7 +19,7 @@ func testTx(seq uint64) *wire.Transaction {
 		Prev:            bytes.Repeat([]byte{0xCD}, 32),
 		Type:            wire.Transfer,
 		TimestampClaim:  1790000000,
-		ProtocolVersion: 1,
+		ProtocolVersion: 3,
 		Pow:             &wire.PowProof{Algorithm: wire.PowLight, Nonce: []byte{1, 2, 3}},
 		Signature:       bytes.Repeat([]byte{0xEE}, 70),
 		Payload:         &wire.TransferPayload{Send: &wire.TransferSend{Recipient: bytes.Repeat([]byte{0x01}, 32), Amount: 500}},

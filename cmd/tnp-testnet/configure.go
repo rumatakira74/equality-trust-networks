@@ -155,7 +155,7 @@ func configureCmd(args []string) error {
 		Genesis: &wire.GenesisRecord{
 			GenesisTime:     uint64(*genesisTime),
 			EpochZero:       0,
-			ProtocolVersion: 2, // v9.13: txNow-семантика
+			ProtocolVersion: 3, // mint-fix: якорь слота M7 — текущий период (v9.13: 2 — txNow-семантика)
 			SeedSunset:      nil,
 		},
 	}
