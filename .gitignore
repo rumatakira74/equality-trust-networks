@@ -51,5 +51,17 @@ desktop.ini
 tmp/
 .cache/
 
+# Боевые ключи подписи (тема A8): хранятся вне репо (~/.tnp-signing/),
+# паттерны — защита от случайного попадания копий в git
+*.jks
+*.keystore
+credentials.txt
+signing.properties
+.tnp-signing/
+
+# Локальный state инструментов (CLI-агент, wrangler-диагностика)
+.vibe/
+.wrangler/
+
 # Flutter (этап 7)
 app/.metadata.bak
