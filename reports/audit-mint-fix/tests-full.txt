@@ -1,0 +1,22 @@
+# команда: GOMAXPROCS=6 /usr/bin/time -v go test ./... (ветка audit-mint-fix, tip mint-fix 2b4f0ac)
+# итог: exit 0, все пакеты ok
+?   	github.com/rumatakira74/equality-trust-networks/cmd/tnp-node	[no test files]
+?   	github.com/rumatakira74/equality-trust-networks/cmd/tnp-sandbox-peer	[no test files]
+ok  	github.com/rumatakira74/equality-trust-networks/cmd/tnp-testnet	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/cons	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/attest	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/crypto	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/ledger	46.767s
+ok  	github.com/rumatakira74/equality-trust-networks/core/params	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/present	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/profiles	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/smt	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/store	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/threshold	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/wire	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/mobile	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/net	90.488s
+ok  	github.com/rumatakira74/equality-trust-networks/sim	(cached)
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:31.95
+	Maximum resident set size (kbytes): 624972
+	Exit status: 0

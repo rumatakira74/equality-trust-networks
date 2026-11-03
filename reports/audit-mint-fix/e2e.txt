@@ -1,0 +1,7 @@
+E2E OK: достижимость — mint принят в каждом из периодов 2..10 (9 случаев)
+E2E OK: вне окна (слот ±49 ч в том же периоде) — reject/E_POW_HARD (16 случаев)
+E2E OK: накопление diff=3 в окне — accept, когорты=3000 (M6: 1000×3)
+E2E OK: осознанный пропуск 7 периодов — reject/E_ACCRUAL_WINDOW (M5 не изменён)
+E2E OK: вердикт по окну не зависит от заявленного периода: map[claim=3:true claim=4:true claim=5:true]
+E2E OK: песочница (SkipMintChallengeWindow) — вне окна accept
+E2E OK: tx с protocolVersion=2 -> reject/E_VER (версия сети 3)

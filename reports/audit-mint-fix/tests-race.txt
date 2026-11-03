@@ -1,0 +1,11 @@
+# команда: GOMAXPROCS=6 /usr/bin/time -v go test -race -count=1 ./core/ledger ./net ./cons ./mobile ./cmd/tnp-testnet ./core/store
+# итог: exit 0
+ok  	github.com/rumatakira74/equality-trust-networks/core/ledger	277.637s
+ok  	github.com/rumatakira74/equality-trust-networks/net	184.581s
+ok  	github.com/rumatakira74/equality-trust-networks/cons	3.561s
+ok  	github.com/rumatakira74/equality-trust-networks/mobile	2.680s
+ok  	github.com/rumatakira74/equality-trust-networks/cmd/tnp-testnet	4.923s
+ok  	github.com/rumatakira74/equality-trust-networks/core/store	1.140s
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:38.45
+	Maximum resident set size (kbytes): 1318376
+	Exit status: 0

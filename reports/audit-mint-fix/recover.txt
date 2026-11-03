@@ -1,0 +1,2 @@
+RECOVER: claim=11 (последний завершённый) -> reject/E_ACCRUAL_WINDOW
+RECOVER: claim=last+6=7 (в том же окне) -> accept/OK, last_claimed=7

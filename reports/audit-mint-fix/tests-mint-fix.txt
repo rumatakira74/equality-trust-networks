@@ -1,0 +1,19 @@
+# команда: GOMAXPROCS=6 go test -count=1 -v -run TestMintFix ./core/ledger
+=== RUN   TestMintFixWindowIntersectionProperty
+--- PASS: TestMintFixWindowIntersectionProperty (0.00s)
+=== RUN   TestMintFixWindowInOut
+--- PASS: TestMintFixWindowInOut (0.34s)
+=== RUN   TestMintFixAccumulationInWindow
+--- PASS: TestMintFixAccumulationInWindow (0.07s)
+=== RUN   TestMintFixAccrualWindowUnchanged
+--- PASS: TestMintFixAccrualWindowUnchanged (0.05s)
+=== RUN   TestMintFixLiveReplayDeterminism
+--- PASS: TestMintFixLiveReplayDeterminism (0.16s)
+=== RUN   TestMintFixSandboxSkip
+--- PASS: TestMintFixSandboxSkip (0.02s)
+=== RUN   TestMintFixOldProtocolVersion
+--- PASS: TestMintFixOldProtocolVersion (0.06s)
+=== RUN   TestMintFixPreFixVector
+--- PASS: TestMintFixPreFixVector (0.60s)
+PASS
+ok  	github.com/rumatakira74/equality-trust-networks/core/ledger	1.313s

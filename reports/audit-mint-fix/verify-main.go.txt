@@ -1,0 +1,542 @@
+// Независимая проверка фикса M7 (тема mint-fix) по РЕАЛЬНОМУ коду ядра.
+// Вне репозитория: модуль с replace на рабочий клон tnp.
+// Режимы: prop (свойство окна), e2e (сквозные вердикты через ledger.Apply),
+// stats (метрики достижимости/поглощения).
+package main
+
+import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"os"
+	"sort"
+	"strconv"
+
+	"github.com/rumatakira74/equality-trust-networks/cons"
+	"github.com/rumatakira74/equality-trust-networks/core/crypto"
+	"github.com/rumatakira74/equality-trust-networks/core/ledger"
+	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/wire"
+)
+
+const (
+	genesisTime = uint64(1_700_000_000)
+	day         = uint64(86400)
+	win48       = uint64(48 * 3600)
+)
+
+func gp(periodSecs, windowHours uint64) *wire.GenesisPackage {
+	g := params.TestGenesis()
+	g.Manifest.Profile.Pow = &wire.PowParams{
+		TargetLight: 0x0010_0000_0000_0000, Argon2MemoryKiB: 8, Argon2Iterations: 1,
+		Argon2Parallelism: 1, TargetHard: 0x0010_0000_0000_0000,
+	}
+	g.Manifest.Profile.DemurrageRateMicros = 0
+	g.Manifest.Profile.MintChallengeWindowHours = windowHours
+	g.Manifest.Profile.PeriodSeconds = periodSecs
+	g.Genesis.GenesisTime = genesisTime
+	wire.SetManifestHash(g)
+	return g
+}
+
+// hashThree — независимая реплика формулы ядра (SHA-256(addr‖period BE64)).
+func hashThree(addr []byte, period uint64) uint64 {
+	var pb [8]byte
+	binary.BigEndian.PutUint64(pb[:], period)
+	h := sha256.Sum256(append(append([]byte{}, addr...), pb[:]...))
+	var out uint64
+	for i := 0; i < 8; i++ {
+		out = out<<8 | uint64(h[i])
+	}
+	return out
+}
+
+func slotOf(addr []byte, period, periodSecs uint64) uint64 {
+	return genesisTime + period*periodSecs + hashThree(addr, period)%periodSecs
+}
+
+func addrOf(id string, netID []byte) []byte {
+	priv := crypto.DeterministicKey("audit-mint-fix:" + id)
+	pub := crypto.MarshalPubKey(&priv.PublicKey)
+	return crypto.DeriveAddress(crypto.Fingerprint(pub), netID)
+}
+
+func newLedger(g *wire.GenesisPackage) *ledger.Ledger {
+	l, err := ledger.New(g, ledger.Options{})
+	if err != nil {
+		panic(err)
+	}
+	return l
+}
+
+func seed(l *ledger.Ledger, id string, last uint64) (*ecdsa.PrivateKey, []byte) {
+	priv := crypto.DeterministicKey("audit-mint-fix:" + id)
+	pub := crypto.MarshalPubKey(&priv.PublicKey)
+	fp := crypto.Fingerprint(pub)
+	addr := crypto.DeriveAddress(fp, l.State.Net.NetworkID)
+	tip := sha256.Sum256([]byte("audit-mint-fix-tip:" + id))
+	w := &ledger.Wallet{
+		Address: addr, Fingerprint: fp, PublicKey: &priv.PublicKey,
+		Status: wire.StatusActive, RegisteredAt: genesisTime, ActivatedAt: genesisTime,
+		ActivatedPeriod: 1, LastClaimedPeriod: last, DelayedThreshold: 3000, Seq: 1,
+		TipTxID: append([]byte(nil), tip[:]...),
+	}
+	l.State.Wallets[string(addr)] = w
+	l.State.FingerprintIndex[string(fp)] = addr
+	return priv, addr
+}
+
+func mintTx(l *ledger.Ledger, priv *ecdsa.PrivateKey, addr []byte, claim, amount, txNow uint64) *wire.Transaction {
+	w := l.State.Wallet(addr)
+	tx := &wire.Transaction{
+		NetworkID: l.State.Net.NetworkID, Wallet: addr, Seq: w.Seq + 1,
+		Prev: w.TipTxID, Type: wire.Mint, TimestampClaim: txNow,
+		ProtocolVersion: l.State.Net.ProtocolVersion,
+		Payload:         &wire.MintPayload{Period: claim, Amount: amount},
+		Pow:             &wire.PowProof{Algorithm: wire.PowArgon2id},
+	}
+	net := l.State.Net
+	ap := crypto.Argon2Params{MemoryKiB: net.Pow.Argon2MemoryKiB,
+		Iterations: net.Pow.Argon2Iterations, Parallelism: net.Pow.Argon2Parallelism}
+	for n := uint64(0); ; n++ {
+		var nb [8]byte
+		binary.BigEndian.PutUint64(nb[:], n)
+		tx.Pow.Nonce = append([]byte(nil), nb[:]...)
+		if crypto.VerifyHard(tx.SigningPreimage(), tx.Pow.Nonce, net.Pow.TargetHard, ap) {
+			break
+		}
+	}
+	sh := tx.SigningHash()
+	sig, err := crypto.SignDER(priv, sh[:])
+	if err != nil {
+		panic(err)
+	}
+	tx.Signature = sig
+	return tx
+}
+
+// ---------------------------------------------------------------------------
+
+// prop: слот внутри периода; окно ±48 ч накрывает слот; пересечение окна с
+// текущим периодом >= 48 ч; реплика hashThree совпадает с ядром по вердикту.
+func prop() {
+	const nAddrs = 200
+	const nPeriods = 12
+	g := gp(0, 48)
+	l := newLedger(g)
+	periodSecs := g.Manifest.Profile.PeriodSecsOrDefault()
+	minIsect := ^uint64(0)
+	var sumIsect uint64
+	cases := 0
+	for i := 0; i < nAddrs; i++ {
+		addr := sha256.Sum256([]byte(fmt.Sprintf("audit-prop:%d", i)))
+		a := addr[:]
+		for p := uint64(1); p <= nPeriods; p++ {
+			slot := slotOf(a, p, periodSecs)
+			start := genesisTime + p*periodSecs
+			end := start + periodSecs
+			if slot < start || slot >= end {
+				fmt.Printf("FAIL слот вне периода: addr=%d p=%d slot=%d [%d,%d)\n", i, p, slot, start, end)
+				os.Exit(1)
+			}
+			// сверка реплики с ядром: в слоте окно открыто, за ±48 ч — нет
+			if !l.CheckMintChallengeWindow(a, p, slot) {
+				fmt.Printf("FAIL ядро: окно закрыто в самом слоте addr=%d p=%d\n", i, p)
+				os.Exit(1)
+			}
+			if l.CheckMintChallengeWindow(a, p, slot-win48-1) {
+				fmt.Printf("FAIL ядро: окно открыто за 48 ч до слота addr=%d p=%d\n", i, p)
+				os.Exit(1)
+			}
+			if l.CheckMintChallengeWindow(a, p, slot+win48+1) {
+				fmt.Printf("FAIL ядро: окно открыто за 48 ч после слота addr=%d p=%d\n", i, p)
+				os.Exit(1)
+			}
+			// пересечение [slot-win, slot+win] с [start, end)
+			lo, hi := slot-win48, slot+win48
+			if start > lo {
+				lo = start
+			}
+			if end < hi {
+				hi = end
+			}
+			isect := hi - lo
+			if isect < win48 {
+				fmt.Printf("FAIL пересечение < 48 ч: addr=%d p=%d isect=%d\n", i, p, isect)
+				os.Exit(1)
+			}
+			if isect < minIsect {
+				minIsect = isect
+			}
+			sumIsect += isect
+			cases++
+		}
+	}
+	fmt.Printf("PROP OK: адресов=%d периодов=%d случаев=%d\n", nAddrs, nPeriods, cases)
+	fmt.Printf("  min пересечение окна с периодом = %d с (%.2f ч)\n", minIsect, float64(minIsect)/3600)
+	fmt.Printf("  среднее пересечение = %.2f ч; доля периода (случайный момент) = %.4f\n",
+		float64(sumIsect)/float64(cases)/3600, float64(sumIsect)/float64(cases)/float64(periodSecs))
+
+	// короткие периоды (genesis-поле 61): окно шире периода — накрывает весь период
+	for _, ps := range []uint64{120, 3600, 6 * 3600} {
+		g2 := gp(ps, 48)
+		l2 := newLedger(g2)
+		for i := 0; i < 50; i++ {
+			a := sha256.Sum256([]byte(fmt.Sprintf("audit-short:%d", i)))
+			for p := uint64(1); p <= 5; p++ {
+				start := genesisTime + p*ps
+				for _, probe := range []uint64{start, start + ps/2, start + ps - 1} {
+					if !l2.CheckMintChallengeWindow(a[:], p, probe) {
+						fmt.Printf("FAIL короткий период ps=%d: точка %d периода %d вне окна\n", ps, probe, p)
+						os.Exit(1)
+					}
+				}
+			}
+		}
+	}
+	fmt.Println("PROP OK: короткие периоды (120 с, 1 ч, 6 ч) — окно накрывает период целиком")
+}
+
+// e2e: сквозные вердикты через ledger.Apply (реальный путь валидации).
+func e2e() {
+	periodSecs := uint64(30 * day)
+	g := gp(0, 48)
+	ok := 0
+	// 1) достижимость: каждый период p=2..10 заявляется в окне ТЕКУЩЕГО периода
+	for p := uint64(2); p <= 10; p++ {
+		id := fmt.Sprintf("reach-%d", p)
+		l := newLedger(g)
+		priv, addr := seed(l, id, p-2)
+		slot := slotOf(addr, p, periodSecs)
+		res := l.Apply(mintTx(l, priv, addr, p-1, 1000, slot))
+		if res.Outcome != ledger.Accepted {
+			fmt.Printf("FAIL достижимость p=%d: %v/%s\n", p, res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		w := l.State.Wallet(addr)
+		if w.LastClaimedPeriod != p-1 {
+			fmt.Printf("FAIL достижимость p=%d: last=%d\n", p, w.LastClaimedPeriod)
+			os.Exit(1)
+		}
+		ok++
+	}
+	fmt.Printf("E2E OK: достижимость — mint принят в каждом из периодов 2..10 (%d случаев)\n", ok)
+
+	// 2) вне окна: txNow = слот ± (48 ч + 1 ч) в том же текущем периоде
+	bad := 0
+	for p := uint64(2); p <= 10; p++ {
+		id := fmt.Sprintf("outside-%d", p)
+		start := genesisTime + p*periodSecs
+		end := start + periodSecs
+		for _, off := range []int64{-int64(win48 + 3600), int64(win48 + 3600)} {
+			l := newLedger(g)
+			priv, addr := seed(l, id, p-2)
+			slot := slotOf(addr, p, periodSecs)
+			now := uint64(int64(slot) + off)
+			if now < start || now >= end {
+				continue // точка вышла в соседний период — не наш случай
+			}
+			res := l.Apply(mintTx(l, priv, addr, p-1, 1000, now))
+			if res.Outcome != ledger.Rejected || res.Code != "E_POW_HARD" {
+				fmt.Printf("FAIL вне окна p=%d off=%d: %v/%s\n", p, off, res.Outcome, res.Code)
+				os.Exit(1)
+			}
+			bad++
+		}
+	}
+	fmt.Printf("E2E OK: вне окна (слот ±49 ч в том же периоде) — reject/E_POW_HARD (%d случаев)\n", bad)
+
+	// 3) накопление: claim = p-1, last = p-4 -> diff=3, в окне текущего периода
+	{
+		const p = uint64(6)
+		l := newLedger(g)
+		priv, addr := seed(l, "accrual", p-4)
+		slot := slotOf(addr, p, periodSecs)
+		res := l.Apply(mintTx(l, priv, addr, p-1, 3000, slot))
+		if res.Outcome != ledger.Accepted {
+			fmt.Printf("FAIL накопление diff=3: %v/%s\n", res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		var total uint64
+		for _, c := range l.State.Wallet(addr).Cohorts {
+			total += c.Amount
+		}
+		fmt.Printf("E2E OK: накопление diff=3 в окне — accept, когорты=%d (M6: 1000×3)\n", total)
+		if total != 3000 {
+			os.Exit(1)
+		}
+	}
+	// 4) accrual_window: diff=7 -> E_ACCRUAL_WINDOW (даже в открытом окне)
+	{
+		const p = uint64(8)
+		l := newLedger(g)
+		priv, addr := seed(l, "accrual-over", p-8)
+		slot := slotOf(addr, p, periodSecs)
+		res := l.Apply(mintTx(l, priv, addr, p-1, 7000, slot))
+		if res.Outcome != ledger.Rejected || res.Code != "E_ACCRUAL_WINDOW" {
+			fmt.Printf("FAIL accrual_window diff=7: %v/%s\n", res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		fmt.Println("E2E OK: осознанный пропуск 7 периодов — reject/E_ACCRUAL_WINDOW (M5 не изменён)")
+	}
+	// 5) заявленный период больше не влияет на окно: два разных claim при
+	// одном txNow дают одинаковый вердикт по окну
+	{
+		const p = uint64(6)
+		verdicts := map[string]bool{}
+		for _, claim := range []uint64{p - 1, p - 2, p - 3} {
+			l := newLedger(g)
+			priv, addr := seed(l, "claim-"+strconv.FormatUint(claim, 10), p-4)
+			slot := slotOf(addr, p, periodSecs)
+			res := l.Apply(mintTx(l, priv, addr, claim, 1000*(claim-(p-4)), slot))
+			verdicts[fmt.Sprintf("claim=%d", claim)] = res.Outcome == ledger.Accepted
+		}
+		fmt.Printf("E2E OK: вердикт по окну не зависит от заявленного периода: %v\n", verdicts)
+	}
+	// 6) песочница: SkipMintChallengeWindow обходит окно
+	{
+		const p = uint64(6)
+		l, err := ledger.New(g, ledger.Options{SkipMintChallengeWindow: true})
+		if err != nil {
+			panic(err)
+		}
+		priv, addr := seed(l, "sandbox", p-2)
+		slot := slotOf(addr, p, periodSecs)
+		res := l.Apply(mintTx(l, priv, addr, p-1, 1000, slot+win48+3600))
+		if res.Outcome != ledger.Accepted {
+			fmt.Printf("FAIL песочница: %v/%s\n", res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		fmt.Println("E2E OK: песочница (SkipMintChallengeWindow) — вне окна accept")
+	}
+	// 7) protocolVersion: tx с версией 2 -> E_VER
+	{
+		const p = uint64(6)
+		l := newLedger(g)
+		priv, addr := seed(l, "ver", p-2)
+		slot := slotOf(addr, p, periodSecs)
+		tx := mintTx(l, priv, addr, p-1, 1000, slot)
+		tx.ProtocolVersion = 2
+		// пересобрать PoW/подпись под изменённое поле
+		net := l.State.Net
+		ap := crypto.Argon2Params{MemoryKiB: net.Pow.Argon2MemoryKiB,
+			Iterations: net.Pow.Argon2Iterations, Parallelism: net.Pow.Argon2Parallelism}
+		for n := uint64(0); ; n++ {
+			var nb [8]byte
+			binary.BigEndian.PutUint64(nb[:], n)
+			tx.Pow.Nonce = append([]byte(nil), nb[:]...)
+			if crypto.VerifyHard(tx.SigningPreimage(), tx.Pow.Nonce, net.Pow.TargetHard, ap) {
+				break
+			}
+		}
+		sh := tx.SigningHash()
+		sig, _ := crypto.SignDER(priv, sh[:])
+		tx.Signature = sig
+		res := l.Apply(tx)
+		if res.Outcome != ledger.Rejected || res.Code != "E_VER" {
+			fmt.Printf("FAIL protocolVersion 2: %v/%s\n", res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		fmt.Printf("E2E OK: tx с protocolVersion=2 -> reject/E_VER (версия сети %d)\n", l.State.Net.ProtocolVersion)
+	}
+}
+
+// stats: метрики достижимости до/после фикса и моделирование поглощения.
+func stats() {
+	periodSecs := uint64(30 * day)
+	const nAddrs = 5000
+	// «старая» семантика: окно вокруг слота ЗАЯВЛЕННОГО периода, подача
+	// возможна только после конца периода (M4) -> достижимая часть окна
+	var oldReach, oldSum uint64
+	// «новая»: окно вокруг слота ТЕКУЩЕГО периода
+	var newSum uint64
+	for i := 0; i < nAddrs; i++ {
+		a := sha256.Sum256([]byte(fmt.Sprintf("audit-stats:%d", i)))
+		slot := slotOf(a[:], 5, periodSecs)
+		start := genesisTime + 5*periodSecs
+		end := start + periodSecs
+		// старая: [max(slot-win, end), slot+win]
+		lo := slot - win48
+		if lo < end {
+			lo = end
+		}
+		hi := slot + win48
+		if hi > lo {
+			oldSum += hi - lo
+			oldReach++
+		}
+		// новая: пересечение с текущим периодом
+		nlo, nhi := slot-win48, slot+win48
+		if start > nlo {
+			nlo = start
+		}
+		if end < nhi {
+			nhi = end
+		}
+		newSum += nhi - nlo
+	}
+	fmt.Printf("STATS: адресов=%d, период=%.0f ч, окно=±%.0f ч\n",
+		nAddrs, float64(periodSecs)/3600, float64(win48)/3600)
+	fmt.Printf("  ДО фикса: достижимо хоть чем-то %.4f%% периодов; средняя достижимая часть %.1f с (%.3f ч)\n",
+		100*float64(oldReach)/float64(nAddrs), float64(oldSum)/float64(nAddrs), float64(oldSum)/float64(nAddrs)/3600)
+	fmt.Printf("  ПОСЛЕ:    достижимо 100%%; средняя достижимая часть %.1f с (%.2f ч) = %.2f%% периода\n",
+		float64(newSum)/float64(nAddrs), float64(newSum)/float64(nAddrs)/3600,
+		100*float64(newSum)/float64(nAddrs)/float64(periodSecs))
+	// поглощение: пропуск 6 подряд при случайном моменте подачи
+	pOld := float64(oldSum) / float64(nAddrs) / float64(periodSecs)
+	pNew := float64(newSum) / float64(nAddrs) / float64(periodSecs)
+	pow := func(p float64, n int) float64 {
+		r := 1.0
+		for i := 0; i < n; i++ {
+			r *= 1 - p
+		}
+		return r
+	}
+	fmt.Printf("  P(6 пропусков подряд) при случайном моменте подачи: ДО %.6f, ПОСЛЕ %.4f\n",
+		pow(pOld, 6), pow(pNew, 6))
+	fmt.Printf("  P(поглощение) при подаче в слот (приложение знает слот): ДО 0 (недостижимо в 14/15), ПОСЛЕ 0\n")
+}
+
+// replay: журнал mint-транзакций, применённый live и через cons.Replay,
+// даёт одинаковые вердикты и одинаковое состояние (окно от txNow).
+func replay() {
+	periodSecs := uint64(30 * day)
+	g := gp(0, 48)
+	// журнал: 4 выпуска одного кошелька в окнах периодов 2..5
+	live := newLedger(g)
+	priv, addr := seed(live, "replay-w", 0)
+	var txs []*wire.Transaction
+	for p := uint64(2); p <= 5; p++ {
+		slot := slotOf(addr, p, periodSecs)
+		tx := mintTx(live, priv, addr, p-1, 1000, slot)
+		res := live.Apply(tx)
+		if res.Outcome != ledger.Accepted {
+			fmt.Printf("FAIL live p=%d: %v/%s\n", p, res.Outcome, res.Code)
+			os.Exit(1)
+		}
+		txs = append(txs, tx)
+	}
+	// replay в свежее ядро тем же журналом
+	rp := newLedger(g)
+	seed(rp, "replay-w", 0)
+	if err := cons.Replay(rp, txs, cons.NewFinalityView(nil)); err != nil {
+		fmt.Printf("FAIL cons.Replay: %v\n", err)
+		os.Exit(1)
+	}
+	if digest(live) != digest(rp) {
+		fmt.Println("FAIL live != replay: дайджесты состояния разошлись")
+		os.Exit(1)
+	}
+	// отклонённая по окну tx не меняет состояние ни в live, ни в replay
+	before := digest(rp)
+	badSlot := slotOf(addr, 6, periodSecs) + win48 + 3600
+	bad := mintTx(rp, priv, addr, 5, 1000, badSlot)
+	if res := rp.Apply(bad); res.Code != "E_POW_HARD" {
+		fmt.Printf("FAIL replay вне окна: %s\n", res.Code)
+		os.Exit(1)
+	}
+	if digest(rp) != before {
+		fmt.Println("FAIL отклонённая tx изменила состояние replay")
+		os.Exit(1)
+	}
+	fmt.Printf("REPLAY OK: live == cons.Replay по дайджесту (%d tx); вне окна — E_POW_HARD, состояние не меняется\n", len(txs))
+}
+
+func digest(l *ledger.Ledger) [32]byte {
+	h := sha256.New()
+	var b [8]byte
+	binary.BigEndian.PutUint64(b[:], l.State.NetTime)
+	h.Write(b[:])
+	binary.BigEndian.PutUint64(b[:], l.State.TotalMinted)
+	h.Write(b[:])
+	addrs := make([]string, 0, len(l.State.Wallets))
+	for a := range l.State.Wallets {
+		addrs = append(addrs, a)
+	}
+	sort.Strings(addrs)
+	for _, a := range addrs {
+		w := l.State.Wallets[a]
+		h.Write([]byte(a))
+		binary.BigEndian.PutUint64(b[:], w.Seq)
+		h.Write(b[:])
+		h.Write(w.TipTxID)
+		binary.BigEndian.PutUint64(b[:], w.LastClaimedPeriod)
+		h.Write(b[:])
+		for _, c := range w.Cohorts {
+			binary.BigEndian.PutUint64(b[:], c.Period)
+			h.Write(b[:])
+			binary.BigEndian.PutUint64(b[:], c.Amount)
+			h.Write(b[:])
+		}
+	}
+	return [32]byte(h.Sum(nil))
+}
+
+// retro: ядро не читает часы узла — tx с claim в далёком прошлом
+// валидируется от собственного claim (C9 — слой сети). Проверяем, что
+// окно M7 связывает только при принудительном C9: mint с claim в периоде 3
+// принимается ядром, когда NetTime уже в периоде 10.
+func retro() {
+	periodSecs := uint64(30 * day)
+	g := gp(0, 48)
+	l := newLedger(g)
+	privA, addrA := seed(l, "retro-a", 8)
+	privB, addrB := seed(l, "retro-b", 1)
+	// сначала «прогреваем» сеть до периода 10 обычной tx времени
+	// (settleTo не обязателен — NetTime растёт только по принятым tx;
+	// здесь достаточно mint периода 9 в окне периода 10)
+	slot10 := slotOf(addrA, 10, periodSecs)
+	if res := l.Apply(mintTx(l, privA, addrA, 9, 1000, slot10)); res.Outcome != ledger.Accepted {
+		fmt.Printf("FAIL прогрев: %v/%s\n", res.Outcome, res.Code)
+		os.Exit(1)
+	}
+	netTime := l.State.NetTime
+	// теперь mint с claim в периоде 3 (за 7 периодов до NetTime), claim = 2
+	slot3 := slotOf(addrB, 3, periodSecs)
+	res := l.Apply(mintTx(l, privB, addrB, 2, 1000, slot3))
+	fmt.Printf("RETRO: NetTime=%d (период %d), mint с claim=%d (период 3): %v/%s\n",
+		netTime, (netTime-g.Genesis.GenesisTime)/periodSecs, slot3, res.Outcome, res.Code)
+}
+
+// recover: кошелёк, пропустивший 10 периодов, восстанавливается заявкой
+// last+accrual_window (M5 ограничивает накопление, но не блокирует выпуск).
+func recoverMode() {
+	periodSecs := uint64(30 * day)
+	g := gp(0, 48)
+	const cur = uint64(12)
+	l := newLedger(g)
+	priv, addr := seed(l, "recover", 1) // last=1, пропущено 10 периодов
+	slot := slotOf(addr, cur, periodSecs)
+	// «наивная» заявка последнего завершённого периода: diff = 11-1 = 10
+	res := l.Apply(mintTx(l, priv, addr, cur-1, 10000, slot))
+	fmt.Printf("RECOVER: claim=%d (последний завершённый) -> %v/%s\n", cur-1, res.Outcome, res.Code)
+	// восстановление: claim = last + accrual_window = 7, diff = 6
+	res = l.Apply(mintTx(l, priv, addr, 7, 6000, slot))
+	fmt.Printf("RECOVER: claim=last+6=7 (в том же окне) -> %v/%s, last_claimed=%d\n",
+		res.Outcome, res.Code, l.State.Wallet(addr).LastClaimedPeriod)
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("usage: verify prop|e2e|stats")
+		os.Exit(2)
+	}
+	switch os.Args[1] {
+	case "prop":
+		prop()
+	case "e2e":
+		e2e()
+	case "stats":
+		stats()
+	case "replay":
+		replay()
+	case "retro":
+		retro()
+	case "recover":
+		recoverMode()
+	default:
+		fmt.Println("unknown mode")
+		os.Exit(2)
+	}
+}

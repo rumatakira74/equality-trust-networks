@@ -1,0 +1,1 @@
+REPLAY OK: live == cons.Replay по дайджесту (4 tx); вне окна — E_POW_HARD, состояние не меняется
