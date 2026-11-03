@@ -1,0 +1,15 @@
+# Выжимка логов сборки release-APK (тема A8, 03.11.2026)
+
+== std-сеть stdnet (equality-stdnet-std-v1.0.0.apk) ==
+команда: TNP_SIGNING_PROPERTIES=~/.tnp-signing/signing.properties TNP_KEY_KIND=std ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.stdnet.x24b5f628 ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-24b5f628 flutter build apk --release
+Running Gradle task 'assembleRelease'...                        
+Running Gradle task 'assembleRelease'...                           27.9s
+✓ Built build/app/outputs/flutter-apk/app-release.apk (175.2MB)
+
+== rec-сеть recnet (equality-recnet-rec-v1.0.0.apk) ==
+команда: TNP_SIGNING_PROPERTIES=~/.tnp-signing/signing.properties TNP_KEY_KIND=rec ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.recnet.xcbea5bee ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-cbea5bee flutter build apk --release
+Running Gradle task 'assembleRelease'...                        
+Running Gradle task 'assembleRelease'...                           29.1s
+✓ Built build/app/outputs/flutter-apk/app-release.apk (175.2MB)
+
+Примечание: TNP_SIGNING_PROPERTIES указывает на ~/.tnp-signing/signing.properties (chmod 600, вне git); пароли в логи не попадают.

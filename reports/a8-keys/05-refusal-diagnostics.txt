@@ -1,0 +1,7 @@
+# Отказ release-сборки без боевых ключей (gradlew :app:assembleRelease)
+
+== TNP_SIGNING_PROPERTIES=/tmp/a8-nonexistent.properties ==
+release-сборка требует боевой signing-конфиг: /tmp/a8-nonexistent.properties не найден. Сгенерируйте ключи и запустите cmd/tnp-testnet configure (см. docs/RELEASE-KEYS.md); путь — env TNP_SIGNING_PROPERTIES.
+
+== без TNP_KEY_KIND (signing-конфиг есть) ==
+release-сборка требует вид боевого ключа: env TNP_KEY_KIND=std|rec (std — все std-сети, rec — rec-сети; вид печатает configure).

@@ -1,0 +1,18 @@
+сеть stdnet по шаблону 7 (Касса взаимопомощи)
+ network_id: 597eb27721a0f8f690f5b5713c23082f7cc36075196bac8ad6347bafd0b06110
+ manifest_hash: e0d57f753fec92032541c146c2f24ed6a62e434b3a45953d1ef45d53fc3052f4
+ genesis_time: 1793692800 (2026-11-03T08:00:00Z)
+ уровень гарантий: высокий (strict + decentralized + open_vouch (3.3))
+ единица: currency, выпуск: 1000/1 мес., передача: free, вход: open_vouch, K=3
+ модули: [pool attest]
+ посевной круг: 3
+ артефакты: /tmp/a8-networks/stdnet
+ посевной V1: адрес 2b6c044eea5c8040f27c088826c9ebd1208a485e521467cd10cecafe325fd222 (выведен из network_id)
+ посевной V2: адрес bc856b4686e3e9cb95a9f5af8c3f82982e1da7537a7e61eaae921b7f7d055069 (выведен из network_id)
+ посевной V3: адрес af7c9700b8ee698ba6bcac632e7e75a2c1baa6ce292dbb4da829f03624e49e24 (выведен из network_id)
+ APK: equality-stdnet-std-v1.0.0.apk
+ applicationId: io.equality.stdnet.x24b5f628
+ label: Eq-24b5f628
+ display_name: "stdnet" · Eq-24b5f628
+ release-подпись: tnp-std — signing.properties: /home/kira/.tnp-signing/signing.properties
+ сборка release: TNP_SIGNING_PROPERTIES=/home/kira/.tnp-signing/signing.properties TNP_KEY_KIND=std ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.stdnet.x24b5f628 ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-24b5f628 flutter build apk --release

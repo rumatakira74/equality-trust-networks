@@ -1,0 +1,19 @@
+сеть recnet по шаблону 8 (Абонентский ресурс (коммерческий))
+ network_id: 931e1e3003601db7e4a8d6cdc1862f51f1aa46f0365a1f49debc8848d7e1c243
+ manifest_hash: 9f29c89d93442b9dd95c660bb349e1809a96fbb6bfacc0fafc84498f35619a36
+ genesis_time: 1793692800 (2026-11-03T08:00:00Z)
+ уровень гарантий: средний (вход по приглашению — закрытый круг (интерпретация этапа 10: ниже высокого))
+ единица: quota, выпуск: 1000/1 мес., передача: peer-redeem, вход: invite_only_vouch, K=3
+ recurring: on (периодная метка, сгорание после границы P+1) — коммерческая сборка (16.2)
+ модули: [redeem]
+ посевной круг: 3
+ артефакты: /tmp/a8-networks/recnet
+ посевной V1: адрес 52c2ab84b045fd894b3f1fcc5b91222bdb401b4669e90aa88bb99c0a2d6152be (выведен из network_id)
+ посевной V2: адрес dd15f36e8d8b9d2f222ae1e0ec8594857603d7eab60e066107bad9af04073b2c (выведен из network_id)
+ посевной V3: адрес d23925809300d50c3ed86a954c490f29f5f03a3473f9b3d314b3117badea7b68 (выведен из network_id)
+ APK: equality-recnet-rec-v1.0.0.apk
+ applicationId: io.equality.recnet.xcbea5bee
+ label: Eq-cbea5bee
+ display_name: "recnet" · Eq-cbea5bee
+ release-подпись: tnp-rec — signing.properties: /home/kira/.tnp-signing/signing.properties
+ сборка release: TNP_SIGNING_PROPERTIES=/home/kira/.tnp-signing/signing.properties TNP_KEY_KIND=rec ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=io.equality.recnet.xcbea5bee ORG_GRADLE_PROJECT_TNP_APP_LABEL=Eq-cbea5bee flutter build apk --release
