@@ -171,9 +171,14 @@ ui-owner-protection 02.11): `adb install -r` — Success, запуск
 всех workflows для ветки `a8-keys` на момент пуша — «CI pending»
 (правило CI-verify: сессия статусы не ждёт):
 
-- `cons`, `core`, `net`, `android`, `flutter` — запуски на push ветки
-  `a8-keys`: см. сводку сессии (номера зафиксированы после пуша;
-  статусы на момент пуша — pending).
+- `cons` — прогон 41608478220 (in_progress на момент фиксации);
+- `net` — прогон 41608478245 (in_progress);
+- `flutter` — прогон 41608478221 (in_progress).
+
+`core` и `android` не запускаются: их path-фильтры (core/**, go.mod,
+vectors/**; mobile/**, android/**) изменений темы не задевают. Статусы
+на момент пуша — «CI pending» (правило CI-verify: сессия статусы не
+ждёт; сводка номеров — после пуша ветки).
 
 ## 9. PENDING
 
