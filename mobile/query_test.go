@@ -349,6 +349,9 @@ func TestMintWindowCurrentPeriod(t *testing.T) {
 	// реальное окно ±48 ч (7.6): SandboxGenesis в песочнице открывает
 	// весь период (учебный оверрайд) — здесь проверяем именно слот M7
 	gen.gp.Manifest.Profile.MintChallengeWindowHours = 48
+	// режим якоря — период выпуска (манифест-поле 63, тема
+	// fix-mint-window): наследие (0) якорит слот к заявляемому периоду
+	gen.gp.Manifest.Profile.MintSlotMode = 1
 	wire.SetManifestHash(gen.gp)
 	// genesis 60 суток назад: текущий период 2, заявляемый 1
 	gen.gp.Genesis.GenesisTime = uint64(time.Now().Add(-60 * 24 * time.Hour).Unix())
@@ -443,10 +446,11 @@ func TestMintWindowCurrentPeriod(t *testing.T) {
 	if mwOpen["open"] != true {
 		t.Errorf("окно текущего периода 2 закрыто (слот в ±24 ч от now)")
 	}
-	// сверка с ядром: open == окно текущего периода (фикс M7)
+	// сверка с ядром: open == окно для заявки периода 1 (якорь —
+	// период выпуска 2 по режиму манифеста)
 	now := uint64(mwOpen["now"].(float64))
-	if want := node.n.QueryMintWindowOpen(addrOpen, 2, now); mwOpen["open"] != want {
-		t.Errorf("open = %v, ядро для периода 2 говорит %v", mwOpen["open"], want)
+	if want := node.n.QueryMintWindowOpen(addrOpen, 1, now); mwOpen["open"] != want {
+		t.Errorf("open = %v, ядро для заявки периода 1 говорит %v", mwOpen["open"], want)
 	}
 
 	// закрытый случай: слот текущего периода 2 далеко от now — окно
@@ -460,5 +464,62 @@ func TestMintWindowCurrentPeriod(t *testing.T) {
 	}
 	if mwClosed["open"] != false {
 		t.Errorf("окно текущего периода 2 открыто вне ±48 ч от слота")
+	}
+
+	// джиттер подачи (аудит Sonnet-2 п. 3.6): submit_at лежит внутри
+	// достижимого окна [window_opens_at, window_closes_at] и стабилен
+	// между опросами (детерминирован от адреса и периода-якоря)
+	lo := int64(mwOpen["window_opens_at"].(float64))
+	hi := int64(mwOpen["window_closes_at"].(float64))
+	at := int64(mwOpen["submit_at"].(float64))
+	if lo > hi {
+		t.Fatalf("пустое окно: opens_at=%d > closes_at=%d", lo, hi)
+	}
+	if at < lo || at > hi {
+		t.Errorf("submit_at=%d вне окна [%d, %d]", at, lo, hi)
+	}
+	var again map[string]any
+	if err := json.Unmarshal([]byte(node.MintWindowJSON(addrOpen)), &again); err != nil {
+		t.Fatal(err)
+	}
+	if again["submit_at"] != mwOpen["submit_at"] {
+		t.Errorf("submit_at нестабилен: %v != %v", again["submit_at"], mwOpen["submit_at"])
+	}
+}
+
+// TestMintJitterOffsetUniform — джиттер подачи mint (аудит Sonnet-2
+// п. 3.6): равномерное смещение в [0, span) от пары (адрес, период).
+// Без джиттера окна кошельков со слотом в первые 48 ч периода обрезаны
+// границей и открываются разом — пик 49× к среднему.
+func TestMintJitterOffsetUniform(t *testing.T) {
+	if got := mintJitterOffset([]byte("addr"), 7, 0); got != 0 {
+		t.Fatalf("span 0: смещение %d, хочу 0", got)
+	}
+	const span = uint64(96 * 3600) // окно ±48 ч
+	const n = 20000
+	var sum, min, max uint64
+	min = span
+	for i := 0; i < n; i++ {
+		addr := crypto.MarshalPubKey(&crypto.DeterministicKey(fmt.Sprintf("jitter:%d", i)).PublicKey)
+		off := mintJitterOffset(addr, 5, span)
+		if off >= span {
+			t.Fatalf("смещение %d вне [0, %d)", off, span)
+		}
+		sum += off
+		if off < min {
+			min = off
+		}
+		if off > max {
+			max = off
+		}
+	}
+	// покрытие диапазона: минимум в первой четверти, максимум в последней
+	if min > span/4 || max < span*3/4 {
+		t.Fatalf("смещения не покрывают окно: min=%d max=%d (span=%d)", min, max, span)
+	}
+	// среднее — около середины окна (равномерность, допуск 5 %)
+	mean := float64(sum) / n
+	if mean < float64(span)*0.45 || mean > float64(span)*0.55 {
+		t.Fatalf("среднее смещение %.0f вне [0.45; 0.55] × %d", mean, span)
 	}
 }

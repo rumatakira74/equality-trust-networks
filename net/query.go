@@ -207,19 +207,35 @@ func (n *Node) QueryPendingGuardianUpdates(addr []byte) []ledger.PendingGuardian
 	return out
 }
 
-// QueryMintWindowOpen — открыто ли окно челленджа выпуска для периода
-// (7.6: слот внутри месяца, окно ±48 ч). Период-якорь передаёт
-// вызывающий: после фикса M7 ядро проверяет окно ТЕКУЩЕГО периода
-// выпуска (период txNow) — mobile-мост передаёт текущий период живых
-// часов, чтобы UI сходился с apply. Точный момент слота не
-// раскрывается (см. шапку файла).
-func (n *Node) QueryMintWindowOpen(addr []byte, period, now uint64) bool {
+// QueryMintWindowOpen — открыто ли окно челленджа выпуска для заявки
+// периода claimPeriod в момент now (7.6: слот внутри периода, окно
+// ±48 ч). Период-якорь слота выбирает ядро по режиму манифеста (поле 63
+// mint_slot_mode): 0 — заявляемый период (наследие), 1 — период выпуска
+// (период txNow). Вызывающий передаёт ЗАЯВЛЯЕМЫЙ период — mobile-мост
+// передаёт claim, чтобы UI сходился с apply в обоих режимах. Точный
+// момент слота не раскрывается (см. шапку файла).
+func (n *Node) QueryMintWindowOpen(addr []byte, claimPeriod, now uint64) bool {
 	if n.Ledger == nil {
 		return false
 	}
 	n.applyMu.RLock()
 	defer n.applyMu.RUnlock()
-	return n.Ledger.CheckMintChallengeWindow(addr, period, now)
+	return n.Ledger.CheckMintWindow(addr, claimPeriod, now)
+}
+
+// QueryMintWindowBounds — границы окна челленджа выпуска (unix-секунды,
+// включительно) для заявки периода claimPeriod в момент now; режим
+// якоря — по манифесту (поле 63). Клиент выбирает момент подачи внутри
+// [lo, hi] с джиттером (аудит Sonnet-2 п. 3.6): без него окна кошельков
+// со слотом в первые 48 ч периода обрезаны границей и открываются разом
+// (пик 49× к среднему).
+func (n *Node) QueryMintWindowBounds(addr []byte, claimPeriod, now uint64) (lo, hi uint64) {
+	if n.Ledger == nil {
+		return now, now
+	}
+	n.applyMu.RLock()
+	defer n.applyMu.RUnlock()
+	return n.Ledger.MintWindowBounds(addr, claimPeriod, now)
 }
 
 // QueryFee — комиссия на перевод суммы (10.2): fee = max(fee_min,

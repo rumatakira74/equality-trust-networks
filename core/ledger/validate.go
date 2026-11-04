@@ -147,22 +147,24 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 		}) {
 			return reject("E_POW_HARD")
 		}
-		// M7: окно челленджа выпуска (7.6). Фикс темы mint-fix (вариант A,
-		// решение владельца 03.11.2026): якорь слота — ТЕКУЩИЙ период
-		// выпуска (l.tt.period от txNow), а не заявленный mp.Period.
-		// Ранее окно ±48 ч считалось вокруг слота заявленного периода:
-		// заявка периода P возможна только после конца P (M4), поэтому
-		// окно пересекалось с допустимым временем подачи лишь при слоте
-		// в последних 48 ч периода — достижимость 1/15 за период, шесть
-		// пропусков подряд давали diff > accrual_window навсегда
-		// (поглощающее состояние, симуляция A9). Теперь слот лежит
-		// внутри текущего периода: пересечение окна ±48 ч с текущим
-		// периодом всегда >= 48 ч — у каждого кошелька каждый период
-		// есть достижимое окно; слот публично вычислим заранее.
-		// Проверка вынесена в CheckMintChallengeWindow и включается
-		// опцией (SkipMintChallengeWindow — только песочница).
+		// M7: окно челленджа выпуска (7.6). Период-якорь слота задаёт
+		// манифест (поле 63 mint_slot_mode, тема fix-mint-window):
+		// 0 — наследие (слот заявляемого mp.Period), 1 — слот периода
+		// ВЫПУСКА (l.tt.period от txNow). Ранее окно ±48 ч считалось
+		// вокруг слота заявленного периода: заявка периода P возможна
+		// только после конца P (M4), поэтому окно пересекалось с
+		// допустимым временем подачи лишь при слоте в последних 48 ч
+		// периода — достижимость 1/15 за период, шесть пропусков подряд
+		// давали diff > accrual_window навсегда (поглощающее состояние,
+		// симуляция A9). В режиме 1 слот лежит внутри текущего периода:
+		// пересечение окна ±48 ч с текущим периодом всегда >= 48 ч — у
+		// каждого кошелька каждый период есть достижимое окно; слот
+		// публично вычислим заранее.
+		// Проверка вынесена в CheckMintWindow и включается опцией
+		// (SkipMintChallengeWindow — только песочница).
 		if tx.Type == wire.Mint && !l.Opts.SkipMintChallengeWindow {
-			if !l.CheckMintChallengeWindow(tx.Wallet, l.tt.period, l.tt.now) {
+			mp := tx.Payload.(*wire.MintPayload)
+			if !l.CheckMintWindow(tx.Wallet, mp.Period, l.tt.now) {
 				return reject("E_POW_HARD")
 			}
 		}
@@ -178,11 +180,11 @@ func (l *Ledger) applySigPowTime(tx *wire.Transaction, registerPub *ecdsa.Public
 }
 
 // CheckMintChallengeWindow: слот H(address || period) внутри периода
-// (period_start + H mod period_seconds) и окно ±48 ч (7.6). Якорь —
-// период момента подачи (после фикса M7 — текущий период выпуска,
-// см. applySigPowTime). Включение hash(чекпоинта предыдущей эпохи)
-// в формулу слота — открытый вопрос, PENDING за владельцем; сейчас
-// код считает H(address || period) (hashThree).
+// (period_start + H mod period_seconds) и окно ±48 ч (7.6). period —
+// период-ЯКОРЬ слота (какой именно — решает MintWindowAnchor по режиму
+// манифеста). Включение hash(чекпоинта предыдущей эпохи) в формулу
+// слота — открытый вопрос, PENDING за владельцем; сейчас код считает
+// H(address || period) (hashThree).
 func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool {
 	win := l.State.Net.Profile.MintChallengeWindowHours * 3600
 	if win == 0 {
@@ -193,13 +195,79 @@ func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool 
 	return now >= lo && now <= hi
 }
 
+// MintWindowAnchor — период-якорь слота челленджа выпуска по режиму
+// манифеста (поле 63 mint_slot_mode, тема fix-mint-window, вариант A
+// аудита Sonnet-2 п. 3.1/3.2):
+//
+//	0 (наследие) — заявляемый период claimedPeriod: окно ±48 ч вокруг
+//	  слота внутри заявляемого периода; заявка возможна только после
+//	  его конца (M4), поэтому достижимо лишь при слоте в последних
+//	  48 ч периода (1/15 кошельков за период);
+//	1 — период выпуска (период txNow): слот лежит внутри текущего
+//	  периода, окно ±48 ч пересекается с допустимым временем подачи
+//	  всегда — достижимо у каждого кошелька каждый период.
+//
+// Режим — часть network_id (манифест), поэтому вердикт детерминирован
+// и одинаков на всех узлах сети.
+func (l *Ledger) MintWindowAnchor(claimedPeriod, now uint64) uint64 {
+	if l.State.Net.Profile.MintSlotMode == 1 {
+		return l.periodAt(now)
+	}
+	return claimedPeriod
+}
+
+// CheckMintWindow — открыто ли окно челленджа для заявки периода
+// claimedPeriod в момент now (M7, 7.6): слот периода-якоря по режиму
+// манифеста (MintWindowAnchor) в пределах ±mint_challenge_window_hours.
+// Единая точка входа для apply и для клиентских запросов (net/mobile) —
+// UI и ядро приходят к одному вердикту.
+func (l *Ledger) CheckMintWindow(addr []byte, claimedPeriod, now uint64) bool {
+	return l.CheckMintChallengeWindow(addr, l.MintWindowAnchor(claimedPeriod, now), now)
+}
+
+// MintWindowBounds — ДОСТИЖИМЫЕ границы окна челленджа (unix-секунды,
+// включительно) для заявки периода claimedPeriod в момент now:
+// [slot−W, slot+W] вокруг слота периода-якоря, в режиме 1 усечённые
+// периодом выпуска (аудит п. 3.1: «окно [S_p − W, S_p + W] усечено
+// периодом p»). win == 0 (окно выключено) — весь интервал [now, now].
+//
+// Нужны клиенту для джиттера подачи (аудит п. 3.6: без джиттера пик 49× —
+// окна кошельков со слотом в первые 48 ч периода обрезаны границей и
+// открываются разом).
+func (l *Ledger) MintWindowBounds(addr []byte, claimedPeriod, now uint64) (lo, hi uint64) {
+	win := l.State.Net.Profile.MintChallengeWindowHours * 3600
+	if win == 0 {
+		return now, now
+	}
+	periodSecs := l.State.Net.Profile.PeriodSecsOrDefault()
+	anchor := l.MintWindowAnchor(claimedPeriod, now)
+	slot := mintChallengeSlot(l.State.GenesisTime, addr, anchor, periodSecs)
+	if slot < win {
+		lo = 0
+	} else {
+		lo = slot - win
+	}
+	hi = slot + win
+	if l.State.Net.Profile.MintSlotMode == 1 {
+		periodStart := l.State.GenesisTime + anchor*periodSecs
+		if lo < periodStart {
+			lo = periodStart
+		}
+		if periodEnd := periodStart + periodSecs; hi > periodEnd {
+			hi = periodEnd
+		}
+	}
+	return lo, hi
+}
+
 // mintChallengeSlot — детерминированный момент слота внутри периода:
 // period_start + (H(...) mod period_seconds). Периоды сети — календарные
 // от genesis (9.2): period_start = genesis_time + period × период сети
 // (конвенция headless-ядра — 30 сут; genesis-поле 61 задаёт длину —
 // тестовые сети живого прогона). Та же конвенция в net.RealClock.
-// Какой период передать (якорь слота) — решает вызывающий: после фикса
-// M7 окно челленджа сверяется со слотом ТЕКУЩЕГО периода выпуска.
+// Какой период передать (якорь слота) — решает MintWindowAnchor по
+// режиму манифеста (поле 63 mint_slot_mode): 0 — заявляемый период
+// (наследие), 1 — период выпуска.
 // Правка этапа 8 (долг этапа 7): раньше отсчёт шёл от 1970 г. — при
 // genesis-времени близком к текущему слот выпадал в далёкое будущее/прошлое
 // и окно челленджа всегда было закрыто.
@@ -566,23 +634,40 @@ func (l *Ledger) applyMint(tx *wire.Transaction) Result {
 		return reject("E_MINT_PERIOD")
 	}
 	// M5: окно накопления (10.1); quota_reset (раздел 4, 6.2): квота за
-	// период, неиспользованное сгорает — заявляется ровно один период,
-	// накопления нет
-	if prof.IssuanceMode == wire.IssuanceQuotaReset {
-		if diff != 1 {
-			return reject("E_ACCRUAL_WINDOW")
-		}
-	} else if diff > prof.AccrualWindowPeriods {
+	// период, неиспользованное сгорает — заявляется один период,
+	// накопления нет.
+	//
+	// Дефект M5 (аудит Sonnet-2 п. 3.3, тема fix-mint-window): требование
+	// diff == 1 делало пропуск периода необратимым. Кошелёк, пропустивший
+	// период, заявлял base+1 < p−1, а когорта периода base+1 сгорает по
+	// правилу «перевод единицы периода P отвергается после границы P+1»
+	// (recurring): каждый следующий выпуск мёртв при поступлении,
+	// навсегда — отставание LastClaimedPeriod сбросить нечем (пишет
+	// только этот обработчик и копия при миграции). Теперь заявляется
+	// любой завершённый период mp.Period > LastClaimedPeriod (M3 выше)
+	// суммой IssuanceAmount — один период, независимо от пропусков.
+	if prof.IssuanceMode != wire.IssuanceQuotaReset && diff > prof.AccrualWindowPeriods {
 		return reject("E_ACCRUAL_WINDOW")
 	}
-	// M6: amount = issuance × diff (10.1)
-	if mp.Amount != prof.IssuanceAmount*diff {
+	// M6: amount = issuance × diff (10.1); quota_reset — всегда один
+	// период (пропуски не накапливаются, M5 выше)
+	want := prof.IssuanceAmount * diff
+	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+		want = prof.IssuanceAmount
+	}
+	if mp.Amount != want {
 		return reject("E_MINT_AMOUNT")
 	}
 
-	// эффекты (3.4): доля R из первых 12 выпусков (7.4)
+	// эффекты (3.4): доля R из первых 12 выпусков (7.4). Для quota_reset
+	// заявляется один период — цикл доли считается за один период
+	// (mp.Period), а не за диапазон base+1..mp.Period (аудит п. 3.3).
+	first := base + 1
+	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+		first = mp.Period
+	}
 	shareTotal := uint64(0)
-	for p := base + 1; p <= mp.Period; p++ {
+	for p := first; p <= mp.Period; p++ {
 		idx := p - w.ActivatedPeriod + 1
 		if idx <= uint64(prof.VoucherRewardPeriods) && len(w.Activators) == int(prof.VouchK) && !w.Flagged {
 			shareTotal += prof.IssuanceAmount * prof.VoucherRewardMicros / 1_000_000

@@ -293,6 +293,19 @@ type ProfileParams struct {
 	// раньше — network_id не меняется; protocol_version не поднят
 	// (формат tx не изменился). Новые сети: configure ставит 1.
 	CpSetCheck uint64
+	// MintSlotMode — период-якорь слота челленджа выпуска (поле 63;
+	// фикс-тема fix-mint-window, вариант A аудита Sonnet-2 п. 3.2; в
+	// аудите номер поля был 62, но его заняло cp_set_check темы
+	// fix-cp-threshold — номер перепроверен): 0 — наследие (v9.14 и
+	// раньше: слот заявляемого mp.Period), 1 — слот периода выпуска
+	// (период txNow; слот лежит внутри текущего периода, поэтому окно
+	// ±mint_challenge_window_hours пересекается с допустимым временем
+	// подачи всегда и у каждого кошелька каждый период есть достижимое
+	// окно). Нулевое значение не кодируется (appendU64Field), поэтому
+	// манифесты прежних сетей кодируются байт-в-байт как раньше —
+	// network_id не меняется; protocol_version не поднят (формат tx не
+	// изменился). Новые сети: configure ставит 1.
+	MintSlotMode uint64
 }
 
 func (p *ProfileParams) Encode() []byte {
@@ -344,6 +357,7 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendBoolField(b, 60, p.Recurring)
 	b = appendU64Field(b, 61, p.PeriodSeconds)
 	b = appendU64Field(b, 62, p.CpSetCheck)
+	b = appendU64Field(b, 63, p.MintSlotMode)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)

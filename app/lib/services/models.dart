@@ -253,6 +253,13 @@ class PendingGuardianUpdate {
 }
 
 /// Окно челленджа выпуска (7.6).
+///
+/// [submitAt] — момент подачи с клиентским джиттером (аудит Sonnet-2
+/// п. 3.6): равномерно внутри достижимого окна
+/// [[windowOpensAt], [windowClosesAt]] вместо «сразу при открытии».
+/// Без джиттера окна кошельков со слотом в первые 48 ч периода обрезаны
+/// границей периода и открываются разом — пик 49× к среднему. open
+/// остаётся вердиктом консенсуса; submitAt — политика клиента.
 class MintWindow {
   final bool open;
   final int windowHours;
@@ -262,6 +269,10 @@ class MintWindow {
   final int claimPeriod;
   final int claimAmount;
   final int lastClaimedPeriod;
+  final int now;
+  final int windowOpensAt;
+  final int windowClosesAt;
+  final int submitAt;
 
   MintWindow.fromJson(Map<String, dynamic> j)
       : open = j['open'] as bool? ?? false,
@@ -271,7 +282,20 @@ class MintWindow {
         currentPeriod = _i(j['current_period']),
         claimPeriod = _i(j['claim_period']),
         claimAmount = _i(j['claim_amount']),
-        lastClaimedPeriod = _i(j['last_claimed_period']);
+        lastClaimedPeriod = _i(j['last_claimed_period']),
+        now = _i(j['now']),
+        windowOpensAt = _i(j['window_opens_at']),
+        windowClosesAt = _i(j['window_closes_at']),
+        submitAt = _i(j['submit_at']);
+
+  /// Можно ли подавать: окно открыто и джиттер клиента уже наступил.
+  bool get ready => open && claimPeriod > 0 && now >= submitAt;
+
+  /// Окно открыто, но запланированный момент подачи ещё не наступил.
+  bool get waiting => open && claimPeriod > 0 && now < submitAt;
+
+  /// Сколько минут ждать до запланированной подачи.
+  int get waitMinutes => waiting ? ((submitAt - now) / 60).ceil() : 0;
 
   static int _i(dynamic v) => v is num ? v.toInt() : 0;
 }

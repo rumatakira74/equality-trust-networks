@@ -268,6 +268,11 @@ func Validate(p *wire.ProfileParams) []string {
 	if p.CpSetCheck > 1 {
 		add("cp_set_check %d вне {0,1} (0 — наследие, 1 — строгая сверка состава)", p.CpSetCheck)
 	}
+	// mint_slot_mode (поле 63, тема fix-mint-window): 0 — наследие (слот
+	// заявляемого периода), 1 — слот периода выпуска
+	if p.MintSlotMode > 1 {
+		add("mint_slot_mode %d вне {0,1} (0 — наследие, 1 — слот периода выпуска)", p.MintSlotMode)
+	}
 	// relaxed — только для сетей с низкими ставками (раздел 4: device_policy);
 	// при выключенной комиссии ставки не действуют
 	if p.DevicePolicy == wire.DevicePolicyRelaxed && p.FeeMode != wire.FeeModeNone &&

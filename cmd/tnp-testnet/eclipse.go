@@ -540,7 +540,7 @@ func eclipseDriver(genesisPath, outDir, victimBin string, linkGroups bool, victi
 	for _, sl := range seedLabels {
 		key := seedKey(sl)
 		addr := addrOf(key, gp.Genesis.NetworkID)
-		amount := gp.Manifest.Profile.IssuanceAmount * seedPeriod
+		amount := mintAmount(gp.Manifest.Profile, 0, seedPeriod)
 		tx, err := buildTx(env, key, addr, wire.Mint,
 			&wire.MintPayload{Period: seedPeriod, Amount: amount}, true)
 		if err != nil {

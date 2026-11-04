@@ -107,6 +107,13 @@ func New(gp *wire.GenesisPackage, opts Options) (*Ledger, error) {
 	if p.CpSetCheck > 1 {
 		return nil, fmt.Errorf("ledger: cp_set_check %d вне {0,1}", p.CpSetCheck)
 	}
+	// 2.6 (9) (тема fix-mint-window, вариант A аудита Sonnet-2): режим
+	// периода-якоря слота челленджа выпуска (поле 63) — только 0
+	// (наследие: слот заявляемого периода) или 1 (слот периода выпуска);
+	// иной семантики нет, тихо применять её нельзя.
+	if p.MintSlotMode > 1 {
+		return nil, fmt.Errorf("ledger: mint_slot_mode %d вне {0,1}", p.MintSlotMode)
+	}
 
 	net := params.FromManifest(m, gp.Genesis.ProtocolVersion)
 	st := NewState(net)

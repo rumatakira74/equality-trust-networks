@@ -360,6 +360,8 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.PeriodSeconds = v
 	case 62:
 		p.CpSetCheck = v
+	case 63:
+		p.MintSlotMode = v
 	default:
 		return errUnknownField
 	}

@@ -106,7 +106,9 @@ class _MintScreenState extends State<MintScreen> {
               Text(
                 w.open
                     ? (w.windowHours > 0
-                          ? l.mintWindowOpen(w.windowHours)
+                          ? (w.waiting
+                                ? l.mintWindowJitter(w.waitMinutes)
+                                : l.mintWindowOpen(w.windowHours))
                           : l.mintWindowOff)
                     : l.mintWindowClosed(w.accrualWindowPeriods),
               ),
@@ -117,9 +119,12 @@ class _MintScreenState extends State<MintScreen> {
               Text(l.mintClaimAmount(w.claimAmount)),
               Text(l.mintIssuance(w.issuanceAmount)),
               const SizedBox(height: 24),
+              // джиттер клиента (аудит Sonnet-2 п. 3.6): кнопка открыта
+              // в запланированный узел момент внутри окна, а не сразу при
+              // его открытии — иначе окна, обрезанные границей периода,
+              // подают все кошельки разом (пик 49×)
               FilledButton(
-                onPressed:
-                    w.open && w.claimPeriod > 0 && !_busy ? _mint : null,
+                onPressed: w.ready && !_busy ? _mint : null,
                 child: Text(l.btnMintDo),
               ),
             ],

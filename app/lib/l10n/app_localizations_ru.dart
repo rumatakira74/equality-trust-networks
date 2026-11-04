@@ -297,6 +297,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String mintWindowJitter(int minutes) {
+    return 'Окно открыто; подача запланирована через $minutes мин (джиттер клиента сглаживает пик нагрузки).';
+  }
+
+  @override
   String mintLastClaimed(int period) {
     return 'Последний заявленный период: $period';
   }

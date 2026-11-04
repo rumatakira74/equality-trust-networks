@@ -297,6 +297,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String mintWindowJitter(int minutes) {
+    return 'Window is open; the client schedules submission in $minutes min (jitter smooths the load peak).';
+  }
+
+  @override
   String mintLastClaimed(int period) {
     return 'Last claimed period: $period';
   }

@@ -82,6 +82,14 @@ func configureCmd(args []string) error {
 	// чекпоинта с манифестом. Манифесты прежних сетей (поле 0) кодируются
 	// байт-в-байт как раньше — их network_id не меняется.
 	prof.CpSetCheck = 1
+	// mint_slot_mode (поле 63, тема fix-mint-window — вариант A аудита
+	// Sonnet-2 п. 3.2): новые сети создаются со слотом челленджа от
+	// периода ВЫПУСКА (период txNow) — иначе окно ±48 ч вокруг слота
+	// заявляемого периода достижимо лишь у 1/15 кошельков за период.
+	// Манифесты прежних сетей (поле 0) кодируются байт-в-байт как
+	// раньше — их network_id не меняется, они работают по старой
+	// семантике.
+	prof.MintSlotMode = 1
 	switch *recurring {
 	case "auto": // из шаблона (профиль 8 — on, остальные — off)
 	case "on":
@@ -362,6 +370,9 @@ func configureCmd(args []string) error {
 	}
 	if prof.CpSetCheck == 1 {
 		fmt.Printf(" cp_set_check: 1 — строгая сверка состава подписантов чекпоинта с манифестом (C1)\n")
+	}
+	if prof.MintSlotMode == 1 {
+		fmt.Printf(" mint_slot_mode: 1 — слот челленджа выпуска от периода выпуска (вариант A)\n")
 	}
 	fmt.Printf(" модули: %v\n посевной круг: %d\n артефакты: %s\n",
 		moduleNames(prof.Modules), len(circle), outDir)

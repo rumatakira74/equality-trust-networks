@@ -367,7 +367,7 @@ func floodDriver(genesisPath, outDir string, duration, rate, validEvery, baselin
 		key := seedKey(sl)
 		addr := addrOf(key, gp.Genesis.NetworkID)
 		env := &txEnv{gp: gp, node: bnode, ctx: ctx}
-		amount := gp.Manifest.Profile.IssuanceAmount * seedPeriod
+		amount := mintAmount(gp.Manifest.Profile, 0, seedPeriod)
 		tx, err := buildTx(env, key, addr, wire.Mint,
 			&wire.MintPayload{Period: seedPeriod, Amount: amount}, true)
 		if err != nil {

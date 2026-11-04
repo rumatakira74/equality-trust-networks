@@ -290,6 +290,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String mintWindowJitter(int minutes) {
+    return '窗口已开启；客户端计划在 $minutes 分钟后提交（抖动用于平滑负载峰值）。';
+  }
+
+  @override
   String mintLastClaimed(int period) {
     return '最后领取的周期：$period';
   }

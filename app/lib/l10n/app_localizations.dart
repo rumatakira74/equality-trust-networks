@@ -602,6 +602,12 @@ abstract class AppLocalizations {
   /// **'Challenge window is closed. The slot inside the month is unpredictable in advance; a miss is carried over within the accrual window ({periods} periods), funds are not blocked.'**
   String mintWindowClosed(int periods);
 
+  /// No description provided for @mintWindowJitter.
+  ///
+  /// In en, this message translates to:
+  /// **'Window is open; the client schedules submission in {minutes} min (jitter smooths the load peak).'**
+  String mintWindowJitter(int minutes);
+
   /// No description provided for @mintLastClaimed.
   ///
   /// In en, this message translates to:

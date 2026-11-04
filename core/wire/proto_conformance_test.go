@@ -322,6 +322,7 @@ func confProfile() *ProfileParams {
 		Recurring:                  true,
 		PeriodSeconds:              2592000,
 		CpSetCheck:                 1,
+		MintSlotMode:               1,
 	}
 }
 
