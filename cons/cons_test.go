@@ -196,29 +196,9 @@ func TestSeedSunsetModes(t *testing.T) {
 	}
 }
 
-// TestPeriodOfEpoch — календарь UTC (9.2): «1-е число месяца» = первая
-// эпоха, начавшаяся после 00:00 UTC 1-го.
-func TestPeriodOfEpoch(t *testing.T) {
-	// genesis 15 января 2024 12:00 UTC
-	g := uint64(1705315200)
-	cases := []struct {
-		epochStart uint64
-		want       uint64
-		what       string
-	}{
-		{g, 0, "та же точка"},
-		{g + 10*86400, 0, "до 1 февраля"},
-		{1706745600, 1, "1 февраля 00:00 UTC"}, // 2024-02-01
-		{1706745600 + 3600, 1, "после 1 февраля"},
-		{1709251200, 2, "1 марта 00:00 UTC"}, // 2024-03-01
-		{1735689600, 12, "1 января 2025"},    // 2025-01-01
-	}
-	for _, c := range cases {
-		if got := PeriodOfEpoch(g, c.epochStart); got != c.want {
-			t.Errorf("%s: период %d, ожидается %d", c.what, got, c.want)
-		}
-	}
-}
+// TestPeriodOfEpoch удалён вместе с PeriodOfEpoch (аудит z-ai
+// AUDIT-Z-07): календарная конвенция периодов удалена как мёртвая и
+// противоречащая конвенции ядра (periodAt / RealClock.Period).
 
 // TestSnowballDeterministic — голосование сходится к ветке большинства и
 // детерминировано по seed.

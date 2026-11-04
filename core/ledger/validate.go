@@ -760,6 +760,11 @@ func (l *Ledger) applyTransfer(tx *wire.Transaction) Result {
 		recipient := l.State.Wallet(tp.Send.Recipient)
 		if recipient != nil {
 			recipient.Liquid += amount
+		} else {
+			// получателя нет в реестре (адрес вне сети): единицы никому не
+			// зачисляются — учитываются как сжигание, иначе INV-8
+			// (сохранение предложения) нарушается тихо (аудит z-ai AUDIT-Z-02)
+			l.State.TotalBurned += amount
 		}
 		if prof.FeeMode == wire.FeeModeBurn {
 			l.State.TotalBurned += fee
@@ -832,6 +837,12 @@ func (l *Ledger) recurringSend(tx *wire.Transaction, w, recipient *Wallet,
 	}
 	if recipient != nil {
 		recipient.CreditCohorts(credit)
+	} else {
+		// получателя нет: зачисленные доли сгорают — единицы покинули
+		// отправителя, INV-8 требует учёта (аудит z-ai AUDIT-Z-02)
+		for _, c := range credit {
+			l.State.TotalBurned += c.Amount
+		}
 	}
 	// несписанное в получателя — комиссия (fee по построению)
 	if prof := l.State.Net.Profile; fee > 0 {

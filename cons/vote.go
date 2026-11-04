@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/rumatakira74/equality-trust-networks/core/ledger"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
@@ -53,6 +54,10 @@ type VoteState struct {
 	Counter int    // последовательные раунды с Pref
 	Final   bool   // локальная финальность (β раундов)
 	Rounds  int    // всего раундов
+	// CreatedAt — момент первой регистрации конфликта на узле
+	// (живость чекпоинтов: застрявшие конфликты перестают блокировать
+	// закрытие эпохи по возрасту — net/cons.go, аудит z-ai AUDIT-Z-05).
+	CreatedAt time.Time
 }
 
 // Snowball — голосование по конфликтам (9.1). Потокобезопасен сам по
@@ -113,7 +118,7 @@ func (s *Snowball) Observe(key string, applied, alternative []byte) *VoteState {
 		if string(b) < string(a) {
 			a, b = b, a
 		}
-		st = &VoteState{Key: key, A: a, B: b, Pref: applied}
+		st = &VoteState{Key: key, A: a, B: b, Pref: applied, CreatedAt: time.Now()}
 		s.states[key] = st
 	}
 	cp := *st

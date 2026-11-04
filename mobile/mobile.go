@@ -196,21 +196,32 @@ func (t *Tx) Type() string   { return t.tx.Type.String() }
 // Правка этапа 7 (латентный баг этапа 6): canonical-кодирование
 // включает pow.nonce, поэтому nonce назначается В tx ДО вычисления
 // preimage — иначе проверка на узле даёт E_POW_LIGHT.
-func (t *Tx) SolveLight(target int64) {
+// Нулевой/отрицательный таргет — ошибка (аудит z-ai AUDIT-Z-09): раньше
+// цикл подбора зацикливался навсегда (валидация «нулевой таргет вне
+// песочницы» есть в ledger.New, но sandbox-genesis из внешнего
+// genesis.bin может пройти через LoadGenesis с нулевыми таргетами).
+func (t *Tx) SolveLight(target int64) error {
+	if target <= 0 {
+		return errors.New("pow: нулевой/отрицательный таргет лёгкого PoW — проверьте genesis")
+	}
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowLight}
 	for n := uint64(0); ; n++ {
 		var nb [8]byte
 		binary.BigEndian.PutUint64(nb[:], n)
 		t.tx.Pow.Nonce = nb[:]
 		if crypto.VerifyLight(t.tx.SigningPreimage(), nb[:], uint64(target)) {
-			return
+			return nil
 		}
 	}
 }
 
 // SolveHard — усиленный PoW (Argon2id, 7.6): выпуск. Nonce назначается
-// в tx до вычисления preimage (см. SolveLight).
-func (t *Tx) SolveHard(target, memKiB, iterations, parallelism int64) {
+// в tx до вычисления preimage (см. SolveLight); нулевой таргет — ошибка
+// (аудит z-ai AUDIT-Z-09).
+func (t *Tx) SolveHard(target, memKiB, iterations, parallelism int64) error {
+	if target <= 0 {
+		return errors.New("pow: нулевой/отрицательный таргет усиленного PoW — проверьте genesis")
+	}
 	t.tx.Pow = &wire.PowProof{Algorithm: wire.PowArgon2id}
 	ap := crypto.Argon2Params{MemoryKiB: uint32(memKiB), Iterations: uint32(iterations),
 		Parallelism: uint32(parallelism)}
@@ -219,7 +230,7 @@ func (t *Tx) SolveHard(target, memKiB, iterations, parallelism int64) {
 		binary.BigEndian.PutUint64(nb[:], n)
 		t.tx.Pow.Nonce = nb[:]
 		if crypto.VerifyHard(t.tx.SigningPreimage(), nb[:], uint64(target), ap) {
-			return
+			return nil
 		}
 	}
 }
