@@ -903,10 +903,11 @@ func (nd *Node) PendingGuardianUpdatesJSON(addr []byte) string {
 // MintWindowJSON — окно челленджа выпуска (7.6): открыто/закрыто, часы
 // окна, окно накопления accrual_window, текущий период и последний
 // заявленный. Точный момент слота не раскрывается (PENDING, отчёт 7).
-// claim_period/claim_amount — период к заявлению (последний завершённый)
-// и сумма по M6 (amount = эмиссия × diff; diff от base: для первого
-// выпуска base = activated_period − 1, вопрос №24) — UI не дублирует
-// формулу ядра. claim_period = 0 — заявлять нечего.
+// claim_period/claim_amount — период к заявлению (последний завершённый,
+// но не дальше base + accrual_window — кламп окном накопления M5) и сумма
+// по M6 (amount = эмиссия × diff; diff от base: для первого выпуска
+// base = activated_period − 1, вопрос №24) — UI не дублирует формулу ядра.
+// claim_period = 0 — заявлять нечего.
 // open — окно челленджа для заявляемого периода claim; период-якорь
 // слота выбирает ядро по режиму манифеста (поле 63 mint_slot_mode):
 // 0 — заявляемый период (наследие), 1 — период выпуска (период txNow).
@@ -933,9 +934,30 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 		last = w.LastClaimedPeriod
 		activated = w.ActivatedPeriod
 	}
+	// base — база diff по ядру (applyMint, M4/M6): последний заявленный
+	// период, а для первого выпуска activated_period − 1 (вопрос №24)
+	base := last
+	if base == 0 {
+		base = activated - 1 // конвенция ядра (M4, uint64-перенос)
+	}
 	claim := uint64(0)
 	if period > 0 {
 		claim = period - 1
+	}
+	// кламп окном накопления (M5, core/ledger/validate.go:649): ядро
+	// отвергает mint при diff = claim − base > accrual_window
+	// (E_ACCRUAL_WINDOW), поэтому UI не предлагает период дальше
+	// base + accrual_window. Без клампа кошелёк, пропустивший
+	// ≥ accrual_window периодов, получал «отравленный» claim: UI
+	// предлагал подачу, ядро отвечало E_ACCRUAL_WINDOW навсегда
+	// (AUDIT-MINT-FIX-02, D2). Формула повторяет арифметику ядра
+	// побуквенно, включая uint64-перенос при activated_period = 0.
+	// quota_reset — накопления нет (M5 не применяется, заявляется один
+	// период), клампа нет.
+	if claim > 0 && prof.IssuanceMode != wire.IssuanceQuotaReset {
+		if maxClaim := base + prof.AccrualWindowPeriods; claim > maxClaim {
+			claim = maxClaim
+		}
 	}
 	if claim <= last {
 		claim = 0
@@ -947,10 +969,6 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 	// (M5 после фикса дефекта пропуска периода, аудит п. 3.3)
 	var amount uint64
 	if claim > 0 {
-		base := last
-		if base == 0 {
-			base = activated - 1 // конвенция ядра (M4, uint64-перенос)
-		}
 		amount = prof.IssuanceAmount * (claim - base)
 		if prof.IssuanceMode == wire.IssuanceQuotaReset {
 			amount = prof.IssuanceAmount
