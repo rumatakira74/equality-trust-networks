@@ -1,0 +1,18 @@
+?   	github.com/rumatakira74/equality-trust-networks/cmd/tnp-node	[no test files]
+?   	github.com/rumatakira74/equality-trust-networks/cmd/tnp-sandbox-peer	[no test files]
+ok  	github.com/rumatakira74/equality-trust-networks/cmd/tnp-testnet	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/cons	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/attest	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/crypto	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/ledger	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/params	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/present	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/profiles	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/smt	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/store	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/threshold	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/core/wire	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/mobile	(cached)
+ok  	github.com/rumatakira74/equality-trust-networks/net	89.139s
+ok  	github.com/rumatakira74/equality-trust-networks/sim	(cached)
+rc=0
