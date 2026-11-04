@@ -144,7 +144,7 @@ The model: [equality-anti-farm-simulation](https://github.com/rumatakira74/equal
 10. **The mint challenge window — after the v9.14 fix.** The slot anchor defect (reachability 1/15 per period, absorption after 6 consecutive misses) took 91.2% of an honest member's income over 60 months, while an automated farm was unaffected (the slot is publicly computable). The fix in main: the slot anchor is the current issuance period, and the ±48 h window always intersects the current period by ≥ 48 h — every wallet has a reachable window in every period; the absorbing state is eliminated (7.6).
 11. **The "income < cost" metric** holds due to the device cost and purchased vouches — not due to PoW (item 9) and not due to the mint window (item 10).
 
-**Assumptions requiring calibration on pilots:** recruit = 0.1 newcomers/person/month (at 0.05 the conclusion of item 2 flips, S-06); vouch_prob = 0.5 on contact; $120 per device (the canon; $200 and wallets_per_device {1, 2, 4} — in the sensitivity grid, the `--a9` scenario). The numbers are sensitive to these values.
+**Assumptions requiring calibration on pilots:** recruit = 0.1 newcomers/person/month (at 0.05 the conclusion of item 2 flips, S-06); vouch_prob = 0.5 on contact; $120 per device — the canonical value (the owner's decision on S-01; $200 and wallets_per_device {1, 2, 4} — in the sensitivity grid, item 8). The numbers are sensitive to these values.
 
 ---
 
