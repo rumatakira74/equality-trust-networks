@@ -282,6 +282,17 @@ type ProfileParams struct {
 	// Слот челленджа (7.6) и часы узла (net.RealClock) масштабируются
 	// той же длиной.
 	PeriodSeconds uint64
+	// CpSetCheck — режим сверки состава подписантов чекпоинта с
+	// локальным вычислением по режиму манифеста (поле 62; тема
+	// fix-cp-threshold, находка C1 аудита Sonnet-2): 0 — наследие
+	// (v9.14 и раньше: participants/threshold принимаются из самого
+	// чекпоинта), 1 — строгий (принимающая сторона сверяет
+	// participants/threshold с cons.Participants(...) и отвергает
+	// расхождение). Нулевое значение не кодируется (appendU64Field),
+	// поэтому манифесты прежних сетей кодируются байт-в-байт как
+	// раньше — network_id не меняется; protocol_version не поднят
+	// (формат tx не изменился). Новые сети: configure ставит 1.
+	CpSetCheck uint64
 }
 
 func (p *ProfileParams) Encode() []byte {
@@ -332,6 +343,7 @@ func (p *ProfileParams) Encode() []byte {
 	b = appendU64Field(b, 59, p.FeeStepMicros)
 	b = appendBoolField(b, 60, p.Recurring)
 	b = appendU64Field(b, 61, p.PeriodSeconds)
+	b = appendU64Field(b, 62, p.CpSetCheck)
 	b = appendU64Field(b, 49, p.MigrateDelayDays)
 	b = appendU64Field(b, 50, p.TimestampToleranceSeconds)
 	b = appendU64Field(b, 51, p.MintChallengeWindowHours)

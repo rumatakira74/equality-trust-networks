@@ -77,6 +77,11 @@ func configureCmd(args []string) error {
 
 	// параметры: шаблон + оверрайды организатора
 	prof := tpl.Profile
+	// cp_set_check (поле 62, тема fix-cp-threshold — C1 аудита Sonnet-2):
+	// новые сети создаются со строгой сверкой состава подписантов
+	// чекпоинта с манифестом. Манифесты прежних сетей (поле 0) кодируются
+	// байт-в-байт как раньше — их network_id не меняется.
+	prof.CpSetCheck = 1
 	switch *recurring {
 	case "auto": // из шаблона (профиль 8 — on, остальные — off)
 	case "on":
@@ -354,6 +359,9 @@ func configureCmd(args []string) error {
 	}
 	if prof.PeriodSeconds > 0 {
 		fmt.Printf(" period_seconds: %d — период заданной длины (тестовая сеть, границы на реальном времени)\n", prof.PeriodSeconds)
+	}
+	if prof.CpSetCheck == 1 {
+		fmt.Printf(" cp_set_check: 1 — строгая сверка состава подписантов чекпоинта с манифестом (C1)\n")
 	}
 	fmt.Printf(" модули: %v\n посевной круг: %d\n артефакты: %s\n",
 		moduleNames(prof.Modules), len(circle), outDir)

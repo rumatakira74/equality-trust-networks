@@ -263,6 +263,11 @@ func Validate(p *wire.ProfileParams) []string {
 	if p.PeriodSeconds != 0 && p.PeriodSeconds < 60 {
 		add("period_seconds %d < 60 (0 — конвенция 30 сут)", p.PeriodSeconds)
 	}
+	// cp_set_check (поле 62, тема fix-cp-threshold): 0 — наследие,
+	// 1 — строгая сверка состава подписантов чекпоинта с манифестом
+	if p.CpSetCheck > 1 {
+		add("cp_set_check %d вне {0,1} (0 — наследие, 1 — строгая сверка состава)", p.CpSetCheck)
+	}
 	// relaxed — только для сетей с низкими ставками (раздел 4: device_policy);
 	// при выключенной комиссии ставки не действуют
 	if p.DevicePolicy == wire.DevicePolicyRelaxed && p.FeeMode != wire.FeeModeNone &&

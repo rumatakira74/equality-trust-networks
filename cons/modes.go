@@ -55,6 +55,31 @@ func Participants(mode wire.CheckpointMode, l *ledger.Ledger, gp *wire.GenesisPa
 	}
 }
 
+// CheckParticipants — сверить состав подписантов и порог чекпоинта с
+// вычисленными по режиму манифеста (C1 аудита Sonnet-2, тема
+// fix-cp-threshold): принимающая сторона обязана получить состав из
+// своего состояния (Participants) и сравнить с тем, что заявляет
+// чекпоинт. Порядок значим: очередь строителей (№42 (A), net/cons.go)
+// индексирует состав по номеру окна, поэтому перестановка участников —
+// другое предложение, а не то же самое.
+func CheckParticipants(cp *wire.Checkpoint, want [][]byte, wantThreshold uint64) error {
+	if cp == nil {
+		return fmt.Errorf("cons: пустой чекпоинт")
+	}
+	if cp.Threshold != wantThreshold {
+		return fmt.Errorf("cons: порог %d не равен вычисленному %d", cp.Threshold, wantThreshold)
+	}
+	if len(cp.Participants) != len(want) {
+		return fmt.Errorf("cons: участников %d, по режиму %d", len(cp.Participants), len(want))
+	}
+	for i := range want {
+		if string(cp.Participants[i]) != string(want[i]) {
+			return fmt.Errorf("cons: участник %d не совпадает с составом режима", i)
+		}
+	}
+	return nil
+}
+
 // seedCircle — посевной круг из genesis: M = состав круга, N = max(2, 2/3 M).
 // Манифест хранит публичные ключи (fingerprint-манифест v9.11) — адреса
 // выводятся из финального network_id.
