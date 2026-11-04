@@ -244,6 +244,15 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 			}
 		}
 	}
+	// Офлайн-буфер публикации из store (D11): принятые по Bluetooth и не
+	// опубликованные до рестарта транзакции возвращаются в awaiting —
+	// у обоих уровней (офлайн-приём есть и у лёгкого узла, 12.2/12.4).
+	if n.Store != nil {
+		if err := n.restoreAwaiting(); err != nil {
+			n.Close()
+			return nil, err
+		}
+	}
 	// оценка несвязанности eclipse-пиров по подсетям (№35, этап 6);
 	// классификатор связывается с реальным узлом (Host появится в Start)
 	if cfg.LinkGroups {
@@ -959,19 +968,50 @@ func (n *Node) LightSync(ctx context.Context) error {
 
 // OnOfflineTx — транзакция, принятая по офлайн-каналу (Bluetooth): кладётся
 // со статусом «ожидает публикации» (12.4). «Получено по Bluetooth» ≠ оплата.
+// Персистентность (D11): при наличии store буфер пишется в SQLite
+// (дедуп по txid) — переживает рестарт: получатель видел «принято»,
+// платёж не должен потеряться при force stop до публикации.
 func (n *Node) OnOfflineTx(tx *wire.Transaction) {
 	id := tx.TxID()
 	n.mu.Lock()
 	if _, ok := n.awaiting[string(id[:])]; !ok {
 		n.awaiting[string(id[:])] = tx
+		// запись под тем же мьютексом: память и store согласованы;
+		// одиночный INSERT атомарен, дедуп — PK + INSERT OR IGNORE
+		if n.Store != nil {
+			if err := n.Store.SaveAwaitingTx(tx, uint64(time.Now().Unix())); err != nil {
+				n.logf("офлайн-буфер: запись в store: %v", err)
+			}
+		}
 	}
 	n.mu.Unlock()
+}
+
+// restoreAwaiting — восстановление офлайн-буфера из store при старте
+// (D11): транзакции, принятые по Bluetooth до рестарта и ещё не
+// опубликованные, возвращаются в awaiting — PublishAwaiting донесёт их
+// при появлении сети. Порядок — поступления (rowid). Вызывается из
+// NewNode (оба уровня: офлайн-приём есть и у лёгкого узла, 12.2/12.4).
+func (n *Node) restoreAwaiting() error {
+	txs, err := n.Store.LoadAwaitingTxs()
+	if err != nil {
+		return fmt.Errorf("net: awaiting restore: %w", err)
+	}
+	for _, tx := range txs {
+		id := tx.TxID()
+		if _, ok := n.awaiting[string(id[:])]; !ok {
+			n.awaiting[string(id[:])] = tx
+		}
+	}
+	return nil
 }
 
 // PublishAwaiting — публикация ожидающих транзакций (при появлении сети):
 // полный apply проверяет seq/prev (12.4: быстрая находка эквивокации).
 // Отклонённые навсегда (не E_SEQ-пробел) снимаются с публикации; пробел
-// (транзакция из будущего) — остаётся ждать предыдущей.
+// (транзакция из будущего) — остаётся ждать предыдущей. Снятие с
+// ожидания синхронно удаляет транзакцию из store (D11): восстановленный
+// после рестарта буфер не реплицирует уже обработанное.
 func (n *Node) PublishAwaiting(ctx context.Context) {
 	n.mu.Lock()
 	txs := make([]*wire.Transaction, 0, len(n.awaiting))
@@ -992,17 +1032,33 @@ func (n *Node) PublishAwaiting(ctx context.Context) {
 			// этап 5, статус «не оплата» держится до подтверждения)
 			delete(n.awaiting, string(id[:]))
 			n.published[string(id[:])] = true
+			n.deleteAwaitingFromStore(id[:])
 		case res.Code == "E_SEQ" || res.Code == "E_DUP":
 			// пробел в цепочке или уже известна — ждём/считаем опубликованной
 			if res.Code == "E_DUP" {
 				delete(n.awaiting, string(id[:]))
 				n.published[string(id[:])] = true
+				n.deleteAwaitingFromStore(id[:])
 			}
 		default:
 			// невалидная — снята с ожидания, не опубликована
 			delete(n.awaiting, string(id[:]))
+			n.deleteAwaitingFromStore(id[:])
 		}
 		n.mu.Unlock()
+	}
+}
+
+// deleteAwaitingFromStore — синхронное снятие с ожидания в store (D11).
+// Вызывающий держит n.mu; ошибка не фатальна (останется в store —
+// после рестарта буфер восстановит эту tx, PublishAwaiting снимет её
+// как E_DUP/невалидную), но журналируется.
+func (n *Node) deleteAwaitingFromStore(txid []byte) {
+	if n.Store == nil {
+		return
+	}
+	if err := n.Store.DeleteAwaitingTx(txid); err != nil {
+		n.logf("офлайн-буфер: удаление из store: %v", err)
 	}
 }
 

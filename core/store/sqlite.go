@@ -69,6 +69,15 @@ func (s *Store) migrate() error {
 			epoch INTEGER PRIMARY KEY,
 			supply INTEGER NOT NULL
 		)`,
+		// Офлайн-буфер публикации (12.4; тема fix-d11-buffer): транзакции,
+		// принятые по Bluetooth и ожидающие публикации. Переживают рестарт
+		// узла: получатель видел «принято», но до публикации платёж не
+		// существует для сети. Дедуп по txid (PK), порядок — rowid.
+		`CREATE TABLE IF NOT EXISTS awaiting_txs (
+			txid BLOB PRIMARY KEY,
+			raw BLOB NOT NULL,
+			added_at INTEGER NOT NULL
+		)`,
 		`CREATE TABLE IF NOT EXISTS meta (
 			key TEXT PRIMARY KEY,
 			value BLOB NOT NULL
@@ -204,6 +213,47 @@ func (s *Store) LatestCheckpointHeader() (uint64, []byte, bool, error) {
 		return 0, nil, false, err
 	}
 	return epoch, hash, true, nil
+}
+
+// SaveAwaitingTx — офлайн-буфер публикации (12.4): транзакция, принятая
+// по Bluetooth, ждёт публикации. Дедуп по txid (PK + INSERT OR IGNORE);
+// одиночный INSERT атомарен — транзакционность обеспечена (D11).
+func (s *Store) SaveAwaitingTx(tx *wire.Transaction, addedAt uint64) error {
+	id := tx.TxID()
+	_, err := s.db.Exec(
+		`INSERT OR IGNORE INTO awaiting_txs (txid, raw, added_at) VALUES (?,?,?)`,
+		id[:], tx.Encode(), addedAt)
+	return err
+}
+
+// LoadAwaitingTxs — весь офлайн-буфер в порядке поступления (rowid):
+// восстановление при старте узла после рестарта (D11).
+func (s *Store) LoadAwaitingTxs() ([]*wire.Transaction, error) {
+	rows, err := s.db.Query(`SELECT raw FROM awaiting_txs ORDER BY rowid`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*wire.Transaction
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		tx, err := wire.DecodeTransaction(raw)
+		if err != nil {
+			return nil, fmt.Errorf("store: decode awaiting: %w", err)
+		}
+		out = append(out, tx)
+	}
+	return out, rows.Err()
+}
+
+// DeleteAwaitingTx — снять транзакцию с ожидания (после успешной
+// публикации или окончательного отклонения; D11).
+func (s *Store) DeleteAwaitingTx(txid []byte) error {
+	_, err := s.db.Exec(`DELETE FROM awaiting_txs WHERE txid = ?`, txid)
+	return err
 }
 
 // SaveMeta / LoadMeta — прочие persistent-данные (genesis, снимок).
