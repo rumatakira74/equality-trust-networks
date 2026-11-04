@@ -6,7 +6,8 @@
 `origin/audit-sonnet:reports/audit-sonnet/REPORT-AUDIT-SONNET-2.md` п. 4.1.
 Красные тесты аудита: `origin/audit-sonnet:reports/audit-sonnet/go-tests/cons_forged_checkpoint_test.go.txt`.
 
-**session-ID: `2026-11-05-fix-cp-threshold`** (метка сессии; прогоны — 04.11.2026, UTC).
+**session-ID: `a5e9a1d2-c0c3-6be1-a7c9-df5f8e35f277`** (метка в сообщениях коммитов —
+`2026-11-05-fix-cp-threshold`; прогоны — 04.11.2026, UTC).
 
 Мержа нет (мандат: «пуш ветки, НЕ мержить»).
 
