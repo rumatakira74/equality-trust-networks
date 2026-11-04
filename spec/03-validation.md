@@ -22,7 +22,7 @@
 | C2 | `protocol_version` равен версии сети узла (поле 5 genesis-записи; текущая — `3`, v9.14) | иначе `E_VER` |
 | C3 | `txid` неизвестен (нет дубля) | иначе `E_DUP` |
 | C4 | `type` совпадает с активной веткой `payload` | иначе `E_TYPE` |
-| C5 | Кошелёк `wallet` зарегистрирован (кроме `REGISTER`) | иначе `E_UNKNOWN_WALLET` |
+| C5 | Кошелёк `wallet` зарегистрирован и не терминален (кроме `REGISTER`; терминальный адрес — старый после исполнения миграции, 3.6.2) | иначе `E_UNKNOWN_WALLET` |
 | C6 | `seq = last_seq(wallet) + 1`; для `REGISTER`: `seq = 1` | иначе `E_SEQ` |
 | C7 | `prev = txid` последней транзакции цепочки; для `REGISTER`: `prev = 0^32` | иначе `E_PREV` |
 | C8 | Подпись ECDSA P-256 верна над `signing_hash` | иначе `E_SIG` |

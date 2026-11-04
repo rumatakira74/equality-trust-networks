@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// BenchmarkSolveLight24 — лёгкий PoW, таргет ~2^24 попыток (0x0000010000000000).
+// BenchmarkSolveLight24 — лёгкий PoW, таргет 2^40 (~2^24 попыток; 0x0000010000000000).
 func BenchmarkSolveLight24(b *testing.B) {
 	tx := NewTransfer([]byte("bench"), []byte("wallet"), 1, make([]byte, 32),
 		[]byte("to"), 100, 1, 1234567)
