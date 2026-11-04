@@ -104,6 +104,7 @@ checkpoint_hash = SHA-256(canonical(Checkpoint без threshold_sig))
 ```
 valid_checkpoint(C):
   C.epoch = prev.epoch + 1  ∧  C.prev_checkpoint_hash = checkpoint_hash(prev)
+  ∧ C.participants ≠ ∅  ∧  0 < C.threshold ≤ |C.participants|
   ∧ |{s ∈ C.threshold_sig.signatures :
        s.signer ∈ C.participants
        ∧ VerifyECDSA(pk(s.signer), checkpoint_hash(C), s.signature)}|
@@ -111,6 +112,21 @@ valid_checkpoint(C):
   ∧ C.participants соответствует правилам режима (7.3)
   ∧ C.network_time в пределах сдвига от prev.network_time (9.2)
 ```
+
+Проверка `C.participants` по режиму (7.3) — по полю профиля 62
+`cp_set_check` (2.2.2): при `1` принимающая сторона вычисляет состав и
+порог сама (`cons.Participants`: эпоха, `prev_hash`, состояние реестра) и
+отвергает расхождение; при `0` (наследие) состав и порог принимаются из
+чекпоинта — так работают сети с прежними манифестами. Порог `0`, пустой
+состав и порог больше числа участников отвергаются при любом значении
+поля: легального чекпоинта с такими значениями не бывает ни в одном
+режиме, а порог `0` означал бы финализацию без единой подписи (C1 аудита
+Sonnet-2, тема fix-cp-threshold).
+
+Подписант (7.3) ставит долю только под предложение, чей `state_root`
+совпадает с его собственным реестром, чья эпоха уже наступила и которое
+не конкурирует с его собственным предложением той же эпохи: подпись
+удостоверяет состояние, а не заявление инициатора предложения.
 
 ## 7.3. Режимы (`checkpoint_mode`, 9.1)
 

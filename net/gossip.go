@@ -181,7 +181,9 @@ func (n *Node) cpAdmit(raw []byte) (*cpMsg, error) {
 	if len(cp.StateRoot) != 32 || len(cp.PrevCheckpointHash) != 32 {
 		return nil, fmt.Errorf("корень/prev_hash не 32 байта")
 	}
-	if len(cp.Participants) == 0 || len(cp.Participants) > 1<<12 {
+	// состав ограничен размером сообщения (1 МиБ ≈ 30 тыс. адресов);
+	// верхняя граница — защита от разбора «на всякий случай»
+	if len(cp.Participants) == 0 || len(cp.Participants) > 1<<15 {
 		return nil, fmt.Errorf("состав подписантов: %d", len(cp.Participants))
 	}
 	for _, p := range cp.Participants {
