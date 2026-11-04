@@ -1,18 +1,21 @@
 // Деривация адреса из фингерпринта.
 //
-// PENDING: вопрос №2 — точная деривация не определена Документом (7.2 даёт
-// только walletFingerprint = SHA-256(attestedPublicKey || protocolId) и индекс
-// «фингерпринт -> адрес»). Рекомендация для пользователя (см. отчёт этапа 3):
+// Адрес — 32 байта, деривация фиксирована (v9.11, единая точка — DeriveAddress):
 //
 //	address = SHA-256(fingerprint || network_id)
 //
-// Привязка к сети защищает от переноса адреса между сетями (12.3: узлы
-// различают пиров по network_id). Функция заменяемая: DeriveAddress.
+// где fingerprint = SHA-256(attestedPublicKey || protocolId) (7.2). Привязка
+// к сети защищает от переноса адреса между сетями (12.3: узлы различают
+// пиров по network_id). Адреса нигде не хранятся: манифест хранит публичные
+// ключи, каждое устройство выводит адрес из финального network_id
+// (fingerprint-манифест, v9.11). Формула — часть протокола: её смена меняет
+// адреса всех кошельков сети.
 package crypto
 
 import "crypto/sha256"
 
-// DeriveAddress — заменяемая деривация адреса (32 байта). PENDING: вопрос №2.
+// DeriveAddress — деривация адреса (32 байта): SHA-256(fingerprint ||
+// network_id). Единая точка деривации адресов сети.
 var DeriveAddress = func(fingerprint, networkID []byte) []byte {
 	h := sha256.New()
 	h.Write(fingerprint)

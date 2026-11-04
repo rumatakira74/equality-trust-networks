@@ -69,11 +69,15 @@ PowProof { PowAlgorithm algorithm = 1; bytes nonce = 2; }
 - Повторяющийся `android_id` повышает таргет `register`
   (`repeat_android_id_target`) — слабый сигнал, не основание отказа (7.2).
 - Для `mint` челлендж привязан к непредсказуемому слоту (7.6):
-  `slot = H(address || period || checkpoint_hash(prev_epoch))`, окно ±48 ч
-  (`mint_challenge_window_hours`). PoW принимается, только если сетевое время
-  попадает в окно слота заявляемого периода; иначе `E_POW_HARD`.
-  Для multi-period `mint` (нагон пропущенных месяцев) слот вычисляется по
-  старшему заявляемому периоду — PENDING: вопрос №10.
+  `slot = period_start + H(address || period) mod period_seconds`, где
+  `period` — ТЕКУЩИЙ период выпуска (период txNow; v9.14 — якорь слота
+  текущий, не заявляемый; включение `checkpoint_hash(prev_epoch)` в формулу —
+  открытый вопрос, PENDING за владельцем), окно ±48 ч
+  (`mint_challenge_window_hours`). PoW принимается, только если txNow
+  попадает в окно слота текущего периода; иначе `E_POW_HARD`.
+  Для multi-period `mint` (нагон пропущенных месяцев) — один PoW на
+  транзакцию, слот считается по текущему периоду (заявляемые периоды на
+  слот не влияют) — вопрос №10.
 
 ## 1.4. Время
 
