@@ -183,6 +183,14 @@
   },
   "mintWindowOff": "Challenge window check is disabled (sandbox). You can mint.",
   "mintWindowClosed": "Challenge window is closed. The slot inside the month is unpredictable in advance; a miss is carried over within the accrual window ({periods} periods), funds are not blocked.",
+  "mintWindowJitter": "Window is open; the client schedules submission in {minutes} min (jitter smooths the load peak).",
+  "@mintWindowJitter": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "@mintWindowClosed": {
     "placeholders": {
       "periods": {

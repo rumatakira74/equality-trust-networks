@@ -90,6 +90,7 @@
   "mintWindowOpen": "挑战窗口已开启（时隙前后 ±{hours} 小时）。可以发行。",
   "mintWindowOff": "挑战窗口检查已关闭（沙盒）。可以发行。",
   "mintWindowClosed": "挑战窗口已关闭。月内时隙无法提前预知；错过可在累积窗口（{periods} 个周期）内补领，资金不会被锁定。",
+  "mintWindowJitter": "窗口已开启；客户端计划在 {minutes} 分钟后提交（抖动用于平滑负载峰值）。",
   "mintLastClaimed": "最后领取的周期：{period}",
   "mintClaimPeriod": "可领取周期：{period}（已结束的周期，M4）",
   "mintClaimAmount": "发行金额：{amount}",

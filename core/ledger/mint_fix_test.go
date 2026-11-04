@@ -36,6 +36,10 @@ func mfixGenesis() *wire.GenesisPackage {
 	}
 	gp.Manifest.Profile.DemurrageRateMicros = 0
 	gp.Manifest.Profile.MintChallengeWindowHours = 48
+	// режим якоря слота — период выпуска (манифест-поле 63, тема
+	// fix-mint-window): тесты фикса M7 проверяют вариант A; наследие
+	// (0) — предмет mint_slot_mode_test.go
+	gp.Manifest.Profile.MintSlotMode = 1
 	gp.Genesis.GenesisTime = mfixGenesisTime
 	wire.SetManifestHash(gp)
 	return gp

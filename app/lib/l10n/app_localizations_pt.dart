@@ -298,6 +298,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String mintWindowJitter(int minutes) {
+    return 'A janela está aberta; o cliente agenda o envio em $minutes min (o jitter suaviza o pico de carga).';
+  }
+
+  @override
   String mintLastClaimed(int period) {
     return 'Último período reclamado: $period';
   }

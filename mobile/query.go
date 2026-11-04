@@ -10,6 +10,8 @@ package tnp
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -905,10 +907,17 @@ func (nd *Node) PendingGuardianUpdatesJSON(addr []byte) string {
 // и сумма по M6 (amount = эмиссия × diff; diff от base: для первого
 // выпуска base = activated_period − 1, вопрос №24) — UI не дублирует
 // формулу ядра. claim_period = 0 — заявлять нечего.
-// open — окно ТЕКУЩЕГО периода (фикс M7, вариант A, 03.11.2026): ядро
-// проверяет слот текущего периода выпуска (период txNow), не заявляемого
-// — находка №2 прогона stage11-prep отменена решением владельца
-// (семантика M7 изменена, protocolVersion 3).
+// open — окно челленджа для заявляемого периода claim; период-якорь
+// слота выбирает ядро по режиму манифеста (поле 63 mint_slot_mode):
+// 0 — заявляемый период (наследие), 1 — период выпуска (период txNow).
+// submit_at — момент подачи с клиентским джиттером (аудит Sonnet-2
+// п. 3.6): равномерно в достижимом окне [max(S−W, boundary),
+// min(S+W, boundary+period)] вместо «сразу при открытии» — без джиттера
+// пик 49× к среднему. Джиттер детерминирован от (адрес, период-якорь),
+// поэтому UI не «прыгает» между опросами, а распределение по кошелькам
+// остаётся равномерным. open остаётся вердиктом консенсуса (окно
+// открыто); submit_at — политика клиента: UI держит кнопку закрытой до
+// него, но протокол подачу раньше не запрещает.
 func (nd *Node) MintWindowJSON(addr []byte) string {
 	w := nd.n.QueryWallet(addr)
 	_, now, _ := nd.n.QueryClock()
@@ -931,10 +940,11 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 	if claim <= last {
 		claim = 0
 	}
-	// окно ТЕКУЩЕГО периода: ядро (фикс M7) проверяет слот текущего
-	// периода выпуска (период txNow будущей Mint-транзакции), не
-	// заявляемого — UI и apply сходятся к одному вердикту
-	open := claim > 0 && nd.n.QueryMintWindowOpen(addr, period, now)
+	// окно заявляемого периода: ядро сверяет слот периода-якоря по
+	// режиму манифеста — UI и apply сходятся к одному вердикту
+	open := claim > 0 && nd.n.QueryMintWindowOpen(addr, claim, now)
+	// сумма по M6: эмиссия × diff; для quota_reset — всегда один период
+	// (M5 после фикса дефекта пропуска периода, аудит п. 3.3)
 	var amount uint64
 	if claim > 0 {
 		base := last
@@ -942,6 +952,16 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 			base = activated - 1 // конвенция ядра (M4, uint64-перенос)
 		}
 		amount = prof.IssuanceAmount * (claim - base)
+		if prof.IssuanceMode == wire.IssuanceQuotaReset {
+			amount = prof.IssuanceAmount
+		}
+	}
+	// достижимое окно и джиттер подачи: submit_at — равномерно в окне
+	var opensAt, closesAt, submitAt int64
+	if claim > 0 && prof.MintChallengeWindowHours > 0 {
+		lo, hi := nd.n.QueryMintWindowBounds(addr, claim, now)
+		opensAt, closesAt = int64(lo), int64(hi)
+		submitAt = int64(lo + mintJitterOffset(addr, nd.n.Ledger.MintWindowAnchor(claim, now), hi-lo))
 	}
 	var lastOut int64
 	if w != nil {
@@ -957,8 +977,29 @@ func (nd *Node) MintWindowJSON(addr []byte) string {
 		"claim_amount":           int64(amount),
 		"last_claimed_period":    lastOut,
 		"now":                    int64(now),
+		"window_opens_at":        opensAt,
+		"window_closes_at":       closesAt,
+		"submit_at":              submitAt,
 	})
 	return string(b)
+}
+
+// mintJitterOffset — детерминированное равномерное смещение в [0, span)
+// для пары (адрес, период-якорь): джиттер момента подачи mint (аудит
+// Sonnet-2 п. 3.6). Домен отделён от домена слота ("tnp-mint-jitter:"),
+// иначе джиттер коррелировал бы с положением слота внутри периода.
+func mintJitterOffset(addr []byte, period, span uint64) uint64 {
+	if span == 0 {
+		return 0
+	}
+	var pb [8]byte
+	binary.BigEndian.PutUint64(pb[:], period)
+	h := sha256.New()
+	h.Write([]byte("tnp-mint-jitter:"))
+	h.Write(addr)
+	h.Write(pb[:])
+	sum := h.Sum(nil)
+	return binary.BigEndian.Uint64(sum[:8]) % span
 }
 
 // FeeQuote — комиссия на перевод суммы (10.2): платит отправитель

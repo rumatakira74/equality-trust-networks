@@ -875,8 +875,7 @@ func mintCmd(args []string) error {
 	if base == 0 {
 		base = w.ActivatedPeriod - 1
 	}
-	diff := *period - base
-	amount := env.gp.Manifest.Profile.IssuanceAmount * diff
+	amount := mintAmount(env.gp.Manifest.Profile, base, *period)
 	payload := &wire.MintPayload{Period: *period, Amount: amount}
 	tx, err := buildTx(env, key, addr, wire.Mint, payload, true)
 	if err != nil {
@@ -892,6 +891,18 @@ func mintCmd(args []string) error {
 		return nil
 	}
 	return submit(env, tx)
+}
+
+// mintAmount — сумма заявки по M6 с учётом режима эмиссии (тема
+// fix-mint-window, дефект M5 аудита Sonnet-2 п. 3.3): quota_reset
+// заявляет один период (любой завершённый период > last_claimed, сумма
+// = IssuanceAmount), periodic_equal — эмиссия × diff. Формула ядра
+// (core/ledger/validate.go, applyMint) — CLI не дублирует её иначе.
+func mintAmount(prof *wire.ProfileParams, base, claim uint64) uint64 {
+	if prof.IssuanceMode == wire.IssuanceQuotaReset {
+		return prof.IssuanceAmount
+	}
+	return prof.IssuanceAmount * (claim - base)
 }
 
 func publishCmd(args []string) error {

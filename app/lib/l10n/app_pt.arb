@@ -90,6 +90,7 @@
   "mintWindowOpen": "A janela de desafio está aberta (±{hours} h em torno da ranhura). Pode emitir.",
   "mintWindowOff": "A verificação da janela de desafio está desativada (sandbox). Pode emitir.",
   "mintWindowClosed": "A janela de desafio está fechada. A ranhura dentro do mês é imprevisível de antemão; uma perda é transferida dentro da janela de acumulação ({periods} períodos), os fundos não são bloqueados.",
+  "mintWindowJitter": "A janela está aberta; o cliente agenda o envio em {minutes} min (o jitter suaviza o pico de carga).",
   "mintLastClaimed": "Último período reclamado: {period}",
   "mintClaimPeriod": "Período a reclamar: {period} (períodos concluídos, M4)",
   "mintClaimAmount": "Valor a emitir: {amount}",

@@ -389,8 +389,14 @@ func TestQuotaReset(t *testing.T) {
 	// накопления нет: пропуск периода и заявка двух сразу — отказ
 	e.now = l.State.GenesisTime + 5*30*86400 + 86400
 	e.settle()
+	// накопления нет: заявляется один период, поэтому сумма за два
+	// (2000 = эмиссия × 2) отвергается. Код отказа — E_MINT_AMOUNT:
+	// после фикса дефекта M5 (тема fix-mint-window, аудит Sonnet-2 п. 3.3)
+	// пропущенный период заявляем (любой завершённый период >
+	// last_claimed, сумма = IssuanceAmount), так что отсекает не
+	// E_ACCRUAL_WINDOW, а проверка суммы M6
 	multi := e.tx("ALICE", wire.Mint, &wire.MintPayload{Period: 4, Amount: 2000}, true)
-	mrej(l.Apply(multi), "E_ACCRUAL_WINDOW", "мульти-периодная квота")
+	mrej(l.Apply(multi), "E_MINT_AMOUNT", "мульти-периодная квота")
 	// граница периода: неиспользованная квота сгорела (период 1 < 5)
 	if w.TotalBalance() != 0 {
 		t.Fatalf("квота не сгорела: %d", w.TotalBalance())
