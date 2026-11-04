@@ -1,0 +1,11 @@
+fuzz: elapsed: 0s, gathering baseline coverage: 0/495 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 189/495 completed
+fuzz: elapsed: 6s, gathering baseline coverage: 375/495 completed
+fuzz: elapsed: 8s, gathering baseline coverage: 495/495 completed, now fuzzing with 2 workers
+fuzz: elapsed: 9s, execs: 2964 (863/sec), new interesting: 0 (total: 495)
+fuzz: elapsed: 12s, execs: 12988 (3342/sec), new interesting: 0 (total: 495)
+fuzz: elapsed: 15s, execs: 23516 (3509/sec), new interesting: 1 (total: 496)
+fuzz: elapsed: 18s, execs: 33588 (3357/sec), new interesting: 2 (total: 497)
+fuzz: elapsed: 20s, execs: 38473 (2336/sec), new interesting: 2 (total: 497)
+PASS
+ok  	github.com/rumatakira74/equality-trust-networks/net	20.213s

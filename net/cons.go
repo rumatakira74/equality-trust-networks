@@ -65,6 +65,37 @@ func voteResponseHash(networkID []byte, key string, pref []byte, weight uint64) 
 	return h.Sum(nil)
 }
 
+// parseVoteQuery — разбор запроса голосования (msgVoteQuery): ключ
+// конфликта. Предел длины — защита от копирования мусорной строки
+// (str копирует байты) до обращения к Snowball (FINDING-1 D10).
+func parseVoteQuery(d *dec) (string, error) {
+	return d.strMax(maxVoteKeyLen)
+}
+
+// parseVoteResp — разбор ответа голосования (msgVoteResp): ключ, ветка,
+// вес, кошелёк подписанта, подпись. Пределы длин — защита от мусорных
+// объявленных размеров (FINDING-1 D10); семантика (совпадение ключа,
+// непустые ветка/вес/подпись, известность кошелька, проверка подписи) —
+// у вызывающего.
+func parseVoteResp(d *dec) (key string, pref []byte, weight uint64, wallet, sig []byte, err error) {
+	if key, err = d.strMax(maxVoteKeyLen); err != nil {
+		return "", nil, 0, nil, nil, err
+	}
+	if pref, err = d.blobMax(maxVotePrefLen); err != nil {
+		return "", nil, 0, nil, nil, err
+	}
+	if weight, err = d.u64(); err != nil {
+		return "", nil, 0, nil, nil, err
+	}
+	if wallet, err = d.blob(); err != nil {
+		return "", nil, 0, nil, nil, err
+	}
+	if sig, err = d.blobMax(maxVoteSigLen); err != nil {
+		return "", nil, 0, nil, nil, err
+	}
+	return key, pref, weight, wallet, sig, nil
+}
+
 // serveVote — обработчик протокола голосования. Ответ подписан ключом
 // кошелька узла (wallet + подпись над key|pref|weight); узел без кошелька
 // отвечает пустым голосом — вес незаявленного голоса не учитывается.
@@ -78,7 +109,7 @@ func (n *Node) serveVote(s network.Stream) {
 	if err != nil || msgType != msgVoteQuery {
 		return
 	}
-	key, err := d.str()
+	key, err := parseVoteQuery(d)
 	if err != nil {
 		return
 	}
@@ -143,27 +174,23 @@ func (r *remotePeer) VotePreference(key string) ([]byte, uint64, bool) {
 	if err != nil || msgType != msgVoteResp {
 		return nil, 0, false
 	}
-	k2, err := d.str()
+	k2, pref, weight, wallet, sig, err := parseVoteResp(d)
 	if err != nil || k2 != key {
 		return nil, 0, false
 	}
-	pref, err := d.blob()
-	if err != nil || len(pref) == 0 {
+	if len(pref) == 0 {
 		return nil, 0, false
 	}
-	weight, err := d.u64()
-	if err != nil || weight == 0 {
+	if weight == 0 {
 		return nil, 0, false
 	}
 	// подпись ответа (долг этапа 5): wallet + подпись над key|pref|weight;
 	// проверка на стороне опрашивающего — ключ кошелька из состояния.
-	wallet, err := d.blob()
-	if err != nil || len(wallet) != 32 {
+	if len(wallet) != 32 {
 		r.n.logf("голосование: ответ без кошелька от %s", r.id.ShortString())
 		return nil, 0, false
 	}
-	sig, err := d.blob()
-	if err != nil || len(sig) == 0 {
+	if len(sig) == 0 {
 		r.n.logf("голосование: ответ без подписи от %s", r.id.ShortString())
 		return nil, 0, false
 	}

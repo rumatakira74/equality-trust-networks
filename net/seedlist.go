@@ -145,6 +145,11 @@ func decodeThresholdSig(b []byte) (*wire.ThresholdSignature, error) {
 		if f != 1 || wt != 2 {
 			return nil, errors.New("seedlist: некорректные подписи")
 		}
+		// счётный предел до разбора доли: заявленный список подписей
+		// не разворачивается в память (FINDING-1 D10)
+		if len(sig.Signatures) >= maxSeedSignatures {
+			return nil, errors.New("seedlist: слишком много подписей")
+		}
 		raw, err := d.blob()
 		if err != nil {
 			return nil, errors.New("seedlist: некорректные подписи")
@@ -155,9 +160,6 @@ func decodeThresholdSig(b []byte) (*wire.ThresholdSignature, error) {
 		}
 		sig.Signatures = append(sig.Signatures, *share)
 	}
-	if len(sig.Signatures) > 32 {
-		return nil, errors.New("seedlist: слишком много подписей")
-	}
 	return sig, nil
 }
 
@@ -165,7 +167,14 @@ func decodeThresholdSig(b []byte) (*wire.ThresholdSignature, error) {
 func decodeSignatureShare(b []byte) (*wire.SignatureShare, error) {
 	d := &dec{b: b}
 	share := &wire.SignatureShare{}
+	fields := 0
 	for d.pos < len(d.b) {
+		// повтор одиночных полей смысла не несёт (последнее значение
+		// побеждает), но даёт неограниченную работу разбора (FINDING-1 D10)
+		fields++
+		if fields > maxSeedShareFields {
+			return nil, errors.New("seedlist: слишком много полей в подписи")
+		}
 		f, wt, err := d.tag()
 		if err != nil {
 			return nil, errors.New("seedlist: некорректная подпись")
@@ -210,6 +219,7 @@ func parseSeedListPayload(payload []byte) (*SeedList, error) {
 	if n > 1024 {
 		return nil, errors.New("seedlist: слишком много пиров")
 	}
+	addrTotal := 0
 	for i := uint64(0); i < n; i++ {
 		var p peerAddrMsg
 		if p.ID, err = d.str(); err != nil {
@@ -222,6 +232,12 @@ func parseSeedListPayload(payload []byte) (*SeedList, error) {
 		if na > 64 {
 			return nil, errors.New("seedlist: слишком много адресов")
 		}
+		// предел на общий объём повторов: произведение 1024×64 (65536)
+		// само по себе общий счётчик не ограничивало (FINDING-1 D10)
+		if addrTotal+int(na) > maxSeedAddrsTotal {
+			return nil, errors.New("seedlist: слишком много адресов всего")
+		}
+		addrTotal += int(na)
 		for j := uint64(0); j < na; j++ {
 			a, err := d.str()
 			if err != nil {
