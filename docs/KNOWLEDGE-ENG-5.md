@@ -192,9 +192,3 @@ So as not to return to what has been discussed; the section can be deleted.
 ---
 
 © 2026 Kirill Lapchinsky · rumatakira74@gmail.com · Telegram @rumatakira · October 18, 2026
-
----
-
-## Theme files (service)
-
-- [Naming and artifact-storage rules](naming-conventions.md) — the development plan is always `development-plan`; in the clouds, everything goes into the `mistral` folder, not the root.
