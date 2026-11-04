@@ -8,7 +8,7 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 > **Unofficial English translation.** In case of any discrepancy, the Russian
 > original (`KNOWLEDGE.md`) prevails.
 
-Document version: 9.15. Working title — Equality Project.  
+Document version: 9.16. Working title — Equality Project.  
 Document date: November 4, 2026.  
 Author: Kirill Lapchinsky  
 Contacts: rumatakira74@gmail.com, Telegram @rumatakira  
@@ -39,6 +39,8 @@ Version 9.13 (stage 15 — the time fix, per the 12-testnet run finding FINDING-
 Version 9.14 (the mint-fix topic, the owner's decision of November 3, 2026; the M7 defect confirmed independently three times — the A9 simulation, the A9 blind audit, the external Sonnet audit): the mint challenge slot anchor (7.6) is the CURRENT issuance period (the txNow period), not the claimed one: period P can only be claimed after P ends (10.1), so the ±48 h window around the claimed period's slot intersected the allowed submission time only when the slot fell in the last 48 h of the period (reachability 1/15 per period; six consecutive misses — an absorbing state: a wallet lost its issuance forever, simulation A9 — honest wallets at −91.2% of income over 60 months, while an automated farm was unaffected). After the fix the slot lies inside the current period: the intersection of the ±48 h window with the current period is always ≥ 48 h — every wallet has a reachable window in every period; the slot is publicly computable in advance (`H(address ‖ period)`; including hash(previous epoch's checkpoint) is an open question, PENDING for the owner), the app can show it to the user; a missed period is compensated within the `accrual_window` (10.1), a deliberate skip of 6+ periods still burns; `protocolVersion` is bumped to 3 (the M7 check semantics changed; no migration — there are no live networks, test ones are re-created).
 
 Version 9.15 (the a10-docs topic, documentation to the facts after A9 — PENDING-2 of the A9 blind audit): Section 7.7 brought to the facts of the A9 recalculation (under the platform's actual parameters) with the AUDIT-A9-01..11 remarks taken into account: the device cost is a model parameter, not a constant ($200; sensitivity $120/$300; the break-even price at 60 months $0.0053 / $0.0085 / $0.0125); the $0.01 crossing — in month 54 at $200 (in month 39 at $120), the metric check horizon ≥ 5 years (the metric wording in 7.6 updated accordingly); a caveat on several wallets per device added — the A1 bypass via Android profiles (2–4 wallets, a cost of $2–25/wallet) raises the farm share peak to 51.7–59.3% and lowers the break-even price to $0.0022–0.0044, A1 holds only under a strict 1:1; PoW is a rate limiter, not a cost ($2.9·10⁻⁶/month and 17.4 s per issuance at targets 2^56/2^40, Argon2id 32 MiB × 1 × p=1; the GPU/ASIC advantage ≈182×/506×); the mint challenge window — per the v9.14 fix in main (the slot anchored to the current issuance period, the absorbing state eliminated); the "income < cost" metric holds due to the device cost and purchased vouches, not due to PoW and not due to the mint window.
+
+Version 9.16 (the a10-docs-fixes topic): pinpoint fixes following the CHECK-A10-DOCS blind review remarks: noise/median caveats in 7.7, the order of magnitude of PoW, the 10.4 horizon, errata for historical notes.
 
 ## Table of contents
 

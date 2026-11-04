@@ -9,8 +9,8 @@ description: "Платформа сетей доверия — конструк�
 
 Документация: для участников — [equality-user-docs](https://github.com/rumatakira74/equality-user-docs), для разработчиков — [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs).
 
-Версия документа: 9.3. Рабочее название — Equality Project.  
-Дата документа: 18 октября 2026 г.  
+Версия документа: 9.16. Рабочее название — Equality Project.  
+Дата документа: 4 ноября 2026 г.  
 Автор: Лапчинский Кирилл (Kirill Lapchinsky)  
 Контакты: rumatakira74@gmail.com, Telegram @rumatakira  
 © 2026 Лапчинский Кирилл (Kirill Lapchinsky). Условия использования определяются лицензией (раздел 16).
