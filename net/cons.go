@@ -891,6 +891,12 @@ func (n *Node) adoptCheckpoint(cp *wire.Checkpoint) bool {
 		n.applyMu.Unlock()
 	}
 	n.consClock.OnCheckpoint(cp)
+	// отложенные по claim (H1): сетевое время последнего чекпоинта —
+	// детерминированная часть потолка допуска применения; принятие
+	// чекпоинта двигает её вперёд. Вне applyMu (retryDeferred → applyLive)
+	if n.Cfg.Level == LevelFull {
+		n.retryDeferred()
+	}
 	// противоречит ли состояние финализированному выбору — перестроиться
 	if n.Ledger != nil && n.needsRebuild() {
 		n.rebuildToFinality()

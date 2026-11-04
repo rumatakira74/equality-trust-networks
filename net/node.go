@@ -83,10 +83,15 @@ type Node struct {
 	headers    []checkpointHeaderMsg
 	pending    map[string][]*wire.Transaction // wallet -> внеочередные
 	pendingN   int
-	seen       map[string]bool              // txid (дедуп)
-	awaiting   map[string]*wire.Transaction // офлайн-канал: ожидает публикации
-	published  map[string]bool              // опубликованные из awaiting
-	spamCount  int64
+	// deferred — отложенные по claim (claim-барьер применения, H1):
+	// claim впереди потолка допуска применения; применяются, когда
+	// потолок догонит claim (tx не теряется — якорь сверки №41 ушёл бы
+	// за ней). См. net/claim.go.
+	deferred  map[string]*wire.Transaction
+	seen      map[string]bool              // txid (дедуп)
+	awaiting  map[string]*wire.Transaction // офлайн-канал: ожидает публикации
+	published map[string]bool              // опубликованные из awaiting
+	spamCount int64
 	// syncAnchors — позиционные якоря сверки по пирам (№41): позиция в
 	// нумерации журнала ПИРА + txid на границе; инкрементальное
 	// продолжение без квадратичного трафика при росте журнала
@@ -180,6 +185,7 @@ func NewNode(cfg *NodeConfig) (*Node, error) {
 		pow:           *cfg.Genesis.Manifest.Profile.Pow,
 		chainIndex:    make(map[string]map[uint64]*wire.Transaction),
 		pending:       make(map[string][]*wire.Transaction),
+		deferred:      make(map[string]*wire.Transaction),
 		seen:          make(map[string]bool),
 		awaiting:      make(map[string]*wire.Transaction),
 		published:     make(map[string]bool),
@@ -440,6 +446,9 @@ func (n *Node) syncLoop() {
 			return
 		case <-t.C:
 			n.SyncAllPeers()
+			// отложенные по claim (H1): потолок допуска применения
+			// двигают часы узла — тик сверки доводит очередь
+			n.retryDeferred()
 		}
 	}
 }
@@ -633,10 +642,17 @@ func (n *Node) applyLive(tx *wire.Transaction) {
 // пинирование Epoch/Period в cons.Replay) обычный рестарт из БД снова
 // работает — ImportJournal остаётся путём восстановления (не удалять):
 // импорт до старта сети, без гонки с gossip/сверками.
+// Claim-барьер (H1): tx с claim впереди потолка допуска применения не
+// применяется, а откладывается — источник (БД) наполняется путями
+// gossip/сверки, где claim не сверялся с часами узла.
 // Возвращает число применённых (accepted) транзакций.
 func (n *Node) ImportJournal(txs []*wire.Transaction) int {
 	applied := 0
 	for _, tx := range txs {
+		if !n.claimAdmissible(tx) {
+			n.deferTx(tx)
+			continue
+		}
 		n.applyMu.Lock()
 		res := n.Ledger.Apply(tx)
 		n.postApply(tx, res)
@@ -725,6 +741,13 @@ func (n *Node) retryPending(wallet []byte) {
 		n.bufferPending(tx)
 	}
 	for _, tx := range ready {
+		// claim-барьер (H1): в буфер внеочередных tx попадала через приём
+		// по C9, но повтор идёт позже — claim сверяется снова, чтобы
+		// сеттлемент не ушёл за пределы потолка допуска применения
+		if !n.claimAdmissible(tx) {
+			n.deferTx(tx)
+			continue
+		}
 		n.applyLive(tx)
 	}
 }

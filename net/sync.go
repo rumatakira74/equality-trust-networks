@@ -348,7 +348,10 @@ func (n *Node) SyncFromPeer(ctx context.Context, p peer.ID) (int, error) {
 // только новым транзакциям. Каждый ответ пира подтверждает доставленные
 // транзакции (corroboration, eclipse 12.3). Транзакции применяются с
 // пинированием часов на timestamp_claim (replay), статус «provisional»
-// до подтверждения N пирами.
+// до подтверждения N пирами. Claim-барьер применения (H1 аудита Sonnet-2):
+// tx с claim впереди потолка допуска применения (net/claim.go) не
+// применяется, а откладывается до наступления claim — иначе сеттлемент
+// необратимо увёл бы NetTime вперёд, а tx пропала бы за якорем.
 // Возвращает число обработанных транзакций и обновлённый якорь.
 func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anchor []byte) (int, uint64, []byte, error) {
 	if n.Ledger == nil {
@@ -357,7 +360,7 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 	applied := 0
 	// Replay (INV-3, v9.13): применяем той же точкой времени, что live —
 	// txNow = timestamp_claim (ledger.Apply); C9 — слой допуска сети,
-	// при сверке не применяется.
+	// при сверке не применяется (вместо него — claim-барьер применения).
 	for {
 		var e enc
 		e.u64(after)
@@ -385,6 +388,15 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 				// corroboration: журнал доставлен этим пиром (eclipse, 12.3)
 				id := tx.TxID()
 				n.Corroboration.Add(id[:], p)
+				// claim-барьер применения (H1): сверка — не приём по gossip,
+				// допуск C9 здесь не действует, а сеттлемент от txNow
+				// необратим (NetTime уходит вперёд на демередж/сгорание).
+				// Tx с claim впереди потолка откладывается — не теряется:
+				// якорь уйдёт за ней, повторно пир её не пришлёт.
+				if !n.claimAdmissible(tx) {
+					n.deferTx(tx)
+					continue
+				}
 				res := n.Ledger.Apply(tx)
 				n.postApply(tx, res)
 				touched = append(touched, tx.Wallet)
@@ -409,6 +421,9 @@ func (n *Node) SyncJournalFrom(ctx context.Context, p peer.ID, after uint64, anc
 		if next < after {
 			after, anchor = next, nil
 		}
+		// отложенные по claim (H1): потолок мог догнать их за время сверки
+		// (часы узла идут); вызов вне applyMu — retryDeferred берёт его сам
+		n.retryDeferred()
 		return applied, after, anchor, nil
 	}
 }
