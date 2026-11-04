@@ -1,0 +1,9 @@
+=== go build ./... ===
+build rc=0
+=== go test ./net/... ===
+ok  	github.com/rumatakira74/equality-trust-networks/net	98.631s
+net rc=0
+=== go test -race ./net/ ./cons/ ===
+ok  	github.com/rumatakira74/equality-trust-networks/net	203.112s
+ok  	github.com/rumatakira74/equality-trust-networks/cons	4.228s
+race rc=0
