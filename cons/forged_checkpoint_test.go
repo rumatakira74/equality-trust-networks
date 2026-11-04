@@ -1,15 +1,11 @@
-//go:build cpforgefix
-
-// Положить как cons/forged_checkpoint_test.go.
+// Тесты находки C1 аудита Sonnet-2 (reports/audit-sonnet/go-tests/
+// cons_forged_checkpoint_test.go.txt, ветка audit-sonnet): чекпоинт без
+// единой подписи (порог 0) не должен считаться финализированным.
 //
-// ЖЕЛАЕМОЕ поведение (REPORT-AUDIT-SONNET-2.md п. 4, находка C1): чекпоинт
-// без единой подписи (порог 0) не должен считаться финализированным.
-// До фикса тесты КРАСНЫЕ: `go test -tags cpforgefix ./cons -run Forged`.
-//
-// Не компилировалось (в среде аудитора нет Go). Сигнатуры Verify и
-// NewCollector, поля wire.Checkpoint сверены по cons/checkpoint.go
-// main@0e44d83. Если фикс изменит сигнатуру Verify (например, добавит
-// ожидаемые participants/threshold) — адаптировать вызов, не ожидание.
+// До фикса (тема fix-cp-threshold) тесты были КРАСНЫЕ под тегом
+// `cpforgefix`; после фикса тег снят — тесты входят в обычный прогон
+// `go test ./cons/`. Ожидания аудита не менялись, адаптировались только
+// комментарии (сигнатура Verify сохранена).
 package cons
 
 import (

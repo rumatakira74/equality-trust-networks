@@ -101,6 +101,25 @@ func (n *Node) startGossip(ctx context.Context) error {
 	go n.gossipLoop(ctx)
 
 	// Заготовка темы чекпоинтов (этап 5): приём без проверки подписи.
+	//
+	// Валидатор темы (C1 аудита Sonnet-2, шаг 4): дешёвые структурные
+	// проверки сообщения до ретрансляции — сеть, длины корней/адресов,
+	// собственный порог чекпоинта, подписант из состава. Семантика
+	// (состав по режиму манифеста, цепочка, подписи) — в onCpMessage и
+	// collectCpPending: валидатор реестр не читает.
+	if err := ps.RegisterTopicValidator(n.cpTopic(),
+		func(ctx context.Context, from peer.ID, msg *pubsub.Message) pubsub.ValidationResult {
+			m, err := n.cpAdmit(msg.Data)
+			if err != nil {
+				n.countSpam()
+				n.logf("чекпоинт от %s: %v", from.ShortString(), err)
+				return pubsub.ValidationReject
+			}
+			msg.ValidatorData = m
+			return pubsub.ValidationAccept
+		}); err != nil {
+		return err
+	}
 	cpTopic, err := ps.Join(n.cpTopic())
 	if err != nil {
 		return err
@@ -112,6 +131,96 @@ func (n *Node) startGossip(ctx context.Context) error {
 	}
 	go n.checkpointLoop(ctx, cpSub)
 	return nil
+}
+
+// cpMsg — разобранное сообщение темы чекпоинтов (валидатор → цикл приёма).
+type cpMsg struct {
+	cp    *wire.Checkpoint
+	share wire.SignatureShare
+}
+
+// cpAdmit — допуск сообщения темы чекпоинтов (C1, шаг 4): структура
+// кадра, своя сеть, длины полей, собственный порог чекпоинта и
+// принадлежность подписанта составу. Порог 0 и порог больше числа
+// участников отвергаются здесь же — такое предложение не может стать
+// финализированным ни в одном режиме (cons.Verify, modes.go), и
+// ретранслировать его незачем.
+func (n *Node) cpAdmit(raw []byte) (*cpMsg, error) {
+	if len(raw) > 1<<20 {
+		return nil, fmt.Errorf("сообщение %d байт > предела", len(raw))
+	}
+	msgType, d, err := readFrame(raw)
+	if err != nil {
+		return nil, err
+	}
+	if msgType != msgCpShare {
+		return nil, fmt.Errorf("тип сообщения %d, ожидался %d", msgType, msgCpShare)
+	}
+	rawCp, err := d.blob()
+	if err != nil {
+		return nil, err
+	}
+	cp, err := decodeCheckpoint(rawCp)
+	if err != nil {
+		return nil, err
+	}
+	signer, err := d.blob()
+	if err != nil {
+		return nil, err
+	}
+	sig, err := d.blob()
+	if err != nil {
+		return nil, err
+	}
+	if len(cp.NetworkID) == 0 || string(cp.NetworkID) != string(n.networkID) {
+		return nil, errForeignNet
+	}
+	if cp.Epoch == 0 {
+		return nil, fmt.Errorf("эпоха 0")
+	}
+	if len(cp.StateRoot) != 32 || len(cp.PrevCheckpointHash) != 32 {
+		return nil, fmt.Errorf("корень/prev_hash не 32 байта")
+	}
+	if len(cp.Participants) == 0 || len(cp.Participants) > 1<<12 {
+		return nil, fmt.Errorf("состав подписантов: %d", len(cp.Participants))
+	}
+	for _, p := range cp.Participants {
+		if len(p) != 32 {
+			return nil, fmt.Errorf("участник не 32 байта")
+		}
+	}
+	if cp.Threshold == 0 {
+		return nil, fmt.Errorf("порог 0")
+	}
+	if cp.Threshold > uint64(len(cp.Participants)) {
+		return nil, fmt.Errorf("порог %d > участников %d", cp.Threshold, len(cp.Participants))
+	}
+	for _, id := range cp.FinalizedTxIDs {
+		if len(id) != 32 {
+			return nil, fmt.Errorf("finalized_txid не 32 байта")
+		}
+	}
+	// доля подписи: либо пустая (предложение/перепубликация), либо
+	// подписант из состава с непустой подписью
+	if len(signer) > 0 {
+		if len(signer) != 32 {
+			return nil, fmt.Errorf("подписант не 32 байта")
+		}
+		if len(sig) == 0 || len(sig) > 128 {
+			return nil, fmt.Errorf("подпись %d байт", len(sig))
+		}
+		inSet := false
+		for _, p := range cp.Participants {
+			if string(p) == string(signer) {
+				inSet = true
+				break
+			}
+		}
+		if !inSet {
+			return nil, fmt.Errorf("подписант вне состава")
+		}
+	}
+	return &cpMsg{cp: cp, share: wire.SignatureShare{Signer: signer, Signature: sig}}, nil
 }
 
 // gossipLoop — приём транзакций из темы.
@@ -146,34 +255,19 @@ func (n *Node) checkpointLoop(ctx context.Context, sub *pubsub.Subscription) {
 		if err != nil {
 			return
 		}
-		if len(msg.Data) > 1<<20 {
-			continue
+		m, ok := msg.ValidatorData.(*cpMsg)
+		if !ok || m == nil || m.cp == nil {
+			// сообщение прошло до регистрации валидатора — полный
+			// путь допуска выполняется здесь
+			m, err = n.cpAdmit(msg.Data)
+			if err != nil {
+				continue
+			}
 		}
-		msgType, d, err := readFrame(msg.Data)
-		if err != nil || msgType != msgCpShare {
-			continue
-		}
-		raw, err := d.blob()
-		if err != nil {
-			continue
-		}
-		cp, err := decodeCheckpoint(raw)
-		if err != nil {
-			continue
-		}
-		signer, err := d.blob()
-		if err != nil {
-			continue
-		}
-		sig, err := d.blob()
-		if err != nil {
-			continue
-		}
-		share := wire.SignatureShare{Signer: signer, Signature: sig}
-		n.onCpMessage(cp, share, false)
+		n.onCpMessage(m.cp, m.share, false)
 		n.collectCpPending(ctx)
 		if n.Checkpoints != nil {
-			n.Checkpoints.HandleCheckpoint(cp)
+			n.Checkpoints.HandleCheckpoint(m.cp)
 		}
 	}
 }
