@@ -183,7 +183,7 @@ func (n *Node) cpAdmit(raw []byte) (*cpMsg, error) {
 	}
 	// состав ограничен размером сообщения (1 МиБ ≈ 30 тыс. адресов);
 	// верхняя граница — защита от разбора «на всякий случай»
-	if len(cp.Participants) == 0 || len(cp.Participants) > 1<<15 {
+	if len(cp.Participants) == 0 || len(cp.Participants) > maxCheckpointParticipants {
 		return nil, fmt.Errorf("состав подписантов: %d", len(cp.Participants))
 	}
 	for _, p := range cp.Participants {
@@ -320,6 +320,12 @@ func decodeCheckpoint(b []byte) (*wire.Checkpoint, error) {
 				return nil, err
 			}
 		case f == 9 && wt == 2:
+			// счётный предел до накопления: заявленный счётчик
+			// участников не задаёт объём памяти (FINDING-1 D10)
+			if len(cp.Participants) >= maxCheckpointParticipants {
+				return nil, fmt.Errorf("net: слишком много участников чекпоинта (лимит %d)",
+					maxCheckpointParticipants)
+			}
 			p, err := d.blob()
 			if err != nil {
 				return nil, err
@@ -340,6 +346,12 @@ func decodeCheckpoint(b []byte) (*wire.Checkpoint, error) {
 			}
 			cp.ThresholdSig = sig
 		case f == 12 && wt == 2:
+			// счётный предел до накопления (FINDING-1 D10): до него
+			// finalized_txid_list ограничивал только кадр
+			if len(cp.FinalizedTxIDs) >= maxCheckpointFinalizedTxIDs {
+				return nil, fmt.Errorf("net: слишком много finalized_txid (лимит %d)",
+					maxCheckpointFinalizedTxIDs)
+			}
 			id, err := d.blob()
 			if err != nil {
 				return nil, err

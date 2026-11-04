@@ -445,6 +445,22 @@ func (n *Node) GetWalletRange(ctx context.Context, p peer.ID, wallet []byte, fro
 	return decodeTxsMsg(d)
 }
 
+// parseTip — разбор ответа tip (msgTip): seq и txid последней транзакции
+// кошелька. Предел длины tip — защита от мусорного объявленного размера
+// (FINDING-1 D10); валидный tip — 32 байта (txid) или пустой (кошелёк без
+// транзакций).
+func parseTip(d *dec) (uint64, []byte, error) {
+	seq, err := d.u64()
+	if err != nil {
+		return 0, nil, err
+	}
+	tip, err := d.blobMax(maxTipLen)
+	if err != nil {
+		return 0, nil, err
+	}
+	return seq, tip, nil
+}
+
 // GetTip — tip кошелька (клиент).
 func (n *Node) GetTip(ctx context.Context, p peer.ID, wallet []byte) (uint64, []byte, error) {
 	var e enc
@@ -457,12 +473,7 @@ func (n *Node) GetTip(ctx context.Context, p peer.ID, wallet []byte) (uint64, []
 	if err != nil || msgType != msgTip {
 		return 0, nil, errors.New("net: некорректный ответ tip")
 	}
-	seq, err := d.u64()
-	if err != nil {
-		return 0, nil, err
-	}
-	tip, err := d.blob()
-	return seq, tip, err
+	return parseTip(d)
 }
 
 // GetHeaders — заголовки чекпоинтов после эпохи (клиент; этап 5 подписывает).
