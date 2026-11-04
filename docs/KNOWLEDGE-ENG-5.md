@@ -119,47 +119,55 @@
 | Migration delay                                                       | 14 days                                                                                                     | 🆕                                  |
 | Personal guardians                                                    | 2 of 3                                                                                                      | ✅                                  |
 | Public guardians: threshold / age / G_max                             | 3 of 5 / ≥ 12 months / 20                                                                                    | 🆕                                  |
-| Public guardian reward                                                | ❓ (a guideline ≤ 10% of monthly issuance, no more often than once per 12 months per ward)                    | 🆕                                  |
+| Public guardian reward                                                | 5% of the ward's monthly issuance, no more often than once per 12 months (No. 29)                             | ✅ No. 29                           |
 | Vouches for activation K                                              | 3                                                                                                           | ✅ (simulation, Section 7.7)        |
 | Slot pool S                                                           | 3 (3–12 months), 5 (above 12 months), 10 for the seed circle in the first year                               | ✅ (simulation, Section 7.7)        |
 | Vouching-member age                                                   | ≥ 3 months                                                                                                  | 🆕                                  |
 | Seed-circle size                                                       | ≥ 300 wallets                                                                                               | ✅ (simulation)                     |
 | Voucher reward R                                                      | 10% of the vouched-for member's first 12 issuances                                                           | ✅ (in the model; farm-neutral, Section 7.7) |
 | Delayed-transfer delay D                                              | 48 h, fixed                                                                                                 | ✅                                  |
-| Delayed-transfer threshold P                                          | ❓ (the default and `P_max`)                                                                                 | 🆕                                  |
-| Fee: `fee_min`, `[rate_min, rate_max]`, target supply growth          | ❓ (a `rate` guideline of 0.5–2%)                                                                            | ⏳                                  |
+| Delayed-transfer threshold P                                          | P = 3000, `P_max` = 30000                                              | ✅                                  |
+| Fee: `fee_min`, `[rate_min, rate_max]`, target supply growth          | `fee_min` = 0.01; rate ∈ [0.5; 2]%, burn                               | ✅                                  |
 | Demurrage: rate / floor                                               | 1% per month; floor: profile 7 — 3000, profile 5 — 30 (3 monthly issuances); mandatory for profiles 5 and 7                                     | ✅                                  |
-| PoW for `transfer`                                                    | light                                                                                                       | ✅                                  |
-| PoW for `register` and issuance                                       | memory-hard, reinforced                                                                                     | ✅                                  |
-| Checkpoint-epoch duration                                             | ❓                                                                                                           | 🆕                                  |
+| PoW for `transfer`                                                    | light: target 2^40 (≈2^24 iterations) SHA-256 (No. 9)                  | ✅ No. 9                            |
+| PoW for `register` and issuance                                       | memory-hard: Argon2id 32 MiB, hardening up to 2^56 (No. 9)             | ✅ No. 9                            |
+| Checkpoint-epoch duration                                             | 24 h (No. 16)                                                          | ✅ No. 16                           |
 | Parameter-change activation delay                                     | ≥ 30 days                                                                                                   | 🆕                                  |
 | Parameter-change signature threshold / window                         | ≥ 2/3 `active` / ❓                                                                                          | 🆕                                  |
+| Corroboration confirmation: M / N                                     | 21 / 14 (No. 17)                                                       | ✅ No. 17                           |
+| The seed circle's seed_sunset                                         | 100 `active` wallets or 24 epochs                                      | ✅ No. 15                           |
+| Issuance suspension at `flagged`                                      | 3 months, on a repeat — forever; vouching from `flagged` is forbidden (No. 12, No. 14) | ✅                    |
+| The small-network boundary for `members_quorum`                       | ~100 members                                                           | ✅ No. 36                           |
 
 ---
 
 ## 18. Open questions
 
 1. ✅ Product name — **Equality Project** (confirmed October 18, 2026; a tag on the Zenodo v1.0.0 deposit). Brand — ❓.
-2. Simulation: the farm economy is closed (Section 7.7 — K, S, R, the seed circle confirmed). Remaining: the registry (conflicts, equivocation, loss of connectivity), the fee, demurrage, the moratorium, and calibrating recruit/vouch_prob on pilots.
-3. `seed_sunset`: the condition and term for shutting down the seed circle; the signer set in the transitional mode.
-4. The default value of P and `P_max` (Section 8.3).
-5. The consequences of a proven equivocation: confirm the soft scheme (Section 7.5).
-6. Public guardians: the reward size, whether a personal guardian is mandatory (Section 11).
-7. The Go core: the integration method, resources, the P-256 signature, attestation parsing (Section 12.1).
+2. ✅ The simulation and the core run are closed: the farm economy (Section 7.7), the registry, the fee, demurrage, the moratorium (the REPORT-STAGE-1..7 reports); what remains is the calibration of recruit/vouch_prob on pilots.
+3. ✅ `seed_sunset`: 100 `active` wallets or 24 epochs (No. 15); the signer set of the seed lists in the transitional mode — ⏳ stage 8.
+4. ✅ P = 3000, `P_max` = 30000 (confirmed by the stage-7 run, Section 8.3).
+5. ✅ The soft scheme of Section 7.5 is confirmed: the `flagged` mark, a 3-month suspension (No. 12), a ban on vouching from `flagged` (No. 14).
+6. ✅ The public guardian's reward: 5% of the ward's monthly issuance, no more often than once per 12 months (No. 29); whether a personal guardian is mandatory — ❓.
+7. ✅ The Go core: `gomobile bind` (stages 6–7), the P-256 signature and attestation parsing are confirmed (the stage6–7 reports); ❓ resources — measurements on a live phone (stage 8).
 8. Parameter changes: the signature threshold and window, the fork-package implementation (Section 13).
 9. Secret voting and ZK membership proofs (Section 6.1).
 10. Minors in educational networks: data and legal requirements.
 11. Contribution confirmation: resistance to collusion, the cap sizes.
-12. Small networks: the size boundary for `members_quorum`, the behavior when some of the members are offline.
+12. ✅ Small networks: the `members_quorum` boundary of ~100 members (No. 36); some members offline — checkpoints and corroboration (stage 5).
 13. Legal questions on the profiles (especially 5 and 7), the distribution of the app (Google Play, and the like).
 14. Licensing: the definition of "non-commercial", the text basis, the CLA, the patent strategy, the verifier license, the commercial-license price (Section 16.3).
 15. The attestation verifier: JVM and JS builds.
 16. The emergency stop in networks without an administrator (Section 13).
-17. ⏳ Economics, the project keys.
+17. ⏳ The project keys (Section 13).
+18. ⚠️ The issuance-challenge slot convention: `mintChallengeSlot` counts the slot from 1970 (the 30-day convention), while the network's periods are calendar-based from genesis → the window is always closed; in the sandbox the window is disabled (`SkipMintChallengeWindow`). Align with Section 9.2 — sub-stage 8.0 (reports/REPORT-STAGE-7.md).
 
 ---
 
 ## 19. Roadmap
+
+
+**Progress (October 19, 2026):** items 1, 3, 4 ✅ (stages 0–5); the member's client is ready (stages 6–7 ✅, emulator; a live phone — the reports' checklists); item 5 (a closed test network) — stage 8; then — the audit and the platform.
 
 1. **The simulator and the specification.** A headless core, models of the registry, vouching, the fee, demurrage, and farm income; it costs nothing and is needed for choosing all the parameters. ✅ The farm-economy model is ready and confirmed K = 3, slots 3/5/10, R = 10%, a seed circle ≥ 300 (Section 7.7); the rest — the registry, the fee, demurrage.
 2. **Licensing.** The non-commercial and commercial license texts, the CLA, the trademark, the patent strategy, a legal review (Section 16.3). Before the first publication of the code and the protocol description.
@@ -191,4 +199,4 @@ So as not to return to what has been discussed; the section can be deleted.
 
 ---
 
-© 2026 Kirill Lapchinsky · rumatakira74@gmail.com · Telegram @rumatakira · October 18, 2026
+© 2026 Kirill Lapchinsky · rumatakira74@gmail.com · Telegram @rumatakira · October 19, 2026

@@ -22,6 +22,13 @@
 
 **Finality.** Periodic checkpoints (epochs): a hash of the state root (a sparse Merkle tree of balances and `seq`) signed with a threshold signature. A checkpoint gives a deterministic before/after order, safe snapshots for light nodes, and time for the network.
 
+**An empty epoch (No. 42 (D), v9.6).** If an epoch is stuck (the checkpoint builder and the whole builders' queue without nodes), the checkpoint of the next epoch N+1 is built on top of the last finalized one: epoch N is closed empty — without a checkpoint; the skip marker is a numbering gap in the chain (…, N−1, N+1, …). The rules:
+
+- the chain allows forward numbering gaps; a regression of the numbering is forbidden;
+- the network-time window (9.2) — per checkpoint, without scaling for skips: the clock follows the last finalized checkpoint, a skip does not distort network time;
+- `seed_sunset` by `deadline_epoch` is counted by epoch NUMBERS: a skip accelerates reaching the deadline in calendar time (two numbers within one window) — the transitional mode is switched off no later than the deadline;
+- stagnation ≤ 1 epoch per each stuck one; a skip proposal is accepted by the signers only after the stuck epoch's builders' queue is exhausted — a premature skip will not gather the signature threshold.
+
 **Checkpoint modes** (`checkpoint_mode`):
 
 - `decentralized` — the signature of a sample of the epoch's validators;
@@ -79,19 +86,20 @@ The values in this section are the default "Currency" profile; the other profile
 - Parameters: `demurrage_rate` (a fraction per month) and `demurrage_floor` (a tax-free remainder).
 - There are no deduction transactions: demurrage is materialized deterministically at period boundaries from max(txNow) over the journal (v9.13): `burn = (balance − floor) × rate` for each crossed boundary with `balance > floor`; the deducted amount is burned. Settlement is monotonic (never rolls back), idempotent and is reproduced by a journal re-computation after a restart.
 
-### 10.4 Economics ⏳
+### 10.4 Economics ✅
 
-The parameters of the base economy (the bounds and the step of the adaptive fee, the target supply growth, the "farm versus income" model, the demurrage rate) are to be tuned by simulation, deferred.
+✅ Fixed (stages 1.2, 6–7; the profile-5 floor — v9.9): demurrage 1%/month, floor = 3 monthly issuances (profile 7 — 3000, profile 5 — 30); a burn fee `fee_min` = 0.01, rate ∈ [0.5; 2]%; P = 3000 / `P_max` = 30000; demurrage is mandatory for profiles 5 and 7. The "farm versus income" model — Section 7.7, a horizon ≥ 5 years.
 
 ---
 
 ## 11. Wallet recovery
 
+- **The recovery card (the owner's decision of October 20, 2026, stage 10).** At wallet creation the app shows a "save this data" screen: the wallet's address, the addresses of the appointed guardians, the network's name, and the card's QR code (export/print). The mandatory meaning is explained: this data is needed for recovery when the phone is lost; it should be kept off the phone (paper, a password manager); the migration data (the nonce, the guardians' signatures) is not handed to anyone. The card remains available later — in the settings and on the migration screen.
 - **Personal guardians: 2 of 3.** The guardians are appointed in advance (at wallet creation), not at the moment of loss. Transaction type `migrate`. The appointed list can be re-elected later — see "Guardian re-election" below.
 - **Guardian re-election (owner's decision of October 21, 2026; implementation — mini-stage 11.2).** The former D4 restriction ("appointed forever") is repealed: a network may be started without a seed circle (the code is open, anyone can start one), and public guardians (age ≥ 12 months) are unattainable during a new network's first year — otherwise an owner whose guardian has disappeared or left the network would lose the recovery path forever. Transaction type `update_guardians` (closed core list, 9.3): published on the owner's chain, signed with the current key; the payload is a new list of personal guardians (≤ 3) + pairs of "new guardian's address + the guardian's signature of the change hash" (consent is passed manually — like a migration approve). Checks on publication: the new guardians are `active` and not `flagged` (№14), the ward limit №7 is not exceeded, only one change is active at a time. The effective window is 48 hours (a constant, not a network parameter; the precedent is the deferred transfer and the P raise): until it expires the old list is in effect, afterwards the new one; migration signatures are valid against the list in effect at the moment the approve was signed. Cancellation — by the owner's signature within the 48-hour window (explicit PIN entry only). If the №7 limit of one of the new guardians is exceeded by the moment of effect — the change does not take effect and is marked expired. Change limit (owner's decision of October 21, 2026): at most **150 effective** guardian changes per wallet over its lifetime; the counter is computed from the wallet's chain history, cancelled and expired changes do not consume the limit; once the limit is exhausted, `update_guardians` is rejected. No fees or rewards; the change is visible in the wallet's public history. The duress PIN opens the decoy mode: "change" operations in the decoy affect only the decoy's data; the real guardian list is untouched.
 - **Migration:** a 14-day delay, during which the old key (if alive) can cancel it; the new wallet passes the same attestation as at `register`; age, issuance history, `period`, vouches, **and the balance are transferred** (otherwise migration bypasses the moratorium and the limits); the old fingerprint is blacklisted forever (otherwise the "migrate → register again" cycle yields unlimited units); a guardian cannot be a guardian for more than K wallets.
 - **If there are no guardians — two paths ✅:**
-  - **Public guardians:** an `active` wallet aged ≥ 12 months declares itself a guardian (`guardian_offer`). The user chooses them in advance; with public guardians participating, the threshold is 3 of 5 (any mix of personal and public ones). The reward is a fixed sum from new emission for each successful `migrate` of a ward (the size ❓, a guideline of no more than 10% of monthly issuance; no more often than once per 12 months per ward; a limit of G_max = 20 wards per guardian; paid only to the signers and only after the delay without a cancellation). Applicable in networks with emission.
+  - **Public guardians:** an `active` wallet aged ≥ 12 months declares itself a guardian (`guardian_offer`). The user chooses them in advance; with public guardians participating, the threshold is 3 of 5 (any mix of personal and public ones). The reward is a fixed sum from new emission for each successful `migrate` of a ward (the size — 5% of the ward's monthly issuance, no more often than once per 12 months — No. 29; a limit of G_max = 20 wards per guardian; paid only to the signers and only after the delay without a cancellation). Applicable in networks with emission.
     - Risk: a reward from emission is a subsidy to farms "migrating" their own wallets; the frequency limit, the delay, and the migration PoW must make this unprofitable; verify the size by simulation.
     - Risk: collusion of public guardians against an owner who has lost the device. Protection: the 3-of-5 threshold, the 14-day delay, public signatures. ❓ Whether to require at least one personal guardian.
   - **A restart by the user's decision:** an ordinary `register` with a new key and new K vouches. The old wallet remains in the registry untouched and inaccessible; the funds on it are lost. A restart gives nothing beyond registering a new wallet.
@@ -107,12 +115,12 @@ The parameters of the base economy (the bounds and the step of the adaptive fee,
 - **Kotlin** — Keystore, biometrics, signing, the foreground service (the platform layer, it is unavoidable).
 - **The core in Go** — the network stack, the verification of transactions and attestation chains, PoW verification, checkpoints, storage (SQLite). The core verifies signatures but does not own keys.
   - Why Go: a mature `go-libp2p` (QUIC/TCP transport, Noise, a Kademlia DHT, GossipSub, hole punching, circuit relay); the standard library and `x/crypto` have ECDSA P-256, X.509 parsing, and Argon2id.
-  - Integration: `gomobile bind` is recommended (an AAR; the Kotlin service starts the core, Flutter communicates via platform channels, exchanging serialized messages, for example protobuf); the alternative is `c-shared` and `dart:ffi`.
+  - Integration ✅: `gomobile bind` (an AAR) — the Kotlin service starts the core, Flutter communicates via platform channels, exchanging protobuf (stages 6–7); the alternative `c-shared` + `dart:ffi` was not needed.
   - The fallback: the core in Kotlin (`jvm-libp2p`) — one native language instead of two, but the networking part is weaker.
 - The same core code runs as a headless simulator (Section 6.5).
-- ❓ **The wallet signature.** The hardware Keystore reliably supports ECDSA P-256; Ed25519 — not everywhere; most likely a P-256 signature. Confirm on the target devices.
+- ✅ **The wallet signature.** The hardware Keystore reliably supports ECDSA P-256; Ed25519 — not everywhere. The P-256 signature is confirmed on the target devices (stage 6).
 - ❓ **Resources.** The build size, memory, and energy (the Go runtime, the DHT, persistent connections). For the light mode — the DHT in client mode; measurements on the prototype.
-- ❓ **Android attestation.** The attestation extension is parsed via `encoding/asn1`; a ready-made library for our needs may not exist.
+- ✅ **Android attestation.** The attestation extension is parsed via `encoding/asn1`; implemented and verified on devices (stage 6; synthetic vectors — stage 2).
 
 ### 12.2 Node tiers
 
