@@ -236,6 +236,15 @@ func (l *Ledger) Apply(tx *wire.Transaction) Result {
 	advancing := txNow > l.State.NetTime
 	var snap *State
 	if advancing {
+		// Предохранитель сеттлемента (H1 аудита Sonnet-2, шаг 3): сдвиг
+		// времени реестра за один Apply ограничен MaxSettleShiftSeconds —
+		// claim в далёком будущем иначе стоил бы O(эпох × кошельков) под
+		// applyMu (анти-DoS). Граница аварийная: сетевые пути держат claim
+		// в пределах допуска (net), честный сдвиг — периоды с прошлой
+		// принятой tx. Отказ не двигает состояние (сеттлемент не начат).
+		if txNow > l.State.NetTime+MaxSettleShiftSeconds {
+			return reject("E_TIME_SHIFT")
+		}
 		snap = l.State.Clone()
 		l.settleTo(txNow)
 	}
