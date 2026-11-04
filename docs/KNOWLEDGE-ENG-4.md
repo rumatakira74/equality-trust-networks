@@ -22,6 +22,13 @@
 
 **Finality.** Periodic checkpoints (epochs): a hash of the state root (a sparse Merkle tree of balances and `seq`) signed with a threshold signature. A checkpoint gives a deterministic before/after order, safe snapshots for light nodes, and time for the network.
 
+**An empty epoch (No. 42 (D), v9.6).** If an epoch is stuck (the checkpoint builder and the whole builders' queue without nodes), the checkpoint of the next epoch N+1 is built on top of the last finalized one: epoch N is closed empty — without a checkpoint; the skip marker is a numbering gap in the chain (…, N−1, N+1, …). The rules:
+
+- the chain allows forward numbering gaps; a regression of the numbering is forbidden;
+- the network-time window (9.2) — per checkpoint, without scaling for skips: the clock follows the last finalized checkpoint, a skip does not distort network time;
+- `seed_sunset` by `deadline_epoch` is counted by epoch NUMBERS: a skip accelerates reaching the deadline in calendar time (two numbers within one window) — the transitional mode is switched off no later than the deadline;
+- stagnation ≤ 1 epoch per each stuck one; a skip proposal is accepted by the signers only after the stuck epoch's builders' queue is exhausted — a premature skip will not gather the signature threshold.
+
 **Checkpoint modes** (`checkpoint_mode`):
 
 - `decentralized` — the signature of a sample of the epoch's validators;
@@ -79,9 +86,9 @@ The values in this section are the default "Currency" profile; the other profile
 - Parameters: `demurrage_rate` (a fraction per month) and `demurrage_floor` (a tax-free remainder).
 - There are no deduction transactions: demurrage is materialized deterministically at period boundaries from max(txNow) over the journal (v9.13): `burn = (balance − floor) × rate` for each crossed boundary with `balance > floor`; the deducted amount is burned. Settlement is monotonic (never rolls back), idempotent and is reproduced by a journal re-computation after a restart.
 
-### 10.4 Economics ⏳
+### 10.4 Economics ✅
 
-The parameters of the base economy (the bounds and the step of the adaptive fee, the target supply growth, the "farm versus income" model, the demurrage rate) are to be tuned by simulation, deferred.
+✅ Fixed (stages 1.2, 6–7; the profile-5 floor — v9.9): demurrage 1%/month, floor = 3 monthly issuances (profile 7 — 3000, profile 5 — 30); a burn fee `fee_min` = 0.01, rate ∈ [0.5; 2]%; P = 3000 / `P_max` = 30000; demurrage is mandatory for profiles 5 and 7. The "farm versus income" model — Section 7.7, a horizon ≥ 5 years.
 
 ---
 
