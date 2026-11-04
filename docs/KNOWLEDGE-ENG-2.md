@@ -20,7 +20,7 @@
 | `fee_mode`                            | `burn`; `pool` (into the network's common fund); `none`                                                                                                                                         | `burn`, an adaptive rate       |
 | `demurrage_rate` / `demurrage_floor`  | a fraction per month / a tax-free remainder                                                                                                                                                     | disabled                       |
 | `entry_mode`                          | `open_vouch`; `founders_seed` (a seed circle from genesis, then vouching only); `invite_only_vouch` (entry by an invitation key from genesis, then vouching)                                     | `open_vouch`                   |
-| `seed_sunset`                         | the number of `active` wallets or a term after which the seed circle loses its special rights                                                                                                    | ❓                              |
+| `seed_sunset`                         | 100 `active` wallets or 24 epochs (No. 15)                                                                                                                                | ✅ No. 15                          |
 | K, slot pool S, vouching-member age   | numbers                                                                                                                                                                                        | 3; 3/5/10; 3 months            |
 | `voucher_reward_R`                    | a fraction, only with `periodic_equal`                                                                                                                                                          | 10% of the first 12 issuances  |
 | `device_policy`                       | `strict` (hardware attestation); `relaxed` (devices without it are allowed; only for networks with low stakes)                                                                                   | `strict`                       |
@@ -65,7 +65,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 
 - The wallet signs a statement: `network_id`, address, status, age, vouching-graph depth, the `flagged` mark, the manifest hash, the checkpoint epoch, the verifier's `challenge`, an expiration date. The signature follows the network's `signing_auth`.
 - A Merkle proof of the wallet's state from a checkpoint is attached to the statement. The verifier does not need to be a node: it verifies the wallet signature, the proof, and the checkpoint signature.
-- The verifier library (Go; JVM and JS builds — ❓) is part of the product; it needs a lightweight network client that syncs with any node; the project's servers are not needed.
+- The verifier library (Go; JVM and JS builds — ❓ PENDING No. 45) is part of the product; it needs a lightweight network client that syncs with any node; the project's servers are not needed.
 - **The verifier decides** what counts as sufficient (the age threshold, depth, guarantee level): the protocol issues no verdicts.
 - "One person — one action" in a third-party application is ensured by the identifier `H(address ‖ app_id)`. It is publicly linked to the address, which is why **secret voting is not supported in v1** (❓ ZK membership proofs — later).
 - Reuse protection: the `challenge` and the expiration date.
@@ -86,7 +86,7 @@ Operations are fixed by the protocol and verified by every node. There is no arb
 ### 6.4 `contribution` — contribution accounting
 
 - `contribution_claim` {description hash, size (hours/points), period}; `contribution_confirm` from confirmers.
-- Confirmation is `peer` only: N independent confirmations from different `active` wallets not linked to the claimant by vouching, with a per-person confirmation limit per period. There is no coordinator role.
+- Confirmation is `peer` only: N independent confirmations from different `active` wallets not linked to the claimant by vouching, with a per-person confirmation limit per period. There is no coordinator role. The draft numbers (N = 2, a limit of 5/period, the `on_contribution` caps) — PENDING No. 46.
 - Payout: **from the program pool** (recommended, no inflation) or limited `on_contribution` issuance with a cap per period and per person.
 - The collusion risk ("we confirm each other") is mitigated by limits, the cap, the graph, and publicity, but is not fully eliminated.
 
