@@ -114,6 +114,17 @@ func New(gp *wire.GenesisPackage, opts Options) (*Ledger, error) {
 	if p.MintSlotMode > 1 {
 		return nil, fmt.Errorf("ledger: mint_slot_mode %d вне {0,1}", p.MintSlotMode)
 	}
+	// 2.6 (10) (аудит z-ai AUDIT-Z-06): recurring несовместим с модулями
+	// pool/contribution — spendWithFee перемещает когорты в Liquid
+	// (Spendable/RefreshCohorts), RecurringSpendable обнуляется и
+	// переводы бричатся. Зеркало правила в profiles.Validate.
+	if p.Recurring {
+		for _, m := range p.Modules {
+			if m == wire.ModulePool || m == wire.ModuleContribution {
+				return nil, errors.New("ledger: recurring с модулем pool/contribution")
+			}
+		}
+	}
 
 	net := params.FromManifest(m, gp.Genesis.ProtocolVersion)
 	st := NewState(net)

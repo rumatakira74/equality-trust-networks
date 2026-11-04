@@ -52,7 +52,9 @@ func TestQueryRegisterGuardians(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tx.SolveLight(gen.PowTargetLight())
+	if err := tx.SolveLight(gen.PowTargetLight()); err != nil {
+		t.Fatal(err)
+	}
 	rp, ok := tx.tx.Payload.(*wire.RegisterPayload)
 	if !ok {
 		t.Fatal("payload не RegisterPayload")
@@ -323,7 +325,9 @@ func submitRegister(t *testing.T, node *Node, gen *Genesis, addr, pub, priv []by
 		t.Fatal(err)
 	}
 	// register — усиленный PoW (7.6, C10/C11); лёгкий дал бы E_POW_HARD
-	reg.SolveHard(gen.PowTargetHard(), gen.Argon2MemKiB(), gen.Argon2Iterations(), gen.Argon2Par())
+	if err := reg.SolveHard(gen.PowTargetHard(), gen.Argon2MemKiB(), gen.Argon2Iterations(), gen.Argon2Par()); err != nil {
+		t.Fatal(err)
+	}
 	sig, err := SignWithKey(priv, reg.SigningHash())
 	if err != nil {
 		t.Fatal(err)

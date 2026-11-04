@@ -55,10 +55,33 @@ class KeystoreWallet(
      * Генерация ключа с аттестацией (register, 9.3). Возвращает цепочку
      * аттестации в формате ядра (лист первым, 4-байтовый BE-префикс
      * длины на сертификат; корни НЕ передаются — зашиты в APK, 7.2).
+     *
+     * StrongBox (аудит z-ai AUDIT-Z-08): на устройствах с
+     * FEATURE_STRONGBOX_KEYSTORE (API ≥ 28) ключ генерируется в
+     * StrongBox (7.2: TEE/StrongBox); если StrongBox заявлен, но не
+     * выделяется — повтор в TEE (фолбэк).
      */
     fun generateWithAttestation(challenge: ByteArray): ByteArray {
         deleteIfPresent()
-        val spec = KeyGenParameterSpec.Builder(
+        val useStrongBox = isStrongBoxCapable()
+        val kpg = KeyPairGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEYSTORE,
+        )
+        try {
+            kpg.initialize(buildSpec(challenge, useStrongBox))
+            kpg.generateKeyPair()
+        } catch (first: Exception) {
+            if (!useStrongBox) throw first
+            // StrongBox заявлен фичей, но недоступен (или иная ошибка
+            // генерации на StrongBox-пути) — повтор без StrongBox (TEE)
+            kpg.initialize(buildSpec(challenge, false))
+            kpg.generateKeyPair()
+        }
+        return attestationChain()
+    }
+
+    private fun buildSpec(challenge: ByteArray, strongBox: Boolean): KeyGenParameterSpec {
+        val builder = KeyGenParameterSpec.Builder(
             alias,
             KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY,
         )
@@ -81,13 +104,10 @@ class KeystoreWallet(
             )
             // добавление отпечатка инвалидирует ключ (7.2)
             .setInvalidatedByBiometricEnrollment(true)
-            .build()
-        val kpg = KeyPairGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEYSTORE,
-        )
-        kpg.initialize(spec)
-        kpg.generateKeyPair()
-        return attestationChain()
+        if (strongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            builder.setIsStrongBoxBacked(true)
+        }
+        return builder.build()
     }
 
     /** Цепочка аттестации в формате ядра (лист + промежуточные). */
@@ -142,11 +162,22 @@ class KeystoreWallet(
         const val AUTH_TIMEOUT_SECONDS = 0
 
         /** Уровень защиты для minLevel (7.2): TEE=1, StrongBox=2. */
-        fun minSecurityLevel(): Int =
+        fun minSecurityLevel(context: Context): Int =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-                isStrongBoxCapable()
+                context.packageManager.hasSystemFeature(
+                    android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE,
+                )
             ) 2 else 1
-
-        private fun isStrongBoxCapable(): Boolean = false
     }
+
+    /**
+     * StrongBox доступен (аудит z-ai AUDIT-Z-08): ранее возвращалась
+     * константа false — StrongBox был недостижим, вопреки 7.2
+     * (TEE/StrongBox); minSecurityLevel всегда отдавал TEE.
+     */
+    private fun isStrongBoxCapable(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+            context.packageManager.hasSystemFeature(
+                android.content.pm.PackageManager.FEATURE_STRONGBOX_KEYSTORE,
+            )
 }

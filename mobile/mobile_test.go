@@ -25,7 +25,9 @@ func TestBridgeTxFlow(t *testing.T) {
 		t.Fatalf("адрес: %d байт", len(addr))
 	}
 	tx := NewTransfer(netID, addr, 1, make([]byte, 32), addr, 100, 1, time.Now().Unix())
-	tx.SolveLight(0x0010_0000_0000_0000)
+	if err := tx.SolveLight(0x0010_0000_0000_0000); err != nil {
+		t.Fatal(err)
+	}
 	hash := tx.SigningHash()
 	sig, err := SignWithKey(priv, hash)
 	if err != nil {

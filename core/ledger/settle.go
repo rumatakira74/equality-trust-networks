@@ -151,9 +151,7 @@ func (l *Ledger) flushPending(now uint64) {
 		if pt.Canceled || pt.Executed || now < pt.Deadline {
 			continue
 		}
-		w := l.State.Wallet(pt.Recipient)
-		_ = w
-		sender := l.State.WalletByKey(k) // ключ содержит адрес отправителя
+		sender := l.State.WalletByKey(k) // ключ: addr (32 б) ‖ '|' ‖ seq (8 б)
 		if sender == nil {
 			continue
 		}
@@ -168,6 +166,10 @@ func (l *Ledger) flushPending(now uint64) {
 		}
 		if rcpt := l.State.Wallet(pt.Recipient); rcpt != nil {
 			rcpt.Liquid += pt.Amount
+		} else {
+			// получателя нет на момент исполнения: единицы сгорают —
+			// INV-8 (аудит z-ai AUDIT-Z-02)
+			l.State.TotalBurned += pt.Amount
 		}
 		if prof.FeeMode == wire.FeeModeBurn {
 			l.State.TotalBurned += pt.Fee

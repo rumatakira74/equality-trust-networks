@@ -3,7 +3,6 @@ package ledger
 
 import (
 	"crypto/ecdsa"
-	"strings"
 
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/params"
@@ -344,13 +343,16 @@ func NewState(net *params.Network) *State {
 
 func (s *State) Wallet(addr []byte) *Wallet { return s.Wallets[key(addr)] }
 
-// WalletByKey — кошелёк по ключу карты (ключ = адрес).
+// WalletByKey — кошелёк отправителя по ключу pending-перевода.
+// Ключ = addr (32 байта) ‖ '|' ‖ 8 BE-байт seq (ptKey): адрес выбирается
+// по фиксированному смещению, не поиском разделителя — байт seq может
+// равняться '|' (0x7C, напр. seq = 124), и скан с конца отрезал бы
+// неверный адрес: перевод не исполнялся бы никогда, средства застревали
+// бы в Locked (аудит z-ai AUDIT-Z-03). Иные длины (чужие ключи) — как
+// раньше, прямым ключом.
 func (s *State) WalletByKey(k string) *Wallet {
-	// ключ pending-перевода: addr|seq — отрезаем суффикс после '|'
-	for i := len(k) - 1; i >= 0; i-- {
-		if k[i] == '|' {
-			return s.Wallets[k[:i]]
-		}
+	if len(k) == 41 {
+		return s.Wallets[k[:32]]
 	}
 	return s.Wallets[k]
 }
@@ -554,7 +556,5 @@ func (w *Wallet) CompletedMintPeriods() uint64 {
 	return w.LastClaimedPeriod - w.ActivatedPeriod + 1
 }
 
-// FreeSlots — число свободных слотов.
-func (w *Wallet) FreeSlots() int { return len(w.OccupiedSlots) }
-
-var _ = strings.TrimSpace
+// FreeSlots — удалён (аудит z-ai AUDIT-Z-10): возвращал число занятых
+// слотов вопреки имени; вызовов в проде не было.

@@ -347,6 +347,17 @@ func Validate(p *wire.ProfileParams) []string {
 		if p.TransferMode != wire.TransferModeRestricted && p.TransferMode != wire.TransferModePeerRedeem {
 			add("recurring при transfer_mode %d (4: только restricted или peer-redeem)", uint32(p.TransferMode))
 		}
+		// recurring + модули (аудит z-ai AUDIT-Z-06): spendWithFee
+		// (донат в пул) через Spendable/RefreshCohorts перемещает когорты
+		// в Liquid, RecurringSpendable обнуляется — все последующие
+		// переводы бричатся (E_BURNED при живом TotalBalance). Recurring-
+		// профиль совместим только с redeem.
+		for _, m := range p.Modules {
+			if m == wire.ModulePool || m == wire.ModuleContribution {
+				add("recurring с модулем pool/contribution (аудит z-ai: spendWithFee обнуляет RecurringSpendable)")
+				break
+			}
+		}
 	}
 	return bad
 }

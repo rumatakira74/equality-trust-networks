@@ -41,13 +41,16 @@ type Params struct {
 	SeedSunsetEpochs uint64
 }
 
-// DefaultParams — предложения этапа 5 (обоснование — отчёт).
+// DefaultParams — предложения этапа 5 (обоснование — отчёт). α = 0.7 —
+// утверждённое значение (решение этапа 5; ранее здесь стояло 0.6 вопреки
+// комментарию, спеке, симуляции и программистской документации —
+// аудит z-ai AUDIT-Z-04).
 func DefaultParams() Params {
 	return Params{
 		EpochSeconds:     24 * 3600,
 		MaxTimeShift:     6 * 3600,
 		SnowballK:        10,
-		SnowballAlpha:    0.6,
+		SnowballAlpha:    0.7,
 		SnowballBeta:     4,
 		ValidatorsM:      21,
 		BuilderQueue:     3,

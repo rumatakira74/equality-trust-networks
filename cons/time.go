@@ -96,40 +96,11 @@ func (c *Clock) Epoch() uint64 {
 	return c.lastCP.Epoch
 }
 
-// Period — текущий период выпуска: календарные месяцы UTC, начавшиеся
-// после genesis к началу текущей эпохи (9.2: «1-е число месяца» =
-// первая эпоха, начавшаяся после 00:00 UTC 1-го).
-func (c *Clock) Period() uint64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	epochStart := c.GenesisTime
-	if c.lastCP != nil {
-		epochStart = c.lastCP.NetworkTime
-	}
-	return PeriodOfEpoch(c.GenesisTime, epochStart)
-}
-
-// PeriodOfEpoch — число «1-х чисел месяца» 00:00 UTC в интервале
-// (genesisTime, epochStartTime]: первая эпоха, начавшаяся после границы,
-// открывает новый период.
-func PeriodOfEpoch(genesisTime, epochStartTime uint64) uint64 {
-	g := time.Unix(int64(genesisTime), 0).UTC()
-	e := time.Unix(int64(epochStartTime), 0).UTC()
-	if !e.After(g) {
-		return 0
-	}
-	// первая граница «1-е число 00:00 UTC» строго после genesis
-	b := time.Date(g.Year(), g.Month(), 1, 0, 0, 0, 0, time.UTC)
-	if !b.After(g) {
-		b = b.AddDate(0, 1, 0)
-	}
-	count := uint64(0)
-	for !b.After(e) {
-		count++
-		b = b.AddDate(0, 1, 0)
-	}
-	return count
-}
+// Period — удалён (аудит z-ai AUDIT-Z-07): мёртвый метод с календарной
+// конвенцией месяцев UTC противоречил конвенции ядра (арифметические
+// периоды от genesis — periodAt, RealClock.Period) и был ловушкой для
+// первого же вызова. Единственный вызов .Period() в проде — RealClock
+// (mobile/query.go), который и остаётся единственной конвенцией.
 
 // EpochDue — пора закрывать эпоху: от последнего чекпоинта прошло
 // epoch_seconds (по сетевому времени узла).

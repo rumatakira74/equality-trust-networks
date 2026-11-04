@@ -18,14 +18,8 @@ func (l *Ledger) CheckInvariants() []string {
 	prof := st.Net.Profile
 
 	// INV-1c: не более одной принятой транзакции на (wallet, seq)
-	seen := make(map[string]uint64)
-	for _, tx := range l.TxIndex {
-		k := string(tx.Wallet)
-		if _, ok := seen[k]; !ok {
-			seen[k] = 0
-		}
-	}
-	// (полная проверка — в FullCheck; здесь по цепочкам кошельков)
+	// (полная проверка — в FullCheck; фрагмент с картой seen удалён —
+	// наполнялся и не использовался, аудит z-ai AUDIT-Z-10)
 	for _, w := range st.Wallets {
 		if w.Locked > w.Liquid {
 			bad = append(bad, fmt.Sprintf("INV-1d: locked(%d) > liquid(%d) у %x",

@@ -12,7 +12,7 @@ func BenchmarkSolveLight24(b *testing.B) {
 	tx := NewTransfer([]byte("bench"), []byte("wallet"), 1, make([]byte, 32),
 		[]byte("to"), 100, 1, 1234567)
 	for i := 0; i < b.N; i++ {
-		tx.SolveLight(0x0000_0100_0000_0000)
+		_ = tx.SolveLight(0x0000_0100_0000_0000)
 	}
 }
 
@@ -21,7 +21,7 @@ func BenchmarkSolveLight20(b *testing.B) {
 	tx := NewTransfer([]byte("bench"), []byte("wallet"), 1, make([]byte, 32),
 		[]byte("to"), 100, 1, 1234567)
 	for i := 0; i < b.N; i++ {
-		tx.SolveLight(0x0000_1000_0000_0000)
+		_ = tx.SolveLight(0x0000_1000_0000_0000)
 	}
 }
 
@@ -32,7 +32,7 @@ func BenchmarkMintPow32MiB(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		tx := NewMint([]byte("bench"), []byte("wallet"), 1, make([]byte, 32),
 			1, 1000, 1, int64(1234567+i))
-		tx.SolveHard(0x0080_0000_0000_0000, 32768, 1, 1)
+		_ = tx.SolveHard(0x0080_0000_0000_0000, 32768, 1, 1)
 	}
 }
 
@@ -41,7 +41,7 @@ func BenchmarkMintPow64MiB(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		tx := NewMint([]byte("bench"), []byte("wallet"), 1, make([]byte, 32),
 			1, 1000, 1, int64(1234567+i))
-		tx.SolveHard(0x0080_0000_0000_0000, 65536, 1, 1)
+		_ = tx.SolveHard(0x0080_0000_0000_0000, 65536, 1, 1)
 	}
 }
 

@@ -11,6 +11,7 @@ package ledger
 
 import (
 	"bytes"
+	"sort"
 
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
@@ -221,10 +222,21 @@ func (l *Ledger) applyPoolClose(tx *wire.Transaction) Result {
 	if pool.Released {
 		return reject("E_POOL_STATE") // выпущенный пул не закрывается
 	}
-	// возврат донатам при невыполненной цели (P5)
+	// возврат донатам при невыполненной цели (P5). Обход — в
+	// детерминированном порядке (сортировка адресов доноров): карта Go
+	// итерируется случайно, а при Balance < ΣDonations (пул опустошён
+	// contribution-выплатами) возврат усекается по остатку — без
+	// сортировки узлы раздавали бы возврат разным донорам и расходились
+	// в state_root (аудит z-ai AUDIT-Z-01)
 	if pool.RefundMode == wire.PoolRefundIfUnmet &&
 		(pool.Goal == 0 || pool.Balance < pool.Goal) {
-		for donor, amount := range pool.Donations {
+		donors := make([]string, 0, len(pool.Donations))
+		for donor := range pool.Donations {
+			donors = append(donors, donor)
+		}
+		sort.Strings(donors)
+		for _, donor := range donors {
+			amount := pool.Donations[donor]
 			if amount == 0 || pool.Balance == 0 {
 				continue
 			}
@@ -349,6 +361,11 @@ func (l *Ledger) applyRedeem(tx *wire.Transaction) Result {
 		}
 		if provider != nil {
 			provider.Liquid += p.Amount
+		} else {
+			// провайдер не зарегистрирован (inProviders проверяет только
+			// fingerprint-членство): единицы сгорают — INV-8
+			// (аудит z-ai AUDIT-Z-02)
+			l.State.TotalBurned += p.Amount
 		}
 	}
 	txid := tx.TxID()

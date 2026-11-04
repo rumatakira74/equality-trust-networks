@@ -233,8 +233,15 @@ func (n *Node) branchApplied(key string) []byte {
 	return tip
 }
 
-// conflictWallet — адрес кошелька из ключа конфликта (wallet|seq).
+// conflictWallet — адрес кошелька из ключа конфликта. Ключ =
+// wallet (32 б) ‖ '|' ‖ 8 BE-байт seq (cons.ConflictKey): адрес берётся
+// по фиксированному смещению — байт seq может быть '|' (0x7C), и скан
+// с конца отрезал бы неверный кошелёк (branchApplied/needsRebuild читали
+// бы чужой реестр и давали лишнюю перестройку; аудит z-ai AUDIT-Z-03).
 func conflictWallet(key string) []byte {
+	if len(key) == 41 {
+		return []byte(key[:32])
+	}
 	for i := len(key) - 1; i >= 0; i-- {
 		if key[i] == '|' {
 			return []byte(key[:i])
@@ -360,7 +367,8 @@ func (n *Node) cpTick(ctx context.Context) {
 		return
 	}
 	if n.hasUnresolvedConflict() {
-		return // чекпоинт фиксирует сходимость (9.1)
+		return // чекпоинт фиксирует сходимость (9.1); застрявшие старше
+		// conflictBlockWindow конфликты не блокируют (живость, AUDIT-Z-05)
 	}
 	prev := n.lastCheckpoint()
 	epoch := uint64(1)
@@ -920,12 +928,33 @@ func (n *Node) lastCPEpoch() uint64 {
 	return 0
 }
 
-// hasUnresolvedConflict — есть ли незавершённое голосование.
+// conflictBlockWindow — сколько незавершённый конфликт блокирует
+// закрытие эпохи (аудит z-ai AUDIT-Z-05, живость чекпоинтов). Конфликт
+// обязан блокировать чекпоинт (9.1: чекпоинт фиксирует сходимость), но
+// не бессрочно: поток эквивокаций (новый конфликт каждые < β×VoteInterval
+// ≈ 8 с, лёгкий PoW ~0,6 с/tx) иначе замораживает чекпоинты, адаптивную
+// комиссию, дедлайны пулов и seed_sunset на неограниченный срок. Конфликт
+// старше окна перестаёт блокировать: узлы, чья применённая ветка совпала
+// с большинством, строят и подписывают чекпоинт (stateRootMatches),
+// разошедшиеся сходятся через needsRebuild/rebuildToFinality по
+// finalized_txid_list. Локальная политика узла (не консенсус): вердикт
+// ядра и подписи по-прежнему проверяются полностью. 0 — блокировать
+// без ограничения (прежнее поведение).
+const conflictBlockWindow = 15 * time.Minute
+
+// hasUnresolvedConflict — есть ли незавершённое голосование, блокирующее
+// чекпоинт: незавершённые конфликты младше conflictBlockWindow (старые —
+// не блокируют, см. константу).
 func (n *Node) hasUnresolvedConflict() bool {
+	now := time.Now()
 	for _, st := range n.Snowball.States() {
-		if !st.Final {
-			return true
+		if st.Final {
+			continue
 		}
+		if conflictBlockWindow > 0 && now.Sub(st.CreatedAt) > conflictBlockWindow {
+			continue // застрявший конфликт не блокирует закрытие эпохи
+		}
+		return true
 	}
 	return false
 }

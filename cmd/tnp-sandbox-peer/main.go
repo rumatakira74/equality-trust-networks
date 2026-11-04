@@ -203,7 +203,9 @@ func mintFor(node *tnp.Node, gen *tnp.Genesis, id string, addr []byte, period ui
 	amount := uint64(1000)
 	tx := tnp.NewMint(gen.NetworkID(), addr, int64(seq+1), prev,
 		int64(period), int64(amount), gen.ProtocolVersion(), time.Now().Unix())
-	tx.SolveHard(gen.PowTargetHard(), gen.Argon2MemKiB(), gen.Argon2Iterations(), gen.Argon2Par())
+	if err := tx.SolveHard(gen.PowTargetHard(), gen.Argon2MemKiB(), gen.Argon2Iterations(), gen.Argon2Par()); err != nil {
+		return err
+	}
 	if err := sign(tx, id); err != nil {
 		return err
 	}
@@ -231,7 +233,9 @@ func vouchFor(node *tnp.Node, gen *tnp.Genesis, id string, addr, candidate []byt
 	}
 	tx := tnp.NewVouch(gen.NetworkID(), addr, int64(seq+1), prev,
 		candidate, int64(clock.Epoch), gen.ProtocolVersion(), time.Now().Unix())
-	tx.SolveLight(gen.PowTargetLight())
+	if err := tx.SolveLight(gen.PowTargetLight()); err != nil {
+		return err
+	}
 	if err := sign(tx, id); err != nil {
 		return err
 	}

@@ -105,7 +105,9 @@ func (e *mintClampEnv) submitMint(t *testing.T, period, amount uint64) string {
 	}
 	tx := NewMint(e.gen.NetworkID(), e.addr, int64(w.Seq)+1, w.TipTxID,
 		int64(period), int64(amount), e.gen.ProtocolVersion(), time.Now().Unix())
-	tx.SolveHard(e.gen.PowTargetHard(), e.gen.Argon2MemKiB(), e.gen.Argon2Iterations(), e.gen.Argon2Par())
+	if err := tx.SolveHard(e.gen.PowTargetHard(), e.gen.Argon2MemKiB(), e.gen.Argon2Iterations(), e.gen.Argon2Par()); err != nil {
+		t.Fatal(err)
+	}
 	sig, err := SignWithKey(e.priv, tx.SigningHash())
 	if err != nil {
 		t.Fatal(err)
