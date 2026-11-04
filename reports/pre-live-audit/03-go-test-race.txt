@@ -1,0 +1,3 @@
+ok  	github.com/rumatakira74/equality-trust-networks/net	142.148s
+ok  	github.com/rumatakira74/equality-trust-networks/cons	(cached)
+rc=0

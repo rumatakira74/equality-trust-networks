@@ -1,0 +1,27 @@
+# pre-live-audit: sync evidence (session 05e53862-a237-4d23-b30d-7c0a1ebb3b88, 2026-11-04 UTC)
+
+## tnp working clone: ls-remote origin main (before branch creation)
+0fdb975c6b283af1f7a2f413dcf2bed865aa56d8	refs/heads/main
+
+## merge a10-docs included?
+git merge-base --is-ancestor 6ca9ce4a origin/main -> OK (6ca9ce4a IS ancestor of origin/main)
+
+## step 0.5: push --delete a10-docs check-a10-docs
+To github.com:rumatakira74/equality-trust-networks.git
+ - [deleted]         a10-docs
+ - [deleted]         check-a10-docs
+
+## remote heads after cleanup
+01d91811ac09e20e47373f930fb4057034a7c059	refs/heads/audit
+829102a559d62fc37dabc32b6090dce09654b308	refs/heads/audit-sonnet
+0fdb975c6b283af1f7a2f413dcf2bed865aa56d8	refs/heads/check-pre-live-audit
+0fdb975c6b283af1f7a2f413dcf2bed865aa56d8	refs/heads/main
+6e16bbb62d87db755aada7cdedbe18b1cd7bcb71	refs/heads/net-dos-a3
+
+## read-only clones (fetch only, no checkout): origin/main
+eq (anti-farm-simulation): c0472d5363d39786d2108c803b96c081c467615c
+programming-docs: aa21c162940b0aa93101d58cf45b236dedc2ba28
+user-docs: f00b17171d4550a1ec9de5e059d9997a74d2e235
+
+## branch check-pre-live-audit created from origin/main and pushed
+0fdb975c6b283af1f7a2f413dcf2bed865aa56d8	refs/heads/check-pre-live-audit
