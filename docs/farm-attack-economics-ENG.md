@@ -1,5 +1,14 @@
 # Farm-Attack Economics — Interpreting the Simulation Results
 
+> **ERRATUM (04.11.2026, the a10-docs-fixes topic; CHECK-A10-DOCS-10).** The figures
+> in this document predate the A9 recalculation and are outdated: the payback in
+> month 38, ~$90k invested and "3 years in the red" belong to base model v1.1.
+> After A9 (the platform's actual parameters) the break-even price crosses $0.01 in
+> month 54 at $200 per device (median 53.5), not in month 38 — i.e. the term is
+> ~4.5 years, not 3 years. The document is kept as a historical note on the v9.2
+> simulation interpretation; the figures in the body are NOT rewritten. Current
+> values — Section 7.7 (`docs/KNOWLEDGE-ENG-3.md`).
+
 An addition to section 7.7 of KNOWLEDGE.md (v9.2). Basis: `equality-anti-farm-simulation` (https://github.com/rumatakira74/equality-anti-farm-simulation), base scenario: K = 3, slots 3/5/10, seed circle 100, farm 20 devices/mo., 8 runs × 60 months.
 Date: October 18, 2026.
 
