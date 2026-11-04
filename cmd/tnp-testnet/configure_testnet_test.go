@@ -4,7 +4,10 @@
 // до E_BURNED, а не застрять в моратории 14 сут).
 package main
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 // TestConfigureShortPeriod — -period-seconds попадает в genesis и
 // декодируется; -transfer-moratorium-days 0 убирает мораторий;
@@ -32,11 +35,13 @@ func TestConfigureShortPeriod(t *testing.T) {
 // отвергается при сборке (0 — конвенция 30 сут, не ошибка).
 func TestConfigurePeriodSecondsValidation(t *testing.T) {
 	if err := configureCmd([]string{"-template", "8", "-slug", "cirrus-t",
-		"-out", t.TempDir(), "-period-seconds", "30"}); err == nil {
+		"-out", t.TempDir(), "-period-seconds", "30",
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")}); err == nil {
 		t.Fatal("period_seconds 30 должно отвергаться (< 60)")
 	}
 	if err := configureCmd([]string{"-template", "8", "-slug", "cirrus-t",
-		"-out", t.TempDir(), "-period-seconds", "0"}); err != nil {
+		"-out", t.TempDir(), "-period-seconds", "0",
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")}); err != nil {
 		t.Fatalf("period_seconds 0 (конвенция) не должно отвергаться: %v", err)
 	}
 }

@@ -321,7 +321,7 @@ func configureCmd(args []string) error {
 	if sgnDir == "" {
 		sgnDir = signingDirDefault()
 	}
-	keyKind, sgnProps, sgnOK, sgnDiag := setupSigning(sgnDir, prof.Recurring)
+	sgn := setupSigning(sgnDir, prof.Recurring)
 	spec := iconSpec(networkID, *logo != "", prof.Recurring)
 	if err := writeIconAssets(outDir+"/icon", networkID, spec, *logo); err != nil {
 		return err
@@ -334,7 +334,7 @@ func configureCmd(args []string) error {
 		"slug":           slugName,
 		"recurring":      prof.Recurring,
 		"network_id":     hex.EncodeToString(networkID),
-		"key_kind":       keyKind,
+		"key_kind":       sgn.kind,
 		"icon": map[string]any{
 			"background":      spec.Background,
 			"palette_index":   spec.PaletteIndex,
@@ -343,8 +343,8 @@ func configureCmd(args []string) error {
 			"adaptive_layers": []string{"icon/background.png", "icon/foreground.png"},
 		},
 	}
-	if sgnOK {
-		androidArtifacts["signing_properties"] = sgnProps
+	if sgn.ok {
+		androidArtifacts["signing_properties"] = sgn.props
 	}
 	aj, err := json.MarshalIndent(androidArtifacts, "", "  ")
 	if err != nil {
@@ -397,14 +397,18 @@ func configureCmd(args []string) error {
 	fmt.Printf(" APK: %s\n applicationId: %s\n label: %s\n display_name: %q · %s\n",
 		apk, appID, label, dn, label)
 	// подпись (тема A8): вид ключа и готовая команда release-сборки;
-	// пароли не печатаются — они в signing.properties (chmod 600, вне git)
-	if sgnOK {
-		fmt.Printf(" release-подпись: tnp-%s — signing.properties: %s\n", keyKind, sgnProps)
-		fmt.Printf(" сборка release: TNP_SIGNING_PROPERTIES=%s TNP_KEY_KIND=%s "+
+	// пароли не печатаются — они в signing.properties (chmod 600, вне git).
+	// Отпечаток ключа (тема fix-release-keys, шаг 1) печатается в виде,
+	// готовом для TNP_SIGNING_KEY_SHA256: сборка сверяет его и отвергает
+	// подпись чужим ключом.
+	if sgn.ok {
+		fmt.Printf(" release-подпись: tnp-%s — signing.properties: %s\n", sgn.kind, sgn.props)
+		fmt.Printf(" отпечаток ключа (SHA-256 файла tnp-%s.jks): %s\n", sgn.kind, sgn.fingerprint)
+		fmt.Printf(" сборка release: TNP_SIGNING_KEY_SHA256=%s TNP_SIGNING_PROPERTIES=%s TNP_KEY_KIND=%s "+
 			"ORG_GRADLE_PROJECT_TNP_APPLICATION_ID=%s ORG_GRADLE_PROJECT_TNP_APP_LABEL=%s flutter build apk --release\n",
-			sgnProps, keyKind, appID, label)
+			sgn.fingerprint, sgn.props, sgn.kind, appID, label)
 	} else {
-		fmt.Printf(" внимание (release-подпись): %s\n", sgnDiag)
+		fmt.Printf(" внимание (release-подпись): %s\n", sgn.diag)
 	}
 	return nil
 }

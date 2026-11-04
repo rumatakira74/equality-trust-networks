@@ -107,7 +107,8 @@ func TestConfigureProfile8Std(t *testing.T) {
 // отвергается при сборке (комбинации global+rec не существует).
 func TestConfigureGlobalRecurringRejected(t *testing.T) {
 	err := configureCmd([]string{"-template", "8", "-global",
-		"-out", filepath.Join(t.TempDir(), "net")})
+		"-out", filepath.Join(t.TempDir(), "net"),
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")})
 	if err == nil || !strings.Contains(err.Error(), "глобальной сети") {
 		t.Fatalf("global+recurring обязан отвергаться, got: %v", err)
 	}
@@ -118,7 +119,8 @@ func TestConfigureGlobalRecurringRejected(t *testing.T) {
 // имя APK equality-global-std-...apk.
 func TestConfigureGlobalStd(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "net")
-	if err := configureCmd([]string{"-template", "7", "-global", "-out", out}); err != nil {
+	if err := configureCmd([]string{"-template", "7", "-global", "-out", out,
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")}); err != nil {
 		t.Fatalf("global: %v", err)
 	}
 	b, err := os.ReadFile(filepath.Join(out, "genesis.bin"))
@@ -172,7 +174,8 @@ func TestConfigureBadSlug(t *testing.T) {
 		"abcdefghijklmnopqrstuvwxy", // 25 символов — длиннее 24
 	} {
 		err := configureCmd([]string{"-template", "8", "-slug", slug,
-			"-out", filepath.Join(t.TempDir(), "net")})
+			"-out", filepath.Join(t.TempDir(), "net"),
+			"-signing-dir", filepath.Join(t.TempDir(), "signing")})
 		if err == nil {
 			t.Fatalf("slug %q обязан отвергаться", slug)
 		}

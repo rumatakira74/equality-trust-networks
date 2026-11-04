@@ -16,19 +16,7 @@ import (
 func fakeSigningDir(t *testing.T) string {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "signing")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, kind := range []string{"std", "rec"} {
-		if err := os.WriteFile(filepath.Join(dir, "tnp-"+kind+".jks"),
-			[]byte("fake"), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	cred := "# фиктивные пароли (тест)\n" +
-		"std.key_alias=tnp-std\nstd.store_password=fake-std-store\nstd.key_password=fake-std-key\n" +
-		"rec.key_alias=tnp-rec\nrec.store_password=fake-rec-store\nrec.key_password=fake-rec-key\n"
-	if err := os.WriteFile(filepath.Join(dir, "credentials.txt"), []byte(cred), 0o600); err != nil {
+	if err := fakeSigningFiles(dir); err != nil {
 		t.Fatal(err)
 	}
 	return dir

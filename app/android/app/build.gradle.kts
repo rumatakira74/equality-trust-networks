@@ -2,6 +2,10 @@
 // этапа 6 (android/app/src/main/kotlin) компилируется сюда напрямую
 // (srcDir, без дублирования); AAR ядра — gomobile bind (android/libs).
 // Экран этапа 6 (ui/MainActivity.kt) исключён — его заменил Flutter-UI.
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
+import java.security.MessageDigest
 import java.util.Properties
 
 plugins {
@@ -17,7 +21,10 @@ plugins {
 // ~/.tnp-signing/signing.properties; вид ключа — TNP_KEY_KIND=std|rec
 // (env или -P; печатает configure). Приватные ключи и пароли в git и CI
 // не попадают; отсутствие/недоступность — явный отказ release-сборки,
-// debug-сборки не затронуты.
+// debug-сборки не затронуты. Тема fix-release-keys (P1 аудита Sonnet-2):
+// release-сборка дополнительно сверяет SHA-256 файла ключа с отпечатком
+// TNP_SIGNING_KEY_SHA256 и требует права файлов ключей не шире 0600
+// (задача verifySigning); release-артефакт без боевой подписи отвергается.
 val wantsRelease = gradle.startParameter.taskNames.any {
     it.contains("elease", ignoreCase = true)
 }
@@ -26,6 +33,155 @@ val signingPropsPath = (System.getenv("TNP_SIGNING_PROPERTIES")
     ?: File(System.getProperty("user.home"), ".tnp-signing/signing.properties").absolutePath
 val signingKeyKind = (System.getenv("TNP_KEY_KIND")
     ?: project.findProperty("TNP_KEY_KIND") as String?)
+
+// Отпечаток боевого ключа (тема fix-release-keys, шаг 1; P1 аудита
+// Sonnet-2 §1.4): ожидаемый SHA-256 ФАЙЛА keystore. Значение задаёт
+// владелец (env TNP_SIGNING_KEY_SHA256 или -P), готовую команду сборки
+// печатает configure; независимый от репозитория источник для сверки —
+// docs/RELEASE-KEYS.md. Без отпечатка release-сборка не подтверждает,
+// что APK подписан своим ключом, и отвергается.
+val signingKeySha256 = (System.getenv("TNP_SIGNING_KEY_SHA256")
+    ?: project.findProperty("TNP_SIGNING_KEY_SHA256") as String?)
+    ?.trim()?.lowercase()
+
+// Задачи, производящие release-артефакт (APK/AAB): на них навешивается
+// verifySigning, а их присутствие в графе при выключенном signing-конфиге
+// — отказ: неподписанный release-APK не должен собираться молча.
+val releaseArtifactTasks = setOf(
+    "packageRelease", "packageReleaseUniversalApk", "packageReleaseBundle",
+    "makeApkFromBundleForRelease", "assembleRelease", "bundleRelease",
+)
+
+// sha256Hex — SHA-256 файла в hex нижнего регистра (как печатает
+// configure и apksigner).
+fun sha256Hex(file: File): String {
+    val md = MessageDigest.getInstance("SHA-256")
+    file.inputStream().use { input ->
+        val buf = ByteArray(64 * 1024)
+        while (true) {
+            val n = input.read(buf)
+            if (n < 0) break
+            md.update(buf, 0, n)
+        }
+    }
+    return md.digest().joinToString("") { "%02x".format(it) }
+}
+
+// permProblem — права файла ключей шире 0600 (только чтение и запись
+// владельца): пароли лежат рядом с keystore открытым текстом, доступ
+// группы, остальных и исполнение отвергаются. null — права в порядке
+// или ФС без POSIX-прав.
+fun permProblem(file: File): String? {
+    if (!file.isFile) return null
+    val perms = try {
+        Files.getPosixFilePermissions(file.toPath())
+    } catch (e: UnsupportedOperationException) {
+        return null
+    }
+    val allowed = setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)
+    if ((perms - allowed).isEmpty()) return null
+    return "${file.absolutePath}: ${PosixFilePermissions.toString(perms)}"
+}
+
+// verifySigning — проверка боевого ключа перед подписью (шаги 1–2, 4):
+// SHA-256 файла ключа сверяется с TNP_SIGNING_KEY_SHA256, права файлов
+// ключей — не шире 0600. Несовпадение отпечатка и широкие права —
+// отказ; отсутствие отпечатка при release-сборке (wantsRelease) — отказ,
+// при обычной — предупреждение. Release-артефакт без боевой подписи —
+// отказ (не молчаливый неподписанный APK).
+val gradleRef = gradle
+val verifySigning by tasks.registering {
+    group = "verification"
+    description = "Сверка SHA-256 файла боевого ключа с TNP_SIGNING_KEY_SHA256 и прав файлов ключей (≤0600)"
+    val propsPath = signingPropsPath
+    val keyKind = signingKeyKind
+    val expectedSha = signingKeySha256
+    val releaseBuild = wantsRelease
+    doLast {
+        val releaseRequested = gradleRef.taskGraph.allTasks.map { it.name }
+            .filter { it in releaseArtifactTasks }
+        if (!releaseBuild && releaseRequested.isNotEmpty()) {
+            throw GradleException(
+                "release-сборка без боевой подписи: в графе задач ${releaseRequested.joinToString(", ")} " +
+                    "при выключенном signing-конфиге (wantsRelease=false — в запрошенных задачах " +
+                    "${gradleRef.startParameter.taskNames} нет подстроки «elease»). Неподписанный " +
+                    "release-APK не собирается молча: отладочная сборка — assembleDebug / " +
+                    "flutter build apk --debug; релиз — настройте ключи (cmd/tnp-testnet configure, " +
+                    "docs/RELEASE-KEYS.md) и собирайте assembleRelease / flutter build apk --release."
+            )
+        }
+        val propsFile = File(propsPath)
+        if (!propsFile.isFile) {
+            if (releaseBuild) {
+                throw GradleException(
+                    "release-сборка требует боевой signing-конфиг: $propsPath не найден. " +
+                        "Сгенерируйте ключи и запустите cmd/tnp-testnet configure " +
+                        "(см. docs/RELEASE-KEYS.md); путь — env TNP_SIGNING_PROPERTIES."
+                )
+            }
+            logger.warn(
+                "verifySigning: signing-конфиг $propsPath не найден — ключей нет, отпечаток не сверен " +
+                    "(не release-сборка; release-сборку без ключей градл отвергает)"
+            )
+            return@doLast
+        }
+        if (keyKind == null) {
+            val msg = "verifySigning: вид боевого ключа не задан (env TNP_KEY_KIND=std|rec) — " +
+                "отпечаток не сверен"
+            if (releaseBuild) throw GradleException("$msg; release-сборка требует явный вид ключа.")
+            logger.warn("$msg (не release-сборка)")
+            return@doLast
+        }
+        val props = Properties().apply { propsFile.inputStream().use { load(it) } }
+        val storePath = props.getProperty("$keyKind.storeFile")
+            ?: throw GradleException("signing-конфиг $propsPath: нет $keyKind.storeFile")
+        val store = File(storePath)
+        if (!store.isFile) {
+            throw GradleException(
+                "боевой keystore недоступен: ${store.absolutePath} (см. docs/RELEASE-KEYS.md)"
+            )
+        }
+        val permProblems = listOf(propsFile, store, File(store.parentFile, "credentials.txt"))
+            .mapNotNull { permProblem(it) }
+        if (permProblems.isNotEmpty()) {
+            throw GradleException(
+                "права файлов ключей шире 0600 (только rw владельца) — пароли рядом с ключом " +
+                    "читаемы группой/остальными:\n  " + permProblems.joinToString("\n  ") +
+                    "\nнужен chmod 600 на эти файлы (docs/RELEASE-KEYS.md)."
+            )
+        }
+        val actual = sha256Hex(store)
+        when {
+            expectedSha == null -> {
+                if (releaseBuild) {
+                    throw GradleException(
+                        "release-сборка без ожидаемого отпечатка ключа: TNP_SIGNING_KEY_SHA256 не задан — " +
+                            "сборка не подтверждает, что APK подписан своим ключом. Фактический " +
+                            "SHA-256 файла ${store.name}: $actual. Отпечаток печатает " +
+                            "cmd/tnp-testnet configure; сверьте с docs/RELEASE-KEYS.md."
+                    )
+                }
+                logger.warn(
+                    "verifySigning: TNP_SIGNING_KEY_SHA256 не задан — отпечаток ключа не сверен " +
+                        "(не release-сборка). Фактический SHA-256 файла ${store.name}: $actual"
+                )
+            }
+            actual != expectedSha -> throw GradleException(
+                "отпечаток боевого ключа не совпал: ${store.absolutePath} → SHA-256 $actual, " +
+                    "ожидался $expectedSha (TNP_SIGNING_KEY_SHA256). Подпись чужим ключом " +
+                    "отвергнута (docs/RELEASE-KEYS.md)."
+            )
+            else -> logger.lifecycle(
+                "verifySigning: отпечаток ключа ${store.name} совпал ($actual), " +
+                    "права файлов ключей ≤0600"
+            )
+        }
+    }
+}
+
+tasks.matching { it.name in releaseArtifactTasks }.configureEach {
+    dependsOn(verifySigning)
+}
 
 android {
     namespace = "platform.tnp.tnp_app"
@@ -70,7 +226,8 @@ android {
                     throw GradleException(
                         "release-сборка требует боевой signing-конфиг: $signingPropsPath не найден. " +
                             "Сгенерируйте ключи и запустите cmd/tnp-testnet configure " +
-                            "(см. docs/RELEASE-KEYS.md); путь — env TNP_SIGNING_PROPERTIES."
+                            "(см. docs/RELEASE-KEYS.md); путь — env TNP_SIGNING_PROPERTIES. " +
+                            "Отпечаток ключа для сверки печатает configure (TNP_SIGNING_KEY_SHA256)."
                     )
                 }
                 if (signingKeyKind != "std" && signingKeyKind != "rec") {

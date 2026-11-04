@@ -11,7 +11,10 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,6 +41,58 @@ func signingDirDefault() string {
 		return ".tnp-signing"
 	}
 	return filepath.Join(home, ".tnp-signing")
+}
+
+// signingKeySHA256 — SHA-256 файла боевого ключа (keystore) в hex.
+// Отпечаток сверяется при сборке со значением TNP_SIGNING_KEY_SHA256
+// (тема fix-release-keys, P1 аудита Sonnet-2): подмена keystore — это
+// подпись чужим ключом, и молча она проходить не должна.
+func signingKeySHA256(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// checkSigningPerms — права файла ключей не шире 0600 (только чтение и
+// запись владельца; доступ группы, остальных и исполнение отвергаются).
+// os.WriteFile(0o600) задаёт права только при создании — скопированный,
+// восстановленный из бэкапа или сгенерированный keytool файл сохраняет
+// чужие права, и пароли рядом с ключом становятся читаемыми.
+func checkSigningPerms(path string) error {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if perm := fi.Mode().Perm(); perm&^0o600 != 0 {
+		return fmt.Errorf("права %04o шире 0600 (только rw владельца): %s — нужен chmod 600",
+			perm, path)
+	}
+	return nil
+}
+
+// verifySigningKey — сверка отпечатка файла ключа с ожидаемым (hex,
+// регистр не важен). Пустой ожидаемый отпечаток — ошибка: сборка без
+// ожидаемого значения не подтверждает, что APK подписан своим ключом.
+func verifySigningKey(path, expected string) error {
+	expected = strings.ToLower(strings.TrimSpace(expected))
+	if expected == "" {
+		return fmt.Errorf("отпечаток ключа не задан (TNP_SIGNING_KEY_SHA256)")
+	}
+	got, err := signingKeySHA256(path)
+	if err != nil {
+		return err
+	}
+	if got != expected {
+		return fmt.Errorf("отпечаток ключа не совпал: %s → %s, ожидался %s", path, got, expected)
+	}
+	return nil
 }
 
 // readSigningCredentials — пароли из credentials.txt (строки key=value,
@@ -89,7 +144,14 @@ func writeSigningProperties(dir string) error {
 		fmt.Fprintf(&b, "%s.storeFile=%s\n%s.storePassword=%s\n%s.keyAlias=%s\n%s.keyPassword=%s\n",
 			kind, abs, kind, store, kind, alias, kind, key)
 	}
-	return os.WriteFile(filepath.Join(dir, "signing.properties"), []byte(b.String()), 0o600)
+	props := filepath.Join(dir, "signing.properties")
+	if err := os.WriteFile(props, []byte(b.String()), 0o600); err != nil {
+		return err
+	}
+	// права выставляются и для уже существующего файла (тема
+	// fix-release-keys, шаг 2): os.WriteFile задаёт их только при создании,
+	// а восстановленный из бэкапа signing.properties сохраняет чужие права
+	return os.Chmod(props, 0o600)
 }
 
 // checkSigningKeystore — боевой keystore существует и читаем
@@ -102,23 +164,60 @@ func checkSigningKeystore(path string) error {
 	return f.Close()
 }
 
+// signingSetup — результат настройки подписи: вид ключа, путь
+// signing.properties, отпечаток файла ключа (SHA-256 — для
+// TNP_SIGNING_KEY_SHA256), ok и диагностика. При ok=false genesis-артефакты
+// собираются, но release-сборка будет отвергнута градлом.
+type signingSetup struct {
+	kind        string
+	props       string
+	fingerprint string
+	ok          bool
+	diag        string
+}
+
 // setupSigning — точка конфигурации подписи: выбирает ключ по типу сети,
-// проверяет наличие/доступность keystores и credentials, генерирует
-// signing.properties. Возвращает (вид ключа, путь signing.properties,
-// ok, диагностика); при ok=false genesis-артефакты собираются, но
-// release-сборка будет отвергнута градлом.
-func setupSigning(dir string, recurring bool) (kind, props string, ok bool, diag string) {
-	kind = signingKind(recurring)
+// проверяет наличие/доступность keystores, права файлов ключей и отпечаток
+// (TNP_SIGNING_KEY_SHA256, если задан), генерирует signing.properties.
+func setupSigning(dir string, recurring bool) signingSetup {
+	kind := signingKind(recurring)
 	for _, k := range []string{"std", "rec"} {
 		if err := checkSigningKeystore(filepath.Join(dir, "tnp-"+k+".jks")); err != nil {
-			return kind, "", false, fmt.Sprintf(
+			return signingSetup{kind: kind, diag: fmt.Sprintf(
 				"боевой ключ %s недоступен: %s (%v) — release-сборка будет отвергнута (см. docs/RELEASE-KEYS.md)",
-				k, filepath.Join(dir, "tnp-"+k+".jks"), err)
+				k, filepath.Join(dir, "tnp-"+k+".jks"), err)}
+		}
+	}
+	// права файлов ключей (шаг 2): пароли лежат рядом с keystore открытым
+	// текстом — доступ группы/остальных к любому из файлов отвергается
+	for _, f := range []string{"credentials.txt", "tnp-std.jks", "tnp-rec.jks"} {
+		path := filepath.Join(dir, f)
+		if _, statErr := os.Stat(path); statErr != nil {
+			continue // отсутствие диагностируют checkSigningKeystore и writeSigningProperties
+		}
+		if err := checkSigningPerms(path); err != nil {
+			return signingSetup{kind: kind, diag: fmt.Sprintf(
+				"права файлов ключей: %v — release-сборка будет отвергнута (см. docs/RELEASE-KEYS.md)", err)}
+		}
+	}
+	store := filepath.Join(dir, "tnp-"+kind+".jks")
+	// отпечаток ключа (шаг 1): печатается для TNP_SIGNING_KEY_SHA256;
+	// заданный env сверяется здесь же — расхождение видно до сборки
+	fingerprint, err := signingKeySHA256(store)
+	if err != nil {
+		return signingSetup{kind: kind, diag: fmt.Sprintf(
+			"отпечаток ключа %s не вычислен: %v — release-сборка будет отвергнута", store, err)}
+	}
+	if expected := os.Getenv("TNP_SIGNING_KEY_SHA256"); expected != "" {
+		if err := verifySigningKey(store, expected); err != nil {
+			return signingSetup{kind: kind, fingerprint: fingerprint, diag: fmt.Sprintf(
+				"%v — release-сборка будет отвергнута (отпечаток печатает configure, сверьте с docs/RELEASE-KEYS.md)", err)}
 		}
 	}
 	if err := writeSigningProperties(dir); err != nil {
-		return kind, "", false, fmt.Sprintf(
-			"signing-конфиг не сгенерирован: %v — release-сборка будет отвергнута (см. docs/RELEASE-KEYS.md)", err)
+		return signingSetup{kind: kind, fingerprint: fingerprint, diag: fmt.Sprintf(
+			"signing-конфиг не сгенерирован: %v — release-сборка будет отвергнута (см. docs/RELEASE-KEYS.md)", err)}
 	}
-	return kind, filepath.Join(dir, "signing.properties"), true, ""
+	return signingSetup{kind: kind, props: filepath.Join(dir, "signing.properties"),
+		fingerprint: fingerprint, ok: true}
 }

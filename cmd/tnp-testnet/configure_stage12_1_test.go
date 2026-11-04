@@ -73,7 +73,8 @@ func TestPaletteMaterial(t *testing.T) {
 // quota_reset — единица сгорала бы на границе периода, не созрев.
 func TestConfigureTemplate3FreshWindow(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "net")
-	if err := configureCmd([]string{"-template", "3", "-slug", "monte-cloud", "-out", out}); err != nil {
+	if err := configureCmd([]string{"-template", "3", "-slug", "monte-cloud", "-out", out,
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")}); err != nil {
 		t.Fatalf("configure: %v", err)
 	}
 	b, err := os.ReadFile(filepath.Join(out, "genesis.bin"))
