@@ -70,14 +70,14 @@ class BluetoothAndBridgeInstrumentedTest {
         tx1.solveLight(0x0000_0100_0000_0000L) // ~2^24 попыток
         val powLightMs = (System.nanoTime() - t1) / 1_000_000.0
 
-        // (3) mint-PoW: Argon2id 32 МиБ × 1, таргет 2^56 (~64 итераций,
-        // предложение №9; 2^52 на эмуляторе занимает десятки минут)
+        // (3) mint-PoW: Argon2id 32 МиБ × 1, таргет 2^56 (~256 итераций,
+        // решение №9, hex по core/params/params.go; 2^52 на эмуляторе занимает десятки минут)
         val tx2 = tnp.Tnp.newMint(
             gen.networkID(), addr, 1, ByteArray(32), 1, 1000,
             gen.protocolVersion(), 1234567,
         )
         val t2 = System.nanoTime()
-        tx2.solveHard(0x0040_0000_0000_0000L, 32768, 1, 1)
+        tx2.solveHard(0x0100_0000_0000_0000L, 32768, 1, 1)
         val argonMs = (System.nanoTime() - t2) / 1_000_000.0
 
         // (4) подпись + проверка (мягкий ключ; на устройстве — Keystore)
