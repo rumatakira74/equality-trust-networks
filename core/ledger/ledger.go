@@ -101,6 +101,12 @@ func New(gp *wire.GenesisPackage, opts Options) (*Ledger, error) {
 			return nil, errors.New("ledger: нулевой PoW-таргет вне песочницы")
 		}
 	}
+	// 2.6 (8) (тема fix-cp-threshold, C1): режим сверки состава подписантов
+	// чекпоинта (поле 62) — только 0 (наследие) или 1 (строгий); иная
+	// семантика не определена, тихо применять её нельзя.
+	if p.CpSetCheck > 1 {
+		return nil, fmt.Errorf("ledger: cp_set_check %d вне {0,1}", p.CpSetCheck)
+	}
 
 	net := params.FromManifest(m, gp.Genesis.ProtocolVersion)
 	st := NewState(net)

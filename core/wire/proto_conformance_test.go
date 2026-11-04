@@ -321,6 +321,7 @@ func confProfile() *ProfileParams {
 		FeeStepMicros:              1000,
 		Recurring:                  true,
 		PeriodSeconds:              2592000,
+		CpSetCheck:                 1,
 	}
 }
 

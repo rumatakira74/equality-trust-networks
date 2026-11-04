@@ -126,10 +126,27 @@ func countActive(l *ledger.Ledger) uint64 {
 // (epoch = prev+1, prev_hash), предел сдвига времени, порог подписей
 // N-из-M, participants по режиму (проверка режима — вызывающий,
 // см. modes.go).
+//
+// C1 аудита Sonnet-2 (тема fix-cp-threshold): порог и состав берутся из
+// самого чекпоинта, поэтому здесь проверяется их собственная
+// непротиворечивость — порог 0 (подписей не требуется) и порог больше
+// числа участников отвергаются безусловно: легального чекпоинта с такими
+// значениями не бывает ни в одном режиме (modes.go: N ≥ 2 и N ≤ M), так
+// что обратная совместимость не страдает. Сверка состава с режимом
+// манифеста — CheckParticipants (вызывающий, по полю 62 cp_set_check).
 func Verify(cp, prev *wire.Checkpoint, genesisTime, epochSeconds, maxShift uint64,
 	pubOf func(addr []byte) (*ecdsa.PublicKey, bool)) error {
 	if cp == nil {
 		return errors.New("cons: пустой чекпоинт")
+	}
+	if len(cp.Participants) == 0 {
+		return errors.New("cons: пустой состав подписантов")
+	}
+	if cp.Threshold == 0 {
+		return errors.New("cons: порог 0 (подписей не требуется)")
+	}
+	if cp.Threshold > uint64(len(cp.Participants)) {
+		return fmt.Errorf("cons: порог %d > участников %d", cp.Threshold, len(cp.Participants))
 	}
 	if prev == nil {
 		if cp.Epoch != 1 {
@@ -258,10 +275,13 @@ func (c *Collector) Count() int {
 }
 
 // Ready — порог достигнут: возвращает полную ThresholdSignature.
+// Порог 0 порога не образует (C1 аудита Sonnet-2): без единой доли
+// чекпоинт «готов» не бывает — иначе предложение с Threshold = 0
+// финализируется на каждом узле без подписей.
 func (c *Collector) Ready() *wire.ThresholdSignature {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if uint64(len(c.shares)) < c.cp.Threshold {
+	if c.cp.Threshold == 0 || uint64(len(c.shares)) < c.cp.Threshold {
 		return nil
 	}
 	sig := &wire.ThresholdSignature{}

@@ -6,6 +6,7 @@
 package net
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
@@ -614,16 +615,6 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 		return
 	}
 	h := cp.CheckpointHash()
-	// конфликт и подпись участника — до мьютекса (читают реестр)
-	signIncoming := false
-	if !local && n.Signer != nil && !n.hasUnresolvedConflict() {
-		for _, p := range cp.Participants {
-			if string(p) == string(n.Cfg.WalletAddr) {
-				signIncoming = true
-				break
-			}
-		}
-	}
 	n.mu.Lock()
 	isNew := false
 	if _, ok := n.CpProposals[string(h[:])]; !ok {
@@ -646,6 +637,15 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 			n.mu.Unlock()
 			return
 		}
+		// эпоха наступила (C1, шаг 3): предложение следующей эпохи,
+		// опубликованное до её начала, не регистрируется — иначе
+		// «первое увиденное побеждает» отдаёт эпоху тому, кто
+		// опубликовал раньше честного строителя. Проверка — только для
+		// чужих сообщений (своё предложение строит cpTick по EpochDue).
+		if !local && !n.cpEpochArrived(cp, prevTime, hasPrev) {
+			n.mu.Unlock()
+			return
+		}
 		// правило одного предложения (блокер 8.1): варианты одной эпохи
 		// не собираются и не подписываются — первый увиденный побеждает
 		if n.hasProposalForEpochLocked(cp.Epoch) {
@@ -659,8 +659,11 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 	col := n.CpCollectors[string(h[:])]
 	n.mu.Unlock()
 	// подпись участником полученного предложения — после снятия мьютекса
-	// (только для нового предложения, как до выноса из-под лок)
-	if isNew && signIncoming {
+	// (только для нового чужого предложения, как до выноса из-под лок).
+	// Ворота подписи (C1): состав по режиму манифеста, корень состояния
+	// собственного реестра, наступившая эпоха, отсутствие конкурирующего
+	// собственного предложения эпохи.
+	if isNew && !local && n.cpShouldSign(cp) {
 		if myShare, err := n.Signer.Sign(cp); err == nil {
 			if col != nil {
 				col.Add(myShare)
@@ -671,6 +674,112 @@ func (n *Node) onCpMessage(cp *wire.Checkpoint, share wire.SignatureShare, local
 	if len(share.Signer) > 0 && col != nil {
 		col.Add(share)
 	}
+}
+
+// cpShouldSign — подписывать ли полученное предложение: кошелёк узла в
+// составе, нет незавершённого голосования и пройдены ворота C1
+// (cpSignGate). Вызывается вне мьютексов (читает реестр и цепочку).
+func (n *Node) cpShouldSign(cp *wire.Checkpoint) bool {
+	if n.Signer == nil || n.hasUnresolvedConflict() {
+		return false
+	}
+	inSet := false
+	for _, p := range cp.Participants {
+		if string(p) == string(n.Cfg.WalletAddr) {
+			inSet = true
+			break
+		}
+	}
+	if !inSet {
+		return false
+	}
+	return n.cpSignGate(cp)
+}
+
+// cpSignGate — ворота подписи предложения (находка C1 аудита Sonnet-2,
+// шаги 1–3 плана):
+//
+//  1. состав и порог чекпоинта совпадают с вычисленными по режиму
+//     манифеста (только при cp_set_check = 1; наследие — без сверки);
+//  2. StateRoot совпадает с собственным реестром: подписант подписывает
+//     только то состояние, которое воспроизводит сам (иначе подпись
+//     удостоверяет чужой StateRoot/TotalSupply/FinalizedTxIDs);
+//  3. эпоха наступила (по данным консенсуса и по часам узла с запасом
+//     предела сдвига времени, 9.2);
+//  4. предложение не конкурирует с собственным предложением той же эпохи
+//     (принадлежность строителю: два варианта одной эпохи раскалывают
+//     набор подписантов — блокер 8.1).
+func (n *Node) cpSignGate(cp *wire.Checkpoint) bool {
+	if err := n.cpCheckParticipants(cp); err != nil {
+		n.logf("чекпоинт %d: состав не по режиму: %v", cp.Epoch, err)
+		return false
+	}
+	if !n.stateRootMatches(cp.StateRoot) {
+		n.logf("чекпоинт %d: корень состояния не совпал с реестром — подписи нет", cp.Epoch)
+		return false
+	}
+	// данные цепочки — под n.mu.RLock; реестр читает stateRootMatches
+	// выше (порядок applyMu → mu, вложенности нет)
+	n.mu.RLock()
+	hasPrev := len(n.Chain) > 0
+	var prevTime uint64
+	if hasPrev {
+		prevTime = n.Chain[len(n.Chain)-1].NetworkTime
+	}
+	own := n.lastProposal
+	ownEpoch := n.lastProposalEpoch
+	n.mu.RUnlock()
+	if !n.cpEpochArrived(cp, prevTime, hasPrev) {
+		n.logf("чекпоинт %d: эпоха ещё не наступила — подписи нет", cp.Epoch)
+		return false
+	}
+	if own != nil && ownEpoch == cp.Epoch && !bytes.Equal(cpHashOf(own), cpHashOf(cp)) {
+		n.logf("чекпоинт %d: чужой вариант эпохи при своём предложении — подписи нет", cp.Epoch)
+		return false
+	}
+	return true
+}
+
+// cpEpochArrived — эпоха предложения наступила: сеть-время чекпоинта не
+// раньше детерминированного момента due (prev.network_time + epoch_seconds;
+// без prev — genesis + epoch_seconds), и локальные часы дошли до due с
+// запасом предела сдвига сетевого времени (9.2) — расхождение часов не
+// отбрасывает предложение живого строителя.
+func (n *Node) cpEpochArrived(cp *wire.Checkpoint, prevTime uint64, hasPrev bool) bool {
+	base := n.Cfg.Genesis.Genesis.GenesisTime
+	if hasPrev {
+		base = prevTime
+	}
+	due := base + n.ConsParams.EpochSeconds
+	if cp.NetworkTime < due {
+		return false
+	}
+	return uint64(time.Now().Unix())+n.ConsParams.MaxTimeShift >= due
+}
+
+// cpCheckParticipants — сверка состава подписантов и порога чекпоинта с
+// вычисленными по режиму манифеста (C1, шаг 1). Действует только при
+// cp_set_check = 1 (поле 62): сети с прежними манифестами (0) работают
+// как раньше — состав и порог принимаются из чекпоинта.
+func (n *Node) cpCheckParticipants(cp *wire.Checkpoint) error {
+	if n.Cfg.Genesis == nil || n.Cfg.Genesis.Manifest == nil ||
+		n.Cfg.Genesis.Manifest.Profile == nil ||
+		n.Cfg.Genesis.Manifest.Profile.CpSetCheck == 0 {
+		return nil
+	}
+	n.applyMu.RLock()
+	if n.Ledger == nil {
+		n.applyMu.RUnlock()
+		return errors.New("нет реестра для сверки состава")
+	}
+	part, thresholdN, err := cons.Participants(
+		n.Cfg.Genesis.Manifest.Profile.CheckpointMode, n.Ledger, n.Cfg.Genesis,
+		n.ConsParams, cp.Epoch, cp.PrevCheckpointHash)
+	n.applyMu.RUnlock()
+	if err != nil {
+		return err
+	}
+	return cons.CheckParticipants(cp, part, thresholdN)
 }
 
 // collectCpPending — финализация сборов с достигнутым порогом и приём
@@ -716,6 +825,13 @@ func (n *Node) collectCpPending(ctx context.Context) {
 		}
 	}
 	for _, cp := range ready {
+		// состав и порог — по режиму манифеста (C1, шаг 1; при
+		// cp_set_check = 1): чекпоинт с чужим составом/порогом не
+		// принимается, даже если подписи под ним сходятся
+		if err := n.cpCheckParticipants(cp); err != nil {
+			n.logf("чекпоинт %d: состав не по режиму: %v", cp.Epoch, err)
+			continue
+		}
 		if err := cons.Verify(cp, n.lastCheckpoint(), n.Cfg.Genesis.Genesis.GenesisTime,
 			n.ConsParams.EpochSeconds, n.ConsParams.MaxTimeShift, n.pubKeyOf); err != nil {
 			n.logf("чекпоинт %d: проверка: %v", cp.Epoch, err)

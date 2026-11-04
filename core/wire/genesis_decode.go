@@ -358,6 +358,8 @@ func (p *ProfileParams) setU64(f uint32, v uint64) error {
 		p.Recurring = v != 0
 	case 61:
 		p.PeriodSeconds = v
+	case 62:
+		p.CpSetCheck = v
 	default:
 		return errUnknownField
 	}
