@@ -1,0 +1,76 @@
+# АРТЕФАКТ 01 — гигиена диффа ветки a10-docs (blind, до открытия REPORT-A10-DOCS.md)
+# дата: 2026-11-04T00:52:17Z  session: 52e752d3-b60f-c3a3-61f5-f8b251bf51de
+
+## main..a10-docs (как требует промпт)
+M	QUESTIONS.md
+M	README.md
+M	android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest.kt
+M	docs/KNOWLEDGE-3.md
+M	docs/KNOWLEDGE-ENG-3.md
+M	docs/KNOWLEDGE-ENG.md
+M	docs/KNOWLEDGE.md
+M	docs/development-plan.md
+D	prompts/check-a10-docs-prompt.md
+A	reports/REPORT-A10-DOCS.md
+A	reports/stage6/bridge-benchmark-emulator-a10.txt
+M	reports/stage6/pow-host.md
+
+## main..a10-docs numstat
+1	1	QUESTIONS.md
+14	10	README.md
+3	3	android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest.kt
+12	8	docs/KNOWLEDGE-3.md
+12	8	docs/KNOWLEDGE-ENG-3.md
+4	2	docs/KNOWLEDGE-ENG.md
+4	2	docs/KNOWLEDGE.md
+2	15	docs/development-plan.md
+0	14	prompts/check-a10-docs-prompt.md
+154	0	reports/REPORT-A10-DOCS.md
+20	0	reports/stage6/bridge-benchmark-emulator-a10.txt
+13	0	reports/stage6/pow-host.md
+
+## merge-base..a10-docs (собственный дифф ветки; main ушёл вперёд после точки ветвления)
+1b961efaf1f110a9c18d06b477c5f6ae3ca03f5f
+M	QUESTIONS.md
+M	README.md
+M	android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest.kt
+M	docs/KNOWLEDGE-3.md
+M	docs/KNOWLEDGE-ENG-3.md
+M	docs/KNOWLEDGE-ENG.md
+M	docs/KNOWLEDGE.md
+A	reports/REPORT-A10-DOCS.md
+A	reports/stage6/bridge-benchmark-emulator-a10.txt
+M	reports/stage6/pow-host.md
+
+## коммиты ветки
+0984faa a10-docs: отчёт REPORT-A10-DOCS (правки построчно, errata, прогон, PENDING)
+8dfc0b7 a10-docs: README 7.6/7.7 синхронизированы со спекой 9.15 (факты A9)
+bf1eed1 a10-docs: errata FINDING-A9-01 (PoW: 256 итераций, hex 2^56) + артефакт прогона
+ed2e2f0 a10-docs: спека 7.7 к фактам A9 (PENDING-2 аудита) + версия 9.15
+
+## код: проверка каталогов core/ android/ flutter/ net/ app/ cmd/ cons/ sim/ simulation/ spec/ mobile/ vectors/ proto/
+android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest.kt
+flutter/: каталога нет в репозитории
+
+## размеры затронутых файлов на a10-docs (байт)
+126441 README.md
+116020 docs/development-plan.md
+39659 QUESTIONS.md
+38696 docs/KNOWLEDGE-3.md
+24197 docs/KNOWLEDGE-ENG-3.md
+19679 docs/KNOWLEDGE.md
+17565 reports/REPORT-A10-DOCS.md
+11580 docs/KNOWLEDGE-ENG.md
+4829 android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest.kt
+4015 reports/stage6/pow-host.md
+1434 reports/stage6/bridge-benchmark-emulator-a10.txt
+0 prompts/check-a10-docs-prompt.md
+
+## бинарные файлы в диффе (numstat с '-')
+(нет)
+
+## скан секретов по добавленным строкам (api_key|secret|password|token|private key|AKIA|ghp_|sk-|bearer|xox)
+194:+  (grep: password/secret/token/api_key/PRIVATE KEY/AKIA/bearer — пусто).
+
+## скан секретов по добавленным строкам (длинные base64/hex-блоки > 60 символов)
+android/app/src/androidTest/java/platform/tnp/android/BluetoothAndBridgeInstrumentedTest

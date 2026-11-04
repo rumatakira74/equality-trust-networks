@@ -1,0 +1,68 @@
+# АРТЕФАКТ 03 — числа спеки против кода tnp main (blind)
+# дата: 2026-11-04T00:52:39Z  session: 52e752d3-b60f-c3a3-61f5-f8b251bf51de
+# проверяемая ветка: check-a10-docs (== a10-docs tip 0984faa); код не менялся (см. артефакт 01)
+
+## core/params/params.go — таргеты, Argon2id, окно, версия протокола
+48:		ProtocolVersion: protocolVersion,
+163:		MintChallengeWindowHours:   48,   // ±48 ч (7.6)
+180:			TargetLight:           0x0000_0100_0000_0000, // 2^24 итераций
+181:			Argon2MemoryKiB:       32768,
+182:			Argon2Iterations:      1,
+183:			Argon2Parallelism:     1,
+184:			TargetHard:            0x0100_0000_0000_0000, // 2^56
+210:		ProtocolVersion: 3,
+
+## core/ledger/validate.go — якорь слота (текущий период выпуска)
+		if tx.Type == wire.Mint && !l.Opts.SkipMintChallengeWindow {
+			if !l.CheckMintChallengeWindow(tx.Wallet, l.tt.period, l.tt.now) {
+				return reject("E_POW_HARD")
+			}
+// CheckMintChallengeWindow: слот H(address || period) внутри периода
+// (period_start + H mod period_seconds) и окно ±48 ч (7.6). Якорь —
+// период момента подачи (после фикса M7 — текущий период выпуска,
+// см. applySigPowTime). Включение hash(чекпоинта предыдущей эпохи)
+// в формулу слота — открытый вопрос, PENDING за владельцем; сейчас
+// код считает H(address || period) (hashThree).
+func (l *Ledger) CheckMintChallengeWindow(addr []byte, period, now uint64) bool {
+// mintChallengeSlot — детерминированный момент слота внутри периода:
+// period_start + (H(...) mod period_seconds). Периоды сети — календарные
+// от genesis (9.2): period_start = genesis_time + period × период сети
+// (конвенция headless-ядра — 30 сут; genesis-поле 61 задаёт длину —
+// тестовые сети живого прогона). Та же конвенция в net.RealClock.
+// Какой период передать (якорь слота) — решает вызывающий: после фикса
+// M7 окно челленджа сверяется со слотом ТЕКУЩЕГО периода выпуска.
+// Правка этапа 8 (долг этапа 7): раньше отсчёт шёл от 1970 г. — при
+// genesis-времени близком к текущему слот выпадал в далёкое будущее/прошлое
+// и окно челленджа всегда было закрыто.
+func mintChallengeSlot(genesisTime uint64, addr []byte, period, periodSecs uint64) uint64 {
+	h := hashThree(addr, period)
+	periodStart := genesisTime + period*periodSecs
+	return periodStart + h%periodSecs
+}
+
+## вопросы/errata
+--- QUESTIONS.md №9 ---
+24:| 9 | Параметры PoW: алгоритм лёгкого PoW не назван; параметры Argon2id и таргеты «под средний телефон» (7.6, 17) — этапы 1.2/2. | spec/01 1.3, proto/genesis.proto | **решено (этап 6, 19.10.2026; hex уточнён правкой A4 и темой a10-docs)**: лёгкий = SHA-256, таргет 2^24 (0x0000010000000000, ~1–4 с на телефоне); усиленный = Argon2id 32 МиБ × 1 итерация × p=1, таргет 2^56 (0x0100000000000000, ~256
+
+--- reports/stage6/pow-host.md:1-16 (erratum) ---
+# Замеры моста и PoW на хосте (этап 6, разделы 12.1; вопрос №9)
+
+> **ERRATUM (04.11.2026, тема a10-docs; FINDING-A9-01 слепого аудита A9).**
+> Исторические замеры ниже не переписаны — читайте с учётом исправления.
+> Фактически по коду (`core/params/params.go`, правка A4): `TargetHard =
+> 0x0100_0000_0000_0000` = 2^56 → ожидание **256** итераций Argon2id
+> (32 МиБ × 1 × p=1), а не «~64 итерации»; hex `0x0040_0000_0000_0000`,
+> использовавшийся ниже, — это 2^54 (1024 итерации), устарел до правки A4.
+> Время полного поиска при 2^56: ~5,6–6,3 с на хосте (~22–23 мс/итерация,
+> замеры A9 и его аудита), ~17–19 с на телефоне — а не «~4,8 с хост».
+> Внутренняя несогласованность документа: «9,5 с при 2^57» подразумевает
+> ~74 мс/итерацию и противоречит собственному «~30 мс» (AUDIT-A9-10).
+> Источники: reports симуляции A9 и REPORT-AUDIT-A9-SIMULATION.md
+> (репозиторий equality-anti-farm-simulation), FINDING-A9-01.
+
+Окружение: Intel Core i7-1065G7 (8 потоков), Ubuntu 24.04, Go 1.27.2.
+
+--- BluetoothAndBridgeInstrumentedTest.kt: solveHard + комментарий ---
+70:        tx1.solveLight(0x0000_0100_0000_0000L) // ~2^24 попыток
+73:        // (3) mint-PoW: Argon2id 32 МиБ × 1, таргет 2^56 (~256 итераций,
+80:        tx2.solveHard(0x0100_0000_0000_0000L, 32768, 1, 1)
