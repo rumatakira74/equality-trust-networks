@@ -12,8 +12,8 @@ import (
 
 	"github.com/rumatakira74/equality-trust-networks/core/attest"
 	"github.com/rumatakira74/equality-trust-networks/core/crypto"
-	"github.com/rumatakira74/equality-trust-networks/core/profiles"
 	"github.com/rumatakira74/equality-trust-networks/core/params"
+	"github.com/rumatakira74/equality-trust-networks/core/profiles"
 	"github.com/rumatakira74/equality-trust-networks/core/wire"
 )
 
