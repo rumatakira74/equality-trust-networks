@@ -77,14 +77,16 @@ func TestConfigureDeterministicNetworkID(t *testing.T) {
 func TestConfigureDuplicateFingerprints(t *testing.T) {
 	// та же метка посевного круга дважды — дубликат публичного ключа
 	err := configureCmd([]string{"-template", "8", "-slug", "monte-cloud",
-		"-seeds", "V1,V1", "-out", filepath.Join(t.TempDir(), "net")})
+		"-seeds", "V1,V1", "-out", filepath.Join(t.TempDir(), "net"),
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")})
 	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("дубликат fingerprint'а")) {
 		t.Fatalf("дубликат посевного круга обязан отвергаться, got: %v", err)
 	}
 	// один и тот же fingerprint поставщика дважды
 	fp := crypto.FingerprintHex(crypto.Fingerprint(crypto.MarshalPubKey(&seedKey("V1").PublicKey)))
 	err = configureCmd([]string{"-template", "8", "-slug", "monte-cloud",
-		"-providers", fp + "," + fp, "-out", filepath.Join(t.TempDir(), "net")})
+		"-providers", fp + "," + fp, "-out", filepath.Join(t.TempDir(), "net"),
+		"-signing-dir", filepath.Join(t.TempDir(), "signing")})
 	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("дубликат fingerprint'а")) {
 		t.Fatalf("дубликат поставщика обязан отвергаться, got: %v", err)
 	}

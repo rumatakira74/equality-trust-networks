@@ -20,6 +20,9 @@ func TestConfigureMigrateDelayDays(t *testing.T) {
 			"-template", "laboratory",
 			"-slug", "migrate-delay-test",
 			"-out", out,
+			// signing-каталог — временный (тесты герметичны: реальные
+			// credentials.txt/signing.properties не читаются и не пишутся)
+			"-signing-dir", filepath.Join(t.TempDir(), "signing"),
 		}, extra...)
 		if err := configureCmd(args); err != nil {
 			t.Fatal(err)
