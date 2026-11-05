@@ -1,8 +1,8 @@
 // Настройки (этап 7): манифест сети (параметры — из genesis, не
 // хардкодятся), guardian_offer (объявить себя публичным гардианом,
 // 11), управление узлом (12.2), блокировка приложения.
-// Этап 10: выбор языка интерфейса (ru, en, es, pt, zh — состав
-// подтверждён владельцем 20.10.2026; fallback — английский).
+// Этап 10: выбор языка интерфейса (ru, en, es, pt, zh, fr, de, it, ja
+// — расширение l10n-fr-de-it-ja; fallback — английский).
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -140,10 +140,10 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  /// Выбор языка (этап 10): системный или один из пяти; сохраняется
+  /// Выбор языка (этап 10): системный или один из девяти; сохраняется
   /// в SharedPreferences (AppState.setLocale).
   Widget _languageCard(BuildContext context, AppState app, AppLocalizations l) {
-    const languages = ['ru', 'en', 'es', 'pt', 'zh'];
+    const languages = ['ru', 'en', 'es', 'pt', 'zh', 'fr', 'de', 'it', 'ja'];
     String label(String code) {
       switch (code) {
         case 'ru':
@@ -156,6 +156,14 @@ class SettingsScreen extends StatelessWidget {
           return l.languagePt;
         case 'zh':
           return l.languageZh;
+        case 'fr':
+          return l.languageFr;
+        case 'de':
+          return l.languageDe;
+        case 'it':
+          return l.languageIt;
+        case 'ja':
+          return l.languageJa;
         default:
           return l.languageSystem;
       }
