@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Нативные строки Android из ARB (тема fix-native-strings): задача
+# generateNativeStrings пишет их при сборке, источник переводов — ARB
+/app/src/main/res/values/strings.xml
+/app/src/main/res/values-??/strings.xml
