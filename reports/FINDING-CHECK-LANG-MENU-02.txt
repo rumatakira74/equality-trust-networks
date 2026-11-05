@@ -1,0 +1,51 @@
+FINDING-CHECK-LANG-MENU-02: первая регистрация кошелька на чистой установке падает NONODE
+
+Тема: check-lang-menu. Дата: 05.11.2026. SHA main: 58f76c192d48e69729b9589e861eb5a40117af07.
+Код приложения не правился (мандат read-only); находка описывает поведение как есть.
+
+Симптом
+-------
+Чистая установка debug-APK, онбординг: биометрия -> PIN -> гардианы (пропуск) ->
+«Register wallet». Первая попытка заканчивается на экране регистрации сообщением:
+
+    Error: NONODE: узел не запущен
+
+Повторное нажатие «Register wallet» без каких-либо других действий проходит:
+регистрация принимается (карточка восстановления появляется). То есть на свежей
+установке регистрация всегда требует второй попытки.
+
+Причина (по коду и logcat)
+--------------------------
+Порядок вызовов в Dart (app/lib/screens/onboarding/onboarding_flow.dart, _RegisterStep._register):
+  1) await app.startNode();            // -> nodeStart -> NodeService.start
+  2) app.signAndSubmit(platform.buildRegister)  // buildRegister создаёт ключ и адрес
+
+Мост (app/android/app/src/main/kotlin/platform/tnp/android/flutterbridge/FlutterBridge.kt):
+  - NodeController.ownWallet = address() при инициализации genesis (строки ~136, ~154);
+    address() возвращает null, пока ключ Keystore не создан, — ownWallet остаётся null;
+  - обработчик "nodeStart" (строка ~750) ownWallet НЕ обновляет;
+  - ownWallet выставляется только в buildRegister (строка ~940) — уже после шага 1.
+
+Узел уровня light без адреса кошелька не стартует (NodeController.ensureStarted ->
+tnp.Tnp.startNode), logcat:
+
+    E TnpNode : запуск узла: лёгкому узлу нужен адрес кошелька
+    E TnpNode : go.Universe$proxyerror: лёгкому узлу нужен адрес кошелька
+    E TnpNode :   at platform.tnp.android.node.NodeController.ensureStarted(NodeController.kt:86)
+
+Далее submitTx уходит в узел, которого нет -> NONODE (FlutterBridge.kt:621 и др.).
+Со второй попытки ownWallet уже выставлен первым buildRegister, узел стартует,
+REGISTER принимается (logcat: handleTx: tx c9cad439c192 type=REGISTER seq=1).
+
+Влияние
+-------
+Блокирует первый проход онбординга: пользователь на чистой установке видит ошибку
+и вынужден нажать «Register wallet» второй раз. На меню языка не влияет, но именно
+этот шаг — единственный путь к настройкам, поэтому в прогоне check-lang-menu он
+преодолевался повторным нажатием.
+
+Рекомендация (решение владельца)
+--------------------------------
+Обновлять NodeController.ownWallet в обработчике nodeStart (или стартовать узел
+после buildRegister / повторять startNode при получении адреса). Правка вне
+мандата check-lang-menu.

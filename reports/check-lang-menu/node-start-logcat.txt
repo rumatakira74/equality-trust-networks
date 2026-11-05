@@ -1,0 +1,20 @@
+11-05 04:10:50.582  4334  4334 D TnpBridge: -> submitTx
+11-05 04:10:50.585  4334  4369 D TnpNode : handleTx: tx c9cad439c192 type=REGISTER seq=1 от <peer.ID Qm*6AaPHk>
+11-05 04:11:47.539  4334  4386 D TnpNode : sync: 
+11-05 04:11:47.540  4334  4386 D TnpNode : stats: {"level":"light","peer_id":"QmWu72DZ1wwN4Gh6cc96KzbusuxztrMkD9Asgu1f6AaPHk","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 04:11:47.936  4334  4386 D TnpNode : sync: 
+11-05 04:11:47.936  4334  4386 D TnpNode : stats: {"level":"light","peer_id":"QmWu72DZ1wwN4Gh6cc96KzbusuxztrMkD9Asgu1f6AaPHk","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 04:12:32.071   677  1775 W ForegroundServiceTypeLoggerModule: FGS stop call for: 10217 has no types!
+11-05 04:12:59.329  5034  5034 D TnpBridge: -> nodeStart
+11-05 04:12:59.331   677  1815 I ActivityManager: Background started FGS: Allowed [callingPackage: platform.tnp.tnp_app; callingUid: 10217; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=platform.tnp.tnp_app/platform.tnp.android.node.NodeService }; code:PROC_STATE_TOP; tempAllowListReason:<null>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+11-05 04:12:59.438   677   970 I ActivityManager: Background started FGS: Allowed [callingPackage: platform.tnp.tnp_app; callingUid: 10217; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { cmp=platform.tnp.tnp_app/platform.tnp.android.node.NodeService }; code:PROC_STATE_TOP; tempAllowListReason:<null>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+11-05 04:13:04.573  5034  5087 D TnpNode : bootstrap: manual: <peer.ID Qm*VVXdtP>: failed to dial: failed to dial QmNPJienGU6g9WBVbwaX26kBUr7ePWPHDNsaLMv9VVXdtP: all dials failed
+11-05 04:13:04.573  5034  5087 D TnpNode :   * [/ip4/127.0.0.1/udp/4001/quic-v1] context deadline exceeded
+11-05 04:13:09.577  5034  5087 D TnpNode : bootstrap: manual: <peer.ID Qm*8JBtJC>: failed to dial: failed to dial QmNXG1JRSkhWPzc8QzkiDm2mBFniQni9vSwW9BCM8JBtJC: all dials failed
+11-05 04:13:09.577  5034  5087 D TnpNode :   * [/ip4/127.0.0.1/udp/4002/quic-v1] context deadline exceeded
+11-05 04:13:09.577  5034  5087 D TnpNode : net: bootstrap: ни один пир не доступен
+11-05 04:13:09.579  5034  5087 D TnpNode : запущен: {"level":"light","peer_id":"QmSifSbdoqy9vt6ygF8pUw3bUXfi8omZ2PSBRjUeRKvVJe","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 04:13:09.579  5034  5087 D TnpNode : sync: 
+11-05 04:13:09.579  5034  5087 D TnpNode : stats: {"level":"light","peer_id":"QmSifSbdoqy9vt6ygF8pUw3bUXfi8omZ2PSBRjUeRKvVJe","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 04:13:09.587  5034  5087 D TnpNode : sync: 
+11-05 04:13:09.587  5034  5087 D TnpNode : stats: {"level":"light","peer_id":"QmSifSbdoqy9vt6ygF8pUw3bUXfi8omZ2PSBRjUeRKvVJe","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
