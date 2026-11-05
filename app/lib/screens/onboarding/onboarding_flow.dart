@@ -419,11 +419,15 @@ class _RegisterStepState extends State<_RegisterStep> {
     final platform = context.read<PlatformService>();
     final flow = context.findAncestorStateOfType<_OnboardingFlowState>();
     try {
-      await app.startNode();
       final guardians = flow?.guardians ?? const <String>[];
+      // узел стартует после сборки регистрации: buildRegister создаёт
+      // ключ и адрес кошелька, без адреса light-узел не стартует
+      // (FINDING-02: при старте до сборки первая регистрация на чистой
+      // установке падала NONODE)
       final res = await app.signAndSubmit(
         () => platform.buildRegister(guardians),
         l.regConfirmTitle,
+        afterBuild: app.startNode,
       );
       if (!mounted) return;
       setState(() => _status = res.accepted

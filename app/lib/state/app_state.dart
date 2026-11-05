@@ -153,11 +153,18 @@ class AppState extends ChangeNotifier {
 
   /// Полный цикл: сборка -> биометрическая подпись -> публикация.
   /// Возвращает результат публикации (в приманке — неотличимый ответ).
+  ///
+  /// afterBuild — действие между сборкой и подписью. Регистрации оно
+  /// нужно для старта узла: buildRegister создаёт ключ и адрес кошелька,
+  /// а light-узел без адреса не стартует (FINDING-02: при обратном
+  /// порядке первая регистрация на чистой установке падала NONODE).
   Future<SubmitResult> signAndSubmit(
     Future<String> Function() build,
-    String title,
-  ) async {
+    String title, {
+    Future<void> Function()? afterBuild,
+  }) async {
     final id = await build();
+    if (afterBuild != null) await afterBuild();
     final ok = await platform.signTx(id, title);
     if (!ok) {
       await platform.discardTx(id);
