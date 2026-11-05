@@ -819,6 +819,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageZh => '中文';
 
   @override
+  String get languageFr => 'Français';
+
+  @override
+  String get languageDe => 'Deutsch';
+
+  @override
+  String get languageIt => 'Italiano';
+
+  @override
+  String get languageJa => '日本語';
+
+  @override
   String get recoveryTitle => '恢复卡';
 
   @override
