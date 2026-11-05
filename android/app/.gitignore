@@ -1,0 +1,5 @@
+# Нативные строки Android из ARB (тема fix-sweep): задача
+# generateNativeStrings пишет их при сборке из app/lib/l10n, источник
+# переводов — ARB; собственные строки UI этапа 6 — values/host_ui.xml
+/src/main/res/values/strings.xml
+/src/main/res/values-??/strings.xml

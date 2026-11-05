@@ -4,9 +4,9 @@
 // generateNativeStrings (app/android/app/build.gradle.kts) — и из Dart не
 // запускается: в CI его выполняет сборка APK и падает на пропавшем ключе.
 // Юнит-тест страхует стык, который сборкой не проверяется: вход генератора
-// (шесть ключей во всех девяти ARB) и совпадение имён ресурсов с теми, что
-// ищет Kotlin. Рассинхрон имени сборку не роняет — строка молча уходит в
-// fallback-литерал, поэтому проверяется отдельно.
+// (семь ключей во всех девяти ARB) и совпадение имён ресурсов с теми, что
+// ищет Kotlin, в обоих хостах. Рассинхрон имени сборку не роняет — строка
+// молча уходит в fallback-литерал, поэтому проверяется отдельно.
 import 'dart:convert';
 import 'dart:io';
 
@@ -20,6 +20,7 @@ const expectedKeys = <String, String>{
   'nodeNotificationText': 'node_notification_text',
   'errTxNotFound': 'err_tx_not_found',
   'signDefaultTitle': 'sign_default_title',
+  'btnCancel': 'btn_cancel',
 };
 
 /// en — шаблон ARB (values/), остальные восемь — `values-<lang>/`.
@@ -72,6 +73,27 @@ void main() {
       reason: 'карта ARB -> ресурс в сборке разошлась с ожидаемой',
     );
 
+    // хост этапа 6 (android/) — тот же механизм generateNativeStrings:
+    // карта должна совпадать с Flutter-хостом, иначе NodeService хоста
+    // молча уйдёт в fallback-литерал
+    final hostGradle = File(
+      '../android/app/build.gradle.kts',
+    ).readAsStringSync();
+    final hostBlock = RegExp(
+      r'val nativeStringKeys = linkedMapOf\(([\s\S]*?)\n\)',
+    ).firstMatch(hostGradle);
+    expect(hostBlock, isNotNull, reason: 'в хосте этапа 6 нет nativeStringKeys');
+    final hostDeclared = <String, String>{
+      for (final m
+          in RegExp(r'"(\w+)"\s+to\s+"(\w+)"').allMatches(hostBlock!.group(1)!))
+        m.group(1)!: m.group(2)!,
+    };
+    expect(
+      hostDeclared,
+      expectedKeys,
+      reason: 'карта ARB -> ресурс в хосте этапа 6 разошлась с ожидаемой',
+    );
+
     // где каждое имя обязано встречаться: рассинхрон имени — это молчаливый
     // fallback в Kotlin, а не ошибка сборки
     final nodeService = File(
@@ -90,6 +112,7 @@ void main() {
       'node_notification_text': nodeService.readAsStringSync(),
       'err_tx_not_found': bridge.readAsStringSync(),
       'sign_default_title': bridge.readAsStringSync(),
+      'btn_cancel': bridge.readAsStringSync(),
       // label приложения — манифест через manifestPlaceholders
       'app_name': gradle,
     };

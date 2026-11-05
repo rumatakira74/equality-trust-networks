@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Собственные строки UI этапа 6 (кнопки, PIN-заголовки): демо-сборка
+     конструктора, переводятся вместе с экраном этапа 6. Нативные строки
+     (app_name, node_channel_name, node_notification_*, ...) генерируются
+     из ARB задачей generateNativeStrings в values[-<lang>]/strings.xml
+     (тема fix-sweep) и в git не попадают. -->
 <resources>
-    <string name="app_name">Сети доверия</string>
-    <string name="node_channel">Узел сети</string>
-    <string name="node_notification">Узел сети доверия работает</string>
     <string name="btn_setup">Настроить кошелёк</string>
     <string name="btn_balance">Баланс</string>
     <string name="btn_send">Перевод</string>
