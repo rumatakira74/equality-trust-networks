@@ -199,6 +199,7 @@ val nativeStringKeys = linkedMapOf(
     "nodeNotificationText" to "node_notification_text",
     "errTxNotFound" to "err_tx_not_found",
     "signDefaultTitle" to "sign_default_title",
+    "btnCancel" to "btn_cancel",
 )
 // en — шаблон ARB (fallback), кладётся в values/ — язык по умолчанию;
 // остальные восемь — в values-<lang>/, их выбирает системная локаль

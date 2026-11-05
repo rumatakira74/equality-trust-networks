@@ -631,8 +631,10 @@ object FlutterBridge {
                     val title = call.argument<String>("title")
                         ?: appContext.getString(R.string.sign_default_title)
                     // подпись негативной кнопки промпта — из ARB через
-                    // канал (FINDING-03); fallback — английский (шаблон ARB)
-                    val cancel = call.argument<String>("cancel") ?: "Cancel"
+                    // канал (FINDING-03); fallback (аргумент не пришёл) —
+                    // из сгенерированных strings: btn_cancel (шаблон ARB en)
+                    val cancel = call.argument<String>("cancel")
+                        ?: appContext.getString(R.string.btn_cancel)
                     val tx = pendingTx[id]
                     if (tx == null) {
                         result.error("NOTFOUND", appContext.getString(R.string.err_tx_not_found), null)

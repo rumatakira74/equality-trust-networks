@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep-правила ресурс-сжатия release (тема fix-sweep, п.в
+     FINDING-fix-native-strings-01): release хоста этапа 6 собирается с
+     isShrinkResources=true, а NodeService ищет строки уведомления узла
+     по имени (resources.getIdentifier) — для шринкера эти ссылки
+     невидимы, без keep строки молча удаляются и уведомление уходит в
+     fallback-литерал. app_name читает манифест, оставлена явно для
+     устойчивости к смене схемы label. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/app_name,@string/node_channel_name,@string/node_notification_title,@string/node_notification_text" />

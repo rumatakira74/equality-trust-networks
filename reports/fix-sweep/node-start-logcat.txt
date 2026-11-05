@@ -1,0 +1,11 @@
+# строка 06:00:11 (таймаут на чистой установке) выведена из кольцевого
+# буфера logcat к моменту выгрузки; зафиксирована в момент события:
+# 11-05 06:00:11.678  4317  4317 I flutter : TnpNode: готовность узла — 15532 мс (таймаут 15 с)
+11-05 06:09:08.441  4686  4686 D TnpBridge: -> nodeStart
+11-05 06:09:08.442  4686  4686 D TnpBridge: <- nodeStart done
+11-05 06:09:18.482  4686  4741 D TnpNode : запущен: {"level":"light","peer_id":"Qme36e29NLfZe9wKsatdq5JGN661Y9DysoKanmqXqgyZb4","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 06:09:18.485  4686  4686 I flutter : TnpNode: готовность узла — 10041 мс
+11-05 06:11:20.085  5660  5660 D TnpBridge: -> nodeStart
+11-05 06:11:20.100  5660  5660 D TnpBridge: <- nodeStart done
+11-05 06:11:30.325  5660  5717 D TnpNode : запущен: {"level":"light","peer_id":"Qme91cfh8k96QA8Ex3kX9YFfmP3KACBpXq3TyHiT5hxRDF","peers":0,"journal_len":0,"spam_rejected":0,"pending":0,"awaiting":0,"conflicts":0,"state_root":""}
+11-05 06:11:30.335  5660  5660 I flutter : TnpNode: готовность узла — 10224 мс

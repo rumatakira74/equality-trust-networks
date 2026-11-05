@@ -13,12 +13,13 @@ import android.os.IBinder
  * пока приложение в фоне. Уровень full/light выбирает NodeController
  * (зарядка + Wi-Fi); смена уровня — перезапуск узла.
  *
- * Строки (тема fix-native-strings): файл компилируется и в Flutter-хост
- * (app/, пакет R — platform.tnp.tnp_app), и в приложение этапа 6
- * (android/, R — platform.tnp.android), поэтому R не импортируется —
- * ресурс ищется по имени (localized). Flutter-хост получает значения из
- * ARB (values-<lang>/strings.xml, задача generateNativeStrings); если
- * ресурса в хосте нет — остаётся прежний литерал.
+ * Строки (темы fix-native-strings, fix-sweep): файл компилируется и в
+ * Flutter-хост (app/, пакет R — platform.tnp.tnp_app), и в приложение
+ * этапа 6 (android/, R — platform.tnp.android), поэтому R не
+ * импортируется — ресурс ищется по имени (localized). Оба хоста
+ * получают значения из ARB (values[-<lang>]/strings.xml, задача
+ * generateNativeStrings); если ресурса в хосте нет — остаётся прежний
+ * литерал.
  */
 class NodeService : Service() {
 
@@ -45,11 +46,12 @@ class NodeService : Service() {
     }
 
     /**
-     * Строка из ресурсов хоста по имени (тема fix-native-strings): R не
-     * импортируется, потому что файл собирается в двух хостах с разными
-     * пакетами R. Flutter-хост берёт значения из ARB (values-<lang>/
-     * strings.xml); у хоста этапа 6 свои ресурсы, и если нужного имени
-     * там нет — остаётся прежний литерал, то есть поведение не меняется.
+     * Строка из ресурсов хоста по имени (темы fix-native-strings,
+     * fix-sweep): R не импортируется, потому что файл собирается в двух
+     * хостах с разными пакетами R. Оба хоста берут значения из ARB
+     * (values[-<lang>]/strings.xml, задача generateNativeStrings); если
+     * нужного имени в ресурсах нет — остаётся прежний литерал, то есть
+     * поведение не меняется.
      */
     private fun localized(name: String, fallback: String): String {
         val id = resources.getIdentifier(name, "string", packageName)
