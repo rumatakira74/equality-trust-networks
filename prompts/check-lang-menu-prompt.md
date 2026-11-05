@@ -10,7 +10,7 @@
 
 ## Ожидаемое состояние (сверять с фактическим main, не с этим текстом)
 
-На момент составления мандата в main 5 языков интерфейса: ARB `app/lib/l10n/app_{ru,en,es,pt,zh}.arb`; выбор языка чипами в настройках (`app/lib/screens/settings/settings_screen.dart`, константа `languages`, подписи через ключи languageRu/En/Es/Pt/Zh/System; fallback en). Если фактический набор ARB в main на момент прогона отличается (например, добавлены fr/de/it/ja) — проверять по фактическому набору.
+В main 9 языков интерфейса (сверено по ремуту 05.11, после merge l10n-fr-de-it-ja): ARB `app/lib/l10n/app_{ru,en,es,pt,zh,fr,de,it,ja}.arb`; выбор языка чипами в настройках (`app/lib/screens/settings/settings_screen.dart`, константа `languages`, подписи через ключи languageRu/En/Es/Pt/Zh/Fr/De/It/Ja/System; fallback en). Если фактический набор ARB в main на момент прогона отличается — проверять по фактическому набору.
 
 ## Задачи
 
