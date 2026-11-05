@@ -1,5 +1,5 @@
-// Тесты локализации (этап 10): пять языков (ru, en, es, pt, zh — состав
-// подтверждён владельцем 20.10.2026), fallback — английский; выбор
+// Тесты локализации (этап 10; расширено l10n-fr-de-it-ja): девять языков
+// (ru, en, es, pt, zh, fr, de, it, ja), fallback — английский; выбор
 // языка в настройках меняет интерфейс немедленно.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -42,13 +42,17 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('пять языков: ключевые строки экрана настроек', (tester) async {
+  testWidgets('девять языков: ключевые строки экрана настроек', (tester) async {
     final cases = {
       const Locale('ru'): ['Настройки', 'Язык', 'Демередж'],
       const Locale('en'): ['Settings', 'Language', 'Demurrage'],
       const Locale('es'): ['Ajustes', 'Idioma', 'Demurrage'],
       const Locale('pt'): ['Ajustes', 'Idioma', 'Demurrage'],
       const Locale('zh'): ['设置', '语言', '损耗费'],
+      const Locale('fr'): ['Réglages', 'Langue', 'Demurrage'],
+      const Locale('de'): ['Einstellungen', 'Sprache', 'Demurrage'],
+      const Locale('it'): ['Impostazioni', 'Lingua', 'Demurrage'],
+      const Locale('ja'): ['設定', '言語', 'デマレージ'],
     };
     for (final entry in cases.entries) {
       final fake = FakePlatformService();
@@ -88,8 +92,8 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
   });
 
-  test('все пять локалей поддержаны делегатом', () async {
-    const expected = {'ru', 'en', 'es', 'pt', 'zh'};
+  test('все девять локалей поддержаны делегатом', () async {
+    const expected = {'ru', 'en', 'es', 'pt', 'zh', 'fr', 'de', 'it', 'ja'};
     final supported =
         AppLocalizations.supportedLocales.map((l) => l.languageCode).toSet();
     expect(supported, expected);

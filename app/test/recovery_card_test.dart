@@ -136,6 +136,14 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    // девять чипов языков делают карточку выбора языка выше: цель
+    // может быть видна лишь частично (центр текста за нижней
+    // границей) — доскролливаем до попадания в хит-тест
+    await tester.dragUntilVisible(
+      find.text('Карточка восстановления').hitTestable(),
+      find.byType(Scrollable).first,
+      const Offset(0, -50),
+    );
     await tester.tap(find.text('Карточка восстановления'));
     await tester.pumpAndSettle();
     expect(find.byType(RecoveryCardScreen), findsOneWidget);
