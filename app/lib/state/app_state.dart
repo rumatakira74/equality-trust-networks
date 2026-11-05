@@ -121,18 +121,34 @@ class AppState extends ChangeNotifier {
   }
 
   /// Запуск узла (12.2) и обновление состояния.
+  ///
+  /// Готовности ждём до 15 с (тема fix-native-strings, п.в): замеренный
+  /// bootstrap узла занимает до ~11 с, а прежние 5 с его не покрывали —
+  /// submitTx сразу после старта получал NONODE. Фактическое время
+  /// ожидания пишется в лог.
   Future<void> startNode() async {
     await platform.nodeStart();
     // узел поднимается в foreground-сервисе асинхронно: дождаться
     // готовности, иначе снапшоты увидят пустой реестр
-    for (var i = 0; i < 25; i++) {
+    final watch = Stopwatch()..start();
+    var ready = false;
+    // 75 × 200 мс = 15 с
+    for (var i = 0; i < 75; i++) {
       try {
-        if ((await platform.nodeStats()).isNotEmpty) break;
+        if ((await platform.nodeStats()).isNotEmpty) {
+          ready = true;
+          break;
+        }
       } on TnpPlatformException {
         // узел ещё не готов
       }
       await Future.delayed(const Duration(milliseconds: 200));
     }
+    watch.stop();
+    debugPrint(
+      'TnpNode: готовность узла — ${watch.elapsedMilliseconds} мс'
+      '${ready ? '' : ' (таймаут 15 с)'}',
+    );
     _nodeRunning = true;
     notifyListeners();
   }
