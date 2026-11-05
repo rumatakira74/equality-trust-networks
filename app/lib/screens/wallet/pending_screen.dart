@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../services/secure_mode.dart';
@@ -54,13 +55,14 @@ class _PendingScreenState extends State<PendingScreen> {
       final res = await app.signAndSubmit(
         () => platform.buildCancel(p.seq),
         l.cancelConfirmTitle,
+        cancel: l.btnCancel,
       );
       setState(() => _result =
           res.accepted ? l.canceledMsg : l.rejectedWithCode(res.code));
       _refresh();
       app.refreshWallet();
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     }
   }
 
@@ -77,6 +79,7 @@ class _PendingScreenState extends State<PendingScreen> {
       final res = await app.signAndSubmit(
         () => platform.buildSetThreshold(newP),
         l.btnChangeThreshold,
+        cancel: l.btnCancel,
       );
       final wallet = app.wallet;
       final raising = newP > (wallet?.thresholdP ?? 0);
@@ -85,7 +88,7 @@ class _PendingScreenState extends State<PendingScreen> {
           : l.rejectedWithCode(res.code));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     }
   }
 

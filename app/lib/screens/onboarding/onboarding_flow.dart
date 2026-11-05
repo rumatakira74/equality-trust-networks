@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -320,7 +321,7 @@ class _GuardiansStepState extends State<_GuardiansStep> {
       } catch (e) {
         if (attempt == 9 && mounted) {
           setState(() {
-            _error = '$e';
+            _error = AppLocalizations.of(context)!.errorText(e);
             _loading = false;
           });
         }
@@ -419,11 +420,16 @@ class _RegisterStepState extends State<_RegisterStep> {
     final platform = context.read<PlatformService>();
     final flow = context.findAncestorStateOfType<_OnboardingFlowState>();
     try {
-      await app.startNode();
       final guardians = flow?.guardians ?? const <String>[];
+      // узел стартует после сборки регистрации: buildRegister создаёт
+      // ключ и адрес кошелька, без адреса light-узел не стартует
+      // (FINDING-02: при старте до сборки первая регистрация на чистой
+      // установке падала NONODE)
       final res = await app.signAndSubmit(
         () => platform.buildRegister(guardians),
         l.regConfirmTitle,
+        afterBuild: app.startNode,
+        cancel: l.btnCancel,
       );
       if (!mounted) return;
       setState(() => _status = res.accepted
@@ -434,7 +440,7 @@ class _RegisterStepState extends State<_RegisterStep> {
         widget.onDone();
       }
     } catch (e) {
-      setState(() => _status = l.errorWith('$e'));
+      setState(() => _status = l.errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

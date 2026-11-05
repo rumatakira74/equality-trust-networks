@@ -322,6 +322,12 @@ abstract class AppLocalizations {
   /// **'Wrong PIN'**
   String get errWrongPin;
 
+  /// No description provided for @errNoNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Node is not running'**
+  String get errNoNode;
+
   /// No description provided for @lockTooManyAttempts.
   ///
   /// In en, this message translates to:

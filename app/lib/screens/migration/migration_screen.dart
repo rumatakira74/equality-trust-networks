@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -164,6 +165,7 @@ class _MigrationScreenState extends State<MigrationScreen> {
       final res = await app.signAndSubmit(
         () => platform.buildMigrateCancel(m.newAddress, m.proposeSeq),
         l.cancelMigrationTitle,
+        cancel: l.btnCancel,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -174,7 +176,7 @@ class _MigrationScreenState extends State<MigrationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
+            .showSnackBar(SnackBar(content: Text(l.errorText(e))));
       }
     }
   }
@@ -280,12 +282,13 @@ class _StartMigrationScreenState extends State<StartMigrationScreen> {
           _nonce,
         ),
         l.keyUnlockTitle,
+        cancel: l.btnCancel,
       );
       setState(() => _result = res.accepted
           ? l.migrationStarted(app.manifest?.migrateDelayDays ?? 14)
           : l.rejectedWithCode(res.code));
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     }
   }
 
@@ -412,7 +415,7 @@ class _ApproveMigrationScreenState extends State<ApproveMigrationScreen> {
         _error = sig.isEmpty ? l.signNotConfirmed : null;
       });
     } catch (e) {
-      setState(() => _error = l.errorWith('$e'));
+      setState(() => _error = l.errorText(e));
     }
   }
 

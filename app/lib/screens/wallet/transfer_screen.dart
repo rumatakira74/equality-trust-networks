@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/platform_service.dart';
 import '../../services/secure_mode.dart';
 import '../../services/tx_errors.dart';
@@ -88,7 +89,8 @@ class _TransferScreenState extends State<TransferScreen> {
       final id = built['id'] as String;
       // подтверждение уже дано PIN-ом: биометрия здесь — только
       // разблокировка ключа Keystore (не подтверждение операции)
-      final signed = await platform.signTx(id, l.keyUnlockTitle);
+      final signed =
+          await platform.signTx(id, l.keyUnlockTitle, cancel: l.btnCancel);
       if (!signed) {
         await platform.discardTx(id);
         setState(() => _result = l.signNotConfirmed);
@@ -108,7 +110,7 @@ class _TransferScreenState extends State<TransferScreen> {
           : (txError ?? l.rejectedWithCode(res.code)));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -131,7 +133,8 @@ class _TransferScreenState extends State<TransferScreen> {
       );
       final id = built['id'] as String;
       // подтверждение уже дано PIN-ом: биометрия — разблокировка ключа
-      final signed = await platform.signTx(id, l.keyUnlockTitle);
+      final signed =
+          await platform.signTx(id, l.keyUnlockTitle, cancel: l.btnCancel);
       if (!signed) {
         await platform.discardTx(id);
         setState(() => _result = l.signNotConfirmed);
@@ -148,7 +151,7 @@ class _TransferScreenState extends State<TransferScreen> {
           ? l.btSent
           : l.btError('${r['error']}'));
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

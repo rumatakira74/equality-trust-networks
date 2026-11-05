@@ -332,7 +332,7 @@ class FakePlatformService implements PlatformService {
       duress ? <PendingGuardianUpdate>[] : guardianUpdates;
 
   @override
-  Future<bool> signTx(String id, String title) async {
+  Future<bool> signTx(String id, String title, {String? cancel}) async {
     if (duress) {
       // приманка (8.2): подпись НЕ выполняется, ответ правдоподобен
       calls.add('signFake($id)');

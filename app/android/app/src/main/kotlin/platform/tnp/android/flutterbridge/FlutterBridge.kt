@@ -628,6 +628,9 @@ object FlutterBridge {
                 "signTx" -> {
                     val id = call.argument<String>("id")!!
                     val title = call.argument<String>("title") ?: "Подтвердите операцию"
+                    // подпись негативной кнопки промпта — из ARB через
+                    // канал (FINDING-03); fallback — английский (шаблон ARB)
+                    val cancel = call.argument<String>("cancel") ?: "Cancel"
                     val tx = pendingTx[id]
                     if (tx == null) {
                         result.error("NOTFOUND", "транзакция не найдена", null)
@@ -637,12 +640,14 @@ object FlutterBridge {
                         // приманка (8.2, A6): тот же биометрический
                         // промпт, что у честной подписи (plain — ключ
                         // не используется), подписи и публикации нет
-                        BiometricGate.authenticatePlain(activity, title, "Отмена") { ok ->
+                        BiometricGate.authenticatePlain(activity, title, cancel) { ok ->
                             result.success(mapOf("ok" to ok, "fake" to true))
                         }
                         return
                     }
-                    BiometricGate.signWithBiometric(activity, wallet, title, tx.signingHash()) { sig ->
+                    BiometricGate.signWithBiometric(
+                        activity, wallet, title, tx.signingHash(), cancel,
+                    ) { sig ->
                         android.util.Log.d("TnpBridge", "signTx callback sig=" + (sig != null))
                         if (sig == null) {
                             result.success(mapOf("ok" to false))

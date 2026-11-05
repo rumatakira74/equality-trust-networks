@@ -35,6 +35,7 @@
   "btnSignBiometric": "Firma (biometria)",
   "enterPin": "Inserisca il PIN",
   "errWrongPin": "PIN errato",
+  "errNoNode": "Il nodo non è in esecuzione",
   "lockTooManyAttempts": "Troppi tentativi falliti. Riprovi tra {seconds} s",
   "confirmOperation": "Confermi l'operazione",
   "keyUnlockTitle": "Sblocca la chiave",

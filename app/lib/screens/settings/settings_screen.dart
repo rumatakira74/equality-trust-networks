@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../state/app_state.dart';
 import '../recovery/recovery_card_screen.dart';
 import 'guardians_screen.dart';
@@ -216,6 +217,7 @@ class SettingsScreen extends StatelessWidget {
       final res = await app.signAndSubmit(
         platform.buildGuardianOffer,
         l.guardianConfirmTitle,
+        cancel: l.btnCancel,
       );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -227,7 +229,7 @@ class SettingsScreen extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
+            .showSnackBar(SnackBar(content: Text(l.errorText(e))));
       }
     }
   }

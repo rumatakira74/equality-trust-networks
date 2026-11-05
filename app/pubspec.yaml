@@ -20,8 +20,8 @@ dependencies:
   provider: ^6.1.2
   # QR-код адреса для поручительства при личной встрече (7.4)
   qr_flutter: ^4.1.0
-  # локализация UI (этап 10): ru, en, es, pt, zh — состав подтверждён
-  # владельцем 20.10.2026; fallback — английский
+  # локализация UI (этап 10, расширена l10n-fr-de-it-ja): девять языков
+  # (ru, en, es, pt, zh, fr, de, it, ja); fallback — английский
   flutter_localizations:
     sdk: flutter
   intl: any

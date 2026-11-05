@@ -35,6 +35,7 @@
   "btnSignBiometric": "Signer (biométrie)",
   "enterPin": "Saisissez le PIN",
   "errWrongPin": "PIN incorrect",
+  "errNoNode": "Le nœud n'est pas démarré",
   "lockTooManyAttempts": "Trop de tentatives échouées. Réessayez dans {seconds} s",
   "confirmOperation": "Confirmez l'opération",
   "keyUnlockTitle": "Déverrouiller la clé",

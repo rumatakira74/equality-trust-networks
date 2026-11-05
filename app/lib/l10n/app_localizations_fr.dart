@@ -116,6 +116,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errWrongPin => 'PIN incorrect';
 
   @override
+  String get errNoNode => 'Le nœud n\'est pas démarré';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Trop de tentatives échouées. Réessayez dans $seconds s';
   }

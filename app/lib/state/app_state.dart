@@ -38,9 +38,10 @@ class AppState extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
-  /// Язык интерфейса (этап 10): null — системный, иначе один из
-  /// поддерживаемых (ru, en, es, pt, zh); выбор — в настройках,
-  /// сохраняется в SharedPreferences.
+  /// Язык интерфейса (этап 10, расширен l10n-fr-de-it-ja): null —
+  /// системный, иначе один из девяти поддерживаемых (ru, en, es, pt,
+  /// zh, fr, de, it, ja); выбор — в настройках, сохраняется в
+  /// SharedPreferences.
   Locale? _locale;
   Locale? get locale => _locale;
 
@@ -153,12 +154,20 @@ class AppState extends ChangeNotifier {
 
   /// Полный цикл: сборка -> биометрическая подпись -> публикация.
   /// Возвращает результат публикации (в приманке — неотличимый ответ).
+  ///
+  /// afterBuild — действие между сборкой и подписью. Регистрации оно
+  /// нужно для старта узла: buildRegister создаёт ключ и адрес кошелька,
+  /// а light-узел без адреса не стартует (FINDING-02: при обратном
+  /// порядке первая регистрация на чистой установке падала NONODE).
   Future<SubmitResult> signAndSubmit(
     Future<String> Function() build,
-    String title,
-  ) async {
+    String title, {
+    Future<void> Function()? afterBuild,
+    String? cancel,
+  }) async {
     final id = await build();
-    final ok = await platform.signTx(id, title);
+    if (afterBuild != null) await afterBuild();
+    final ok = await platform.signTx(id, title, cancel: cancel);
     if (!ok) {
       await platform.discardTx(id);
       throw TnpPlatformException('SIGN', 'SIGN_NOT_CONFIRMED');

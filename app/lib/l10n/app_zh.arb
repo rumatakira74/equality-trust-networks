@@ -35,6 +35,7 @@
   "btnSignBiometric": "签名（生物识别）",
   "enterPin": "输入 PIN",
   "errWrongPin": "PIN 错误",
+  "errNoNode": "节点未运行",
   "lockTooManyAttempts": "尝试次数过多，请在 {seconds} 秒后重试",
   "@lockTooManyAttempts": {
     "placeholders": {

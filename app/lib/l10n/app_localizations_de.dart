@@ -116,6 +116,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errWrongPin => 'Falsche PIN';
 
   @override
+  String get errNoNode => 'Der Knoten läuft nicht';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Zu viele fehlgeschlagene Versuche. Erneut in $seconds s versuchen';
   }

@@ -35,6 +35,7 @@
   "btnSignBiometric": "Firmar (biometría)",
   "enterPin": "Introduzca el PIN",
   "errWrongPin": "PIN incorrecto",
+  "errNoNode": "El nodo no está en marcha",
   "lockTooManyAttempts": "Demasiados intentos fallidos. Reinténtalo en {seconds} s",
   "@lockTooManyAttempts": {
     "placeholders": {

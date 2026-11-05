@@ -115,6 +115,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errWrongPin => 'PIN が違います';
 
   @override
+  String get errNoNode => 'ノードが起動していません';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return '失敗が多すぎます。$seconds 秒後に再試行してください';
   }

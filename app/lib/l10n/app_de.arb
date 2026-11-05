@@ -35,6 +35,7 @@
   "btnSignBiometric": "Signieren (Biometrie)",
   "enterPin": "PIN eingeben",
   "errWrongPin": "Falsche PIN",
+  "errNoNode": "Der Knoten läuft nicht",
   "lockTooManyAttempts": "Zu viele fehlgeschlagene Versuche. Erneut in {seconds} s versuchen",
   "confirmOperation": "Operation bestätigen",
   "keyUnlockTitle": "Schlüssel entsperren",
