@@ -38,9 +38,10 @@ class AppState extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
-  /// Язык интерфейса (этап 10): null — системный, иначе один из
-  /// поддерживаемых (ru, en, es, pt, zh); выбор — в настройках,
-  /// сохраняется в SharedPreferences.
+  /// Язык интерфейса (этап 10, расширен l10n-fr-de-it-ja): null —
+  /// системный, иначе один из девяти поддерживаемых (ru, en, es, pt,
+  /// zh, fr, de, it, ja); выбор — в настройках, сохраняется в
+  /// SharedPreferences.
   Locale? _locale;
   Locale? get locale => _locale;
 

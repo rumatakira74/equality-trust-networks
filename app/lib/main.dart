@@ -1,7 +1,8 @@
 // Точка входа приложения (этап 7). Провайдеры состояния, маршрут:
 // загрузка -> (онбординг | экран блокировки) -> главная навигация.
-// Локализация (этап 10): ru, en, es, pt, zh — состав подтверждён
-// владельцем 20.10.2026; fallback — английский; выбор — в настройках.
+// Локализация (этап 10, расширена l10n-fr-de-it-ja): девять языков —
+// ru, en, es, pt, zh, fr, de, it, ja; fallback — английский (шаблон
+// app_en.arb); выбор — в настройках.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +39,8 @@ class TnpApp extends StatelessWidget {
             colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E6E4E)),
             useMaterial3: true,
           ),
-          // пять языков этапа 10; null — язык системы, fallback — en
+          // девять языков (этап 10 + l10n-fr-de-it-ja); null — язык
+          // системы, fallback — en
           locale: app.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
