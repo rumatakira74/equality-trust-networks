@@ -13,6 +13,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'Réseaux de confiance';
 
   @override
+  String get appLabel => 'Réseaux de confiance';
+
+  @override
   String get navWallet => 'Portefeuille';
 
   @override
@@ -119,12 +122,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errNoNode => 'Le nœud n\'est pas démarré';
 
   @override
+  String get errTxNotFound => 'Transaction introuvable';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Trop de tentatives échouées. Réessayez dans $seconds s';
   }
 
   @override
   String get confirmOperation => 'Confirmez l\'opération';
+
+  @override
+  String get signDefaultTitle => 'Confirmez l\'opération';
 
   @override
   String get keyUnlockTitle => 'Déverrouiller la clé';
@@ -815,6 +824,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get nodeStopped => 'Le nœud est arrêté';
+
+  @override
+  String get nodeChannelName => 'Nœud du réseau';
+
+  @override
+  String get nodeNotificationTitle => 'Réseaux de confiance';
+
+  @override
+  String get nodeNotificationText =>
+      'Le nœud du réseau de confiance fonctionne';
 
   @override
   String get nodeLevelHint =>

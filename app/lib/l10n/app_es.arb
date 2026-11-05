@@ -1,6 +1,7 @@
 {
   "@@locale": "es",
   "appTitle": "Redes de confianza",
+  "appLabel": "Redes de confianza",
   "navWallet": "Monedero",
   "navVouching": "Avales",
   "navRegistry": "Registro",
@@ -36,6 +37,7 @@
   "enterPin": "Introduzca el PIN",
   "errWrongPin": "PIN incorrecto",
   "errNoNode": "El nodo no está en marcha",
+  "errTxNotFound": "Transacción no encontrada",
   "lockTooManyAttempts": "Demasiados intentos fallidos. Reinténtalo en {seconds} s",
   "@lockTooManyAttempts": {
     "placeholders": {
@@ -45,6 +47,7 @@
     }
   },
   "confirmOperation": "Confirme la operación",
+  "signDefaultTitle": "Confirme la operación",
   "keyUnlockTitle": "Desbloquear clave",
   "rejectedWithCode": "Rechazado: {code}",
   "errorWith": "Error: {e}",
@@ -226,6 +229,9 @@
   "guardianPublished": "Declaración publicada",
   "nodeRunning": "El nodo está funcionando",
   "nodeStopped": "El nodo está detenido",
+  "nodeChannelName": "Nodo de red",
+  "nodeNotificationTitle": "Redes de confianza",
+  "nodeNotificationText": "El nodo de la red de confianza está funcionando",
   "nodeLevelHint": "Nivel full — con carga y Wi-Fi, si no light (12.2)",
   "lockApp": "Bloquear la aplicación",
   "relockNote": "Bloqueado. Reinicie la aplicación.",

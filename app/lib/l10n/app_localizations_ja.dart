@@ -13,6 +13,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'トラストネットワーク';
 
   @override
+  String get appLabel => 'トラストネットワーク';
+
+  @override
   String get navWallet => 'ウォレット';
 
   @override
@@ -118,12 +121,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get errNoNode => 'ノードが起動していません';
 
   @override
+  String get errTxNotFound => 'トランザクションが見つかりません';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return '失敗が多すぎます。$seconds 秒後に再試行してください';
   }
 
   @override
   String get confirmOperation => '操作を確認';
+
+  @override
+  String get signDefaultTitle => '操作を確認';
 
   @override
   String get keyUnlockTitle => '鍵をロック解除';
@@ -799,6 +808,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get nodeStopped => 'ノードは停止中';
+
+  @override
+  String get nodeChannelName => 'ネットワークノード';
+
+  @override
+  String get nodeNotificationTitle => 'トラストネットワーク';
+
+  @override
+  String get nodeNotificationText => 'トラストネットワークのノードは実行中';
 
   @override
   String get nodeLevelHint => 'full レベル——充電中かつ Wi-Fi 接続時、それ以外は light（12.2）';

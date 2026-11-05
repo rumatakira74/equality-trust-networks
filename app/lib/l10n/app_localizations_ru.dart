@@ -13,6 +13,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'Сети доверия';
 
   @override
+  String get appLabel => 'Сети доверия';
+
+  @override
   String get navWallet => 'Кошелёк';
 
   @override
@@ -118,12 +121,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get errNoNode => 'Узел не запущен';
 
   @override
+  String get errTxNotFound => 'Транзакция не найдена';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Слишком много неудачных попыток. Повторите через $seconds с';
   }
 
   @override
   String get confirmOperation => 'Подтвердите операцию';
+
+  @override
+  String get signDefaultTitle => 'Подтвердите операцию';
 
   @override
   String get keyUnlockTitle => 'Разблокировка ключа';
@@ -810,6 +819,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get nodeStopped => 'Узел остановлен';
+
+  @override
+  String get nodeChannelName => 'Узел сети';
+
+  @override
+  String get nodeNotificationTitle => 'Сети доверия';
+
+  @override
+  String get nodeNotificationText => 'Узел сети доверия работает';
 
   @override
   String get nodeLevelHint =>

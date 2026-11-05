@@ -13,6 +13,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appTitle => 'Redes de confiança';
 
   @override
+  String get appLabel => 'Redes de confiança';
+
+  @override
   String get navWallet => 'Carteira';
 
   @override
@@ -118,12 +121,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errNoNode => 'O nó não está em execução';
 
   @override
+  String get errTxNotFound => 'Transação não encontrada';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Muitas tentativas falhadas. Tente novamente em $seconds s';
   }
 
   @override
   String get confirmOperation => 'Confirme a operação';
+
+  @override
+  String get signDefaultTitle => 'Confirme a operação';
 
   @override
   String get keyUnlockTitle => 'Desbloquear chave';
@@ -812,6 +821,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get nodeStopped => 'O nó está parado';
+
+  @override
+  String get nodeChannelName => 'Nó da rede';
+
+  @override
+  String get nodeNotificationTitle => 'Redes de confiança';
+
+  @override
+  String get nodeNotificationText =>
+      'O nó da rede de confiança está funcionando';
 
   @override
   String get nodeLevelHint =>

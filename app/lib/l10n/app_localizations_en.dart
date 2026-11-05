@@ -13,6 +13,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Trust Networks';
 
   @override
+  String get appLabel => 'Trust Networks';
+
+  @override
   String get navWallet => 'Wallet';
 
   @override
@@ -119,12 +122,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errNoNode => 'Node is not running';
 
   @override
+  String get errTxNotFound => 'Transaction not found';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Too many failed attempts. Try again in $seconds s';
   }
 
   @override
   String get confirmOperation => 'Confirm operation';
+
+  @override
+  String get signDefaultTitle => 'Confirm the operation';
 
   @override
   String get keyUnlockTitle => 'Unlock key';
@@ -811,6 +820,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nodeStopped => 'Node is stopped';
+
+  @override
+  String get nodeChannelName => 'Network node';
+
+  @override
+  String get nodeNotificationTitle => 'Trust Networks';
+
+  @override
+  String get nodeNotificationText => 'Trust network node is running';
 
   @override
   String get nodeLevelHint =>

@@ -1,6 +1,7 @@
 {
   "@@locale": "en",
   "appTitle": "Trust Networks",
+  "appLabel": "Trust Networks",
   "navWallet": "Wallet",
   "navVouching": "Vouching",
   "navRegistry": "Registry",
@@ -36,6 +37,7 @@
   "enterPin": "Enter PIN",
   "errWrongPin": "Wrong PIN",
   "errNoNode": "Node is not running",
+  "errTxNotFound": "Transaction not found",
   "lockTooManyAttempts": "Too many failed attempts. Try again in {seconds} s",
   "@lockTooManyAttempts": {
     "placeholders": {
@@ -45,6 +47,7 @@
     }
   },
   "confirmOperation": "Confirm operation",
+  "signDefaultTitle": "Confirm the operation",
   "keyUnlockTitle": "Unlock key",
   "rejectedWithCode": "Rejected: {code}",
   "@rejectedWithCode": {
@@ -686,6 +689,9 @@
   "guardianPublished": "Declaration published",
   "nodeRunning": "Node is running",
   "nodeStopped": "Node is stopped",
+  "nodeChannelName": "Network node",
+  "nodeNotificationTitle": "Trust Networks",
+  "nodeNotificationText": "Trust network node is running",
   "nodeLevelHint": "Full level — when charging and on Wi-Fi, otherwise light (12.2)",
   "lockApp": "Lock the app",
   "relockNote": "Locked. Restart the app.",

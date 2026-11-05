@@ -1,6 +1,7 @@
 {
   "@@locale": "ru",
   "appTitle": "Сети доверия",
+  "appLabel": "Сети доверия",
   "navWallet": "Кошелёк",
   "navVouching": "Поручительства",
   "navRegistry": "Реестр",
@@ -36,6 +37,7 @@
   "enterPin": "Введите PIN",
   "errWrongPin": "Неверный PIN",
   "errNoNode": "Узел не запущен",
+  "errTxNotFound": "Транзакция не найдена",
   "lockTooManyAttempts": "Слишком много неудачных попыток. Повторите через {seconds} с",
   "@lockTooManyAttempts": {
     "placeholders": {
@@ -45,6 +47,7 @@
     }
   },
   "confirmOperation": "Подтвердите операцию",
+  "signDefaultTitle": "Подтвердите операцию",
   "keyUnlockTitle": "Разблокировка ключа",
   "rejectedWithCode": "Отклонено: {code}",
   "errorWith": "Ошибка: {e}",
@@ -226,6 +229,9 @@
   "guardianPublished": "Объявление опубликовано",
   "nodeRunning": "Узел работает",
   "nodeStopped": "Узел остановлен",
+  "nodeChannelName": "Узел сети",
+  "nodeNotificationTitle": "Сети доверия",
+  "nodeNotificationText": "Узел сети доверия работает",
   "nodeLevelHint": "Уровень full — при зарядке и Wi-Fi, иначе light (12.2)",
   "lockApp": "Заблокировать приложение",
   "relockNote": "Заблокировано. Перезапустите приложение.",
