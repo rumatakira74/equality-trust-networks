@@ -22,7 +22,7 @@ const expectedKeys = <String, String>{
   'signDefaultTitle': 'sign_default_title',
 };
 
-/// en — шаблон ARB (values/), остальные восемь — values-<lang>/.
+/// en — шаблон ARB (values/), остальные восемь — `values-<lang>/`.
 const locales = ['en', 'ru', 'es', 'pt', 'zh', 'fr', 'de', 'it', 'ja'];
 
 void main() {
