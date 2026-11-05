@@ -2,7 +2,7 @@
 
 ## Контекст
 
-Ты — zcode-агент, работаешь локально в каталоге `/home/projects/audit-equality-trust-networks` (конвейерный клон rumatakira74/equality-trust-networks). Личный клон владельца `/home/projects/equality-trust-networks` НЕ трогать.
+Ты — zcode-агент, работаешь локально в каталоге `/home/projects/equality-trust-networks` (рабочий клон конвейера rumatakira74/equality-trust-networks; имя каталога совпадает с ремут-репо). Личный клон владельца `/home/projects/audit-equality-trust-networks` НЕ трогать.
 
 Задача — проверка read-only по коду: собрать APK текущего main и на Android-эмуляторе проверить доступность и работу меню выбора языка интерфейса. Код приложения не менять; ветка служит только для отчёта и скриншотов.
 
