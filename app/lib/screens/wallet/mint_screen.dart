@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../services/secure_mode.dart';
@@ -75,12 +76,13 @@ class _MintScreenState extends State<MintScreen> {
       final res = await app.signAndSubmit(
         () => platform.buildMint(w.claimPeriod, w.claimAmount),
         l.keyUnlockTitle,
+        cancel: l.btnCancel,
       );
       setState(() => _result =
           res.accepted ? l.mintPublished : l.rejectedWithCode(res.code));
       await app.refreshWallet();
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

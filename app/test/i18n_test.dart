@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tnp_app/l10n/app_localizations.dart';
+import 'package:tnp_app/l10n/error_text.dart';
 import 'package:tnp_app/screens/settings/settings_screen.dart';
 import 'package:tnp_app/services/platform_service.dart';
 import 'package:tnp_app/state/app_state.dart';
@@ -90,6 +91,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(prefs.getString('ui_locale'), '');
     expect(find.text('Settings'), findsOneWidget);
+  });
+
+  test('ошибки моста локализуются по коду (NONODE, FINDING-03)', () async {
+    const expected = {
+      'ru': 'Узел не запущен',
+      'en': 'Node is not running',
+      'es': 'El nodo no está en marcha',
+      'ja': 'ノードが起動していません',
+    };
+    for (final entry in expected.entries) {
+      final l = await AppLocalizations.delegate.load(Locale(entry.key));
+      expect(
+        l.errorText(TnpPlatformException('NONODE', 'узел не запущен')),
+        entry.value,
+        reason: 'локаль ${entry.key}: код NONODE должен брать текст из ARB',
+      );
+    }
+    // неизвестный код — как есть: код и сообщение остаются диагностикой
+    final ru = await AppLocalizations.delegate.load(const Locale('ru'));
+    expect(
+      ru.errorText(TnpPlatformException('E_POW', 'слабый PoW')),
+      'Ошибка: E_POW: слабый PoW',
+    );
   });
 
   test('все девять локалей поддержаны делегатом', () async {

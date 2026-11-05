@@ -35,6 +35,7 @@
   "btnSignBiometric": "Sign (biometrics)",
   "enterPin": "Enter PIN",
   "errWrongPin": "Wrong PIN",
+  "errNoNode": "Node is not running",
   "lockTooManyAttempts": "Too many failed attempts. Try again in {seconds} s",
   "@lockTooManyAttempts": {
     "placeholders": {

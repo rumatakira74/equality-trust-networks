@@ -116,6 +116,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get errWrongPin => 'PIN errato';
 
   @override
+  String get errNoNode => 'Il nodo non è in esecuzione';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Troppi tentativi falliti. Riprovi tra $seconds s';
   }

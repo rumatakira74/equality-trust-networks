@@ -116,6 +116,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errWrongPin => 'Wrong PIN';
 
   @override
+  String get errNoNode => 'Node is not running';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Too many failed attempts. Try again in $seconds s';
   }

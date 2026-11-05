@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -134,12 +135,13 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
       final res = await app.signAndSubmit(
         () => platform.buildVouch(_candidate.text.trim()),
         l.vouchConfirmTitle,
+        cancel: l.btnCancel,
       );
       setState(() => _result = res.accepted
           ? l.vouchPublished
           : l.rejectedWithCode(res.code));
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -159,7 +161,7 @@ class _VouchForNewcomerState extends State<_VouchForNewcomer> {
         _result = l.btAddrReceived;
       });
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     }
   }
 

@@ -162,10 +162,11 @@ class AppState extends ChangeNotifier {
     Future<String> Function() build,
     String title, {
     Future<void> Function()? afterBuild,
+    String? cancel,
   }) async {
     final id = await build();
     if (afterBuild != null) await afterBuild();
-    final ok = await platform.signTx(id, title);
+    final ok = await platform.signTx(id, title, cancel: cancel);
     if (!ok) {
       await platform.discardTx(id);
       throw TnpPlatformException('SIGN', 'SIGN_NOT_CONFIRMED');

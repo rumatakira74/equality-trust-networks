@@ -35,6 +35,7 @@
   "btnSignBiometric": "Подписать (биометрия)",
   "enterPin": "Введите PIN",
   "errWrongPin": "Неверный PIN",
+  "errNoNode": "Узел не запущен",
   "lockTooManyAttempts": "Слишком много неудачных попыток. Повторите через {seconds} с",
   "@lockTooManyAttempts": {
     "placeholders": {

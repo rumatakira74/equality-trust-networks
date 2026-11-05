@@ -65,7 +65,10 @@ abstract class PlatformService {
   Future<List<PendingGuardianUpdate>> pendingGuardianUpdates({String? addrHex});
 
   // -- подпись (биометрия) и публикация --
-  Future<bool> signTx(String id, String title);
+  /// cancel — подпись негативной кнопки биометрического промпта
+  /// (локализована в ARB и передаётся из интерфейса; мост без неё
+  /// показывает свой fallback).
+  Future<bool> signTx(String id, String title, {String? cancel});
   Future<SubmitResult> submitTx(String id);
   Future<void> discardTx(String id);
 
@@ -311,8 +314,12 @@ class MethodChannelPlatformService implements PlatformService {
           .toList();
 
   @override
-  Future<bool> signTx(String id, String title) async {
-    final r = await _call('signTx', {'id': id, 'title': title});
+  Future<bool> signTx(String id, String title, {String? cancel}) async {
+    final r = await _call('signTx', {
+      'id': id,
+      'title': title,
+      'cancel': ?cancel,
+    });
     return (r as Map)['ok'] as bool;
   }
 

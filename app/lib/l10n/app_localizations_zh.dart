@@ -115,6 +115,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errWrongPin => 'PIN 错误';
 
   @override
+  String get errNoNode => '节点未运行';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return '尝试次数过多，请在 $seconds 秒后重试';
   }

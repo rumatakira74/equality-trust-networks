@@ -35,6 +35,7 @@
   "btnSignBiometric": "署名（生体認証）",
   "enterPin": "PIN を入力",
   "errWrongPin": "PIN が違います",
+  "errNoNode": "ノードが起動していません",
   "lockTooManyAttempts": "失敗が多すぎます。{seconds} 秒後に再試行してください",
   "confirmOperation": "操作を確認",
   "keyUnlockTitle": "鍵をロック解除",

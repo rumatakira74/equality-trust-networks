@@ -14,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../l10n/error_text.dart';
 import '../../services/models.dart';
 import '../../services/platform_service.dart';
 import '../../state/app_state.dart';
@@ -155,6 +156,7 @@ class _GuardiansScreenState extends State<GuardiansScreen> {
       final res = await app.signAndSubmit(
         () => platform.buildUpdateGuardiansCancel(u.proposeSeq),
         l.keyUnlockTitle,
+        cancel: l.btnCancel,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -165,7 +167,7 @@ class _GuardiansScreenState extends State<GuardiansScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l.errorWith('$e'))));
+            .showSnackBar(SnackBar(content: Text(l.errorText(e))));
       }
     }
   }
@@ -210,7 +212,7 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
       if (mounted) setState(() => _hash = h);
     } catch (e) {
       if (mounted) {
-        setState(() => _result = AppLocalizations.of(context)!.errorWith('$e'));
+        setState(() => _result = AppLocalizations.of(context)!.errorText(e));
       }
     }
   }
@@ -250,12 +252,13 @@ class _ReelectGuardiansScreenState extends State<ReelectGuardiansScreen> {
           _nonce,
         ),
         l.keyUnlockTitle,
+        cancel: l.btnCancel,
       );
       setState(() => _result = res.accepted
           ? l.changePublished
           : l.rejectedWithCode(res.code));
     } catch (e) {
-      setState(() => _result = l.errorWith('$e'));
+      setState(() => _result = l.errorText(e));
     }
   }
 
@@ -403,7 +406,7 @@ class _GuardianConsentScreenState extends State<GuardianConsentScreen> {
       // таймаут платформенного слоя: UI не висит, экран рабочий
       if (!mounted) return;
       setState(() {
-        _error = e is TimeoutException ? l.biometricTimeout : l.errorWith('$e');
+        _error = e is TimeoutException ? l.biometricTimeout : l.errorText(e);
       });
     } finally {
       if (mounted) setState(() => _busy = false);

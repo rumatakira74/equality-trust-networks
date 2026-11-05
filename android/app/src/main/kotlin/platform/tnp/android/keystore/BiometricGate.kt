@@ -87,11 +87,12 @@ object BiometricGate {
         wallet: KeystoreWallet,
         title: String,
         hash: ByteArray,
+        negativeButtonText: String = "Отмена",
         onResult: (ByteArray?) -> Unit,
     ) {
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setNegativeButtonText("Отмена")
+            .setNegativeButtonText(negativeButtonText)
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
 
