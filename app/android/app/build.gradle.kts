@@ -183,6 +183,97 @@ tasks.matching { it.name in releaseArtifactTasks }.configureEach {
     dependsOn(verifySigning)
 }
 
+// --- нативные строки Android из ARB (тема fix-native-strings, п.а+п.б) ---
+// Строки, которые не проходят через вызов Dart, берутся штатным средством
+// Android — ресурсами values[-<lang>]/strings.xml: уведомление
+// foreground-сервиса узла (NodeService.kt) и label приложения (манифест).
+// Единый источник переводов остаётся один — ARB (app/lib/l10n): задача
+// generateNativeStrings пишет из них strings.xml при сборке, системная
+// локаль Android сама выбирает каталог values-<lang>. Сгенерированные
+// файлы не коммитятся (app/android/.gitignore) и пересоздаются на чистой
+// сборке; вручную не правятся.
+val nativeStringKeys = linkedMapOf(
+    "appLabel" to "app_name",
+    "nodeChannelName" to "node_channel_name",
+    "nodeNotificationTitle" to "node_notification_title",
+    "nodeNotificationText" to "node_notification_text",
+    "errTxNotFound" to "err_tx_not_found",
+    "signDefaultTitle" to "sign_default_title",
+)
+// en — шаблон ARB (fallback), кладётся в values/ — язык по умолчанию;
+// остальные восемь — в values-<lang>/, их выбирает системная локаль
+val nativeStringLocales = listOf("ru", "es", "pt", "zh", "fr", "de", "it", "ja")
+val nativeArbDir = file("../../lib/l10n")
+val nativeResDir = file("src/main/res")
+val nativeArbFiles = fileTree(nativeArbDir) { include("app_*.arb") }
+
+// xmlEscapeText — экранирование значения для strings.xml: служебные
+// символы XML и обязательные для aapt апостроф и кавычка (без этого
+// сборка ресурсов падает на французском «l'opération»)
+fun xmlEscapeText(value: String): String = value
+    .replace("&", "&amp;")
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
+    .replace("'", "\\'")
+    .replace("\"", "\\\"")
+
+val generateNativeStrings by tasks.registering {
+    group = "build"
+    description = "Генерирует res/values[-<lang>]/strings.xml из ARB (тема fix-native-strings)"
+
+    val outputFiles = listOf(File(nativeResDir, "values/strings.xml")) +
+        nativeStringLocales.map { File(nativeResDir, "values-$it/strings.xml") }
+    inputs.files(nativeArbFiles)
+        .withPropertyName("arb")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.files(outputFiles).withPropertyName("stringsXml")
+
+    doLast {
+        @Suppress("UNCHECKED_CAST")
+        fun readArb(lang: String): Map<String, Any?> {
+            val file = File(nativeArbDir, "app_$lang.arb")
+            if (!file.isFile) throw GradleException("нет ARB: $file")
+            return groovy.json.JsonSlurper().parse(file) as Map<String, Any?>
+        }
+
+        fun writeStrings(lang: String) {
+            val data = readArb(lang)
+            val dir = if (lang == "en") {
+                File(nativeResDir, "values")
+            } else {
+                File(nativeResDir, "values-$lang")
+            }
+            val xml = StringBuilder()
+            xml.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
+            xml.append("<!-- Сгенерировано из app/lib/l10n/app_$lang.arb ")
+            xml.append("(тема fix-native-strings). Вручную не править. -->\n")
+            xml.append("<resources>\n")
+            for ((arbKey, resName) in nativeStringKeys) {
+                val value = data[arbKey] as? String
+                    ?: throw GradleException("ARB app_$lang.arb: нет строкового ключа $arbKey")
+                xml.append("    <string name=\"$resName\">${xmlEscapeText(value)}</string>\n")
+            }
+            xml.append("</resources>\n")
+            dir.mkdirs()
+            File(dir, "strings.xml").writeText(xml.toString(), Charsets.UTF_8)
+        }
+
+        writeStrings("en")
+        for (lang in nativeStringLocales) writeStrings(lang)
+        logger.lifecycle(
+            "native strings: ${outputFiles.size} файлов из ARB " +
+                "(values + ${nativeStringLocales.joinToString(", ")})"
+        )
+    }
+}
+
+// Задача идёт до обработки ресурсов: mergeResources должен видеть готовые
+// strings.xml. Хук ленивый (matching/configureEach) — не зависит от того,
+// объявлена ли preBuild раньше в этом скрипте.
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(generateNativeStrings)
+}
+
 android {
     namespace = "platform.tnp.tnp_app"
     compileSdk = 36
@@ -210,8 +301,12 @@ android {
         // label приложения: Eq- + 8 hex SHA-256(network_id) (v9.10,
         // решение 7); в launcher — только Eq-хеш, display_name живёт
         // внутри приложения и всегда в паре с ним
+        // по умолчанию — ресурс из ARB (values[-<lang>]/strings.xml,
+        // задача generateNativeStrings, тема fix-native-strings): label
+        // локализуется системной локалью; сетевая сборка по-прежнему
+        // переопределяет его литералом через -P TNP_APP_LABEL
         manifestPlaceholders["appLabel"] =
-            (project.findProperty("TNP_APP_LABEL") as String?) ?: "Сети доверия"
+            (project.findProperty("TNP_APP_LABEL") as String?) ?: "@string/app_name"
     }
 
     buildTypes {

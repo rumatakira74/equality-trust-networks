@@ -19,6 +19,7 @@ import platform.tnp.android.node.NodeService
 import platform.tnp.android.pin.DuressState
 import platform.tnp.android.pin.PinCheck
 import platform.tnp.android.pin.PinManager
+import platform.tnp.tnp_app.R
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -627,13 +628,14 @@ object FlutterBridge {
                 // -- подпись и публикация --
                 "signTx" -> {
                     val id = call.argument<String>("id")!!
-                    val title = call.argument<String>("title") ?: "Подтвердите операцию"
+                    val title = call.argument<String>("title")
+                        ?: appContext.getString(R.string.sign_default_title)
                     // подпись негативной кнопки промпта — из ARB через
                     // канал (FINDING-03); fallback — английский (шаблон ARB)
                     val cancel = call.argument<String>("cancel") ?: "Cancel"
                     val tx = pendingTx[id]
                     if (tx == null) {
-                        result.error("NOTFOUND", "транзакция не найдена", null)
+                        result.error("NOTFOUND", appContext.getString(R.string.err_tx_not_found), null)
                         return
                     }
                     if (duress.active) {
@@ -661,7 +663,7 @@ object FlutterBridge {
                     val id = call.argument<String>("id")!!
                     val tx = pendingTx[id]
                     if (tx == null) {
-                        result.error("NOTFOUND", "транзакция не найдена", null)
+                        result.error("NOTFOUND", appContext.getString(R.string.err_tx_not_found), null)
                         return
                     }
                     if (duress.active) {
@@ -702,7 +704,7 @@ object FlutterBridge {
                     val device = call.argument<String>("device")!!
                     val tx = pendingTx.remove(id)
                     if (tx == null) {
-                        result.error("NOTFOUND", "транзакция не найдена", null)
+                        result.error("NOTFOUND", appContext.getString(R.string.err_tx_not_found), null)
                         return
                     }
                     if (duress.active) {

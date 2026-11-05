@@ -13,6 +13,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => '信任网络';
 
   @override
+  String get appLabel => '信任网络';
+
+  @override
   String get navWallet => '钱包';
 
   @override
@@ -118,12 +121,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errNoNode => '节点未运行';
 
   @override
+  String get errTxNotFound => '未找到交易';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return '尝试次数过多，请在 $seconds 秒后重试';
   }
 
   @override
   String get confirmOperation => '确认操作';
+
+  @override
+  String get signDefaultTitle => '确认操作';
 
   @override
   String get keyUnlockTitle => '解锁密钥';
@@ -790,6 +799,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nodeStopped => '节点已停止';
+
+  @override
+  String get nodeChannelName => '网络节点';
+
+  @override
+  String get nodeNotificationTitle => '信任网络';
+
+  @override
+  String get nodeNotificationText => '信任网络节点运行中';
 
   @override
   String get nodeLevelHint => 'full 级别——充电且连 Wi-Fi 时，否则 light（12.2）';

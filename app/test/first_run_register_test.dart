@@ -116,8 +116,10 @@ void main() {
     // регистрация
     await tester.tap(find.text('Зарегистрировать кошелёк'));
     await tester.pump();
-    // опрос готовности узла в AppState.startNode — до 5 с (25 x 200 мс):
-    // прокручиваем время, иначе цепочка останется незавершённой
+    // опрос готовности узла в AppState.startNode — до 15 с (75 x 200 мс,
+    // тема fix-native-strings п.в); фейк отдаёт nodeStats сразу, поэтому
+    // цикл выходит на первой итерации, а прокрутка нужна, чтобы
+    // завершилась цепочка
     await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
 

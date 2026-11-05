@@ -13,6 +13,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appTitle => 'Redes de confianza';
 
   @override
+  String get appLabel => 'Redes de confianza';
+
+  @override
   String get navWallet => 'Monedero';
 
   @override
@@ -119,12 +122,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get errNoNode => 'El nodo no está en marcha';
 
   @override
+  String get errTxNotFound => 'Transacción no encontrada';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Demasiados intentos fallidos. Reinténtalo en $seconds s';
   }
 
   @override
   String get confirmOperation => 'Confirme la operación';
+
+  @override
+  String get signDefaultTitle => 'Confirme la operación';
 
   @override
   String get keyUnlockTitle => 'Desbloquear clave';
@@ -815,6 +824,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nodeStopped => 'El nodo está detenido';
+
+  @override
+  String get nodeChannelName => 'Nodo de red';
+
+  @override
+  String get nodeNotificationTitle => 'Redes de confianza';
+
+  @override
+  String get nodeNotificationText =>
+      'El nodo de la red de confianza está funcionando';
 
   @override
   String get nodeLevelHint =>

@@ -1,6 +1,7 @@
 {
   "@@locale": "zh",
   "appTitle": "信任网络",
+  "appLabel": "信任网络",
   "navWallet": "钱包",
   "navVouching": "担保",
   "navRegistry": "名录",
@@ -36,6 +37,7 @@
   "enterPin": "输入 PIN",
   "errWrongPin": "PIN 错误",
   "errNoNode": "节点未运行",
+  "errTxNotFound": "未找到交易",
   "lockTooManyAttempts": "尝试次数过多，请在 {seconds} 秒后重试",
   "@lockTooManyAttempts": {
     "placeholders": {
@@ -45,6 +47,7 @@
     }
   },
   "confirmOperation": "确认操作",
+  "signDefaultTitle": "确认操作",
   "keyUnlockTitle": "解锁密钥",
   "rejectedWithCode": "已拒绝：{code}",
   "errorWith": "错误：{e}",
@@ -226,6 +229,9 @@
   "guardianPublished": "声明已发布",
   "nodeRunning": "节点运行中",
   "nodeStopped": "节点已停止",
+  "nodeChannelName": "网络节点",
+  "nodeNotificationTitle": "信任网络",
+  "nodeNotificationText": "信任网络节点运行中",
   "nodeLevelHint": "full 级别——充电且连 Wi-Fi 时，否则 light（12.2）",
   "lockApp": "锁定应用",
   "relockNote": "已锁定。请重新启动应用。",

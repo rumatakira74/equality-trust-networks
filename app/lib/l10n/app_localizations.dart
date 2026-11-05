@@ -118,6 +118,12 @@ abstract class AppLocalizations {
   /// **'Trust Networks'**
   String get appTitle;
 
+  /// No description provided for @appLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust Networks'**
+  String get appLabel;
+
   /// No description provided for @navWallet.
   ///
   /// In en, this message translates to:
@@ -328,6 +334,12 @@ abstract class AppLocalizations {
   /// **'Node is not running'**
   String get errNoNode;
 
+  /// No description provided for @errTxNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction not found'**
+  String get errTxNotFound;
+
   /// No description provided for @lockTooManyAttempts.
   ///
   /// In en, this message translates to:
@@ -339,6 +351,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm operation'**
   String get confirmOperation;
+
+  /// No description provided for @signDefaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the operation'**
+  String get signDefaultTitle;
 
   /// No description provided for @keyUnlockTitle.
   ///
@@ -1431,6 +1449,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Node is stopped'**
   String get nodeStopped;
+
+  /// No description provided for @nodeChannelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Network node'**
+  String get nodeChannelName;
+
+  /// No description provided for @nodeNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust Networks'**
+  String get nodeNotificationTitle;
+
+  /// No description provided for @nodeNotificationText.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust network node is running'**
+  String get nodeNotificationText;
 
   /// No description provided for @nodeLevelHint.
   ///

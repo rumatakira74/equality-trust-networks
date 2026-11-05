@@ -1,6 +1,7 @@
 {
   "@@locale": "pt",
   "appTitle": "Redes de confiança",
+  "appLabel": "Redes de confiança",
   "navWallet": "Carteira",
   "navVouching": "Avalistas",
   "navRegistry": "Registro",
@@ -36,6 +37,7 @@
   "enterPin": "Digite o PIN",
   "errWrongPin": "PIN incorreto",
   "errNoNode": "O nó não está em execução",
+  "errTxNotFound": "Transação não encontrada",
   "lockTooManyAttempts": "Muitas tentativas falhadas. Tente novamente em {seconds} s",
   "@lockTooManyAttempts": {
     "placeholders": {
@@ -45,6 +47,7 @@
     }
   },
   "confirmOperation": "Confirme a operação",
+  "signDefaultTitle": "Confirme a operação",
   "keyUnlockTitle": "Desbloquear chave",
   "rejectedWithCode": "Rejeitado: {code}",
   "errorWith": "Erro: {e}",
@@ -226,6 +229,9 @@
   "guardianPublished": "Declaração publicada",
   "nodeRunning": "O nó está funcionando",
   "nodeStopped": "O nó está parado",
+  "nodeChannelName": "Nó da rede",
+  "nodeNotificationTitle": "Redes de confiança",
+  "nodeNotificationText": "O nó da rede de confiança está funcionando",
   "nodeLevelHint": "Nível full — carregando e com Wi-Fi, senão light (12.2)",
   "lockApp": "Bloquear o aplicativo",
   "relockNote": "Bloqueado. Reinicie o aplicativo.",

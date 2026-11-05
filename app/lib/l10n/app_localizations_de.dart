@@ -13,6 +13,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get appTitle => 'Vertrauensnetzwerke';
 
   @override
+  String get appLabel => 'Vertrauensnetzwerke';
+
+  @override
   String get navWallet => 'Wallet';
 
   @override
@@ -119,12 +122,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errNoNode => 'Der Knoten läuft nicht';
 
   @override
+  String get errTxNotFound => 'Transaktion nicht gefunden';
+
+  @override
   String lockTooManyAttempts(int seconds) {
     return 'Zu viele fehlgeschlagene Versuche. Erneut in $seconds s versuchen';
   }
 
   @override
   String get confirmOperation => 'Operation bestätigen';
+
+  @override
+  String get signDefaultTitle => 'Operation bestätigen';
 
   @override
   String get keyUnlockTitle => 'Schlüssel entsperren';
@@ -813,6 +822,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get nodeStopped => 'Der Knoten ist gestoppt';
+
+  @override
+  String get nodeChannelName => 'Netzwerkknoten';
+
+  @override
+  String get nodeNotificationTitle => 'Vertrauensnetzwerke';
+
+  @override
+  String get nodeNotificationText => 'Der Knoten des Vertrauensnetzwerks läuft';
 
   @override
   String get nodeLevelHint =>
