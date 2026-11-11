@@ -1,0 +1,16 @@
+== go mod tidy (GOPROXY=off, только кэш модулей) ==
+== нативный sanity-прогон (linux/amd64) ==
+address: 709bd90f80a742b121e726891b572894e592472653b4653ab845160ee6227924
+statement hash: c7453d9c950a805c16a97c382e42eeeca50f8da973e5f842d8f6ccd530cfb319
+state leaf roundtrip: seq=1 status=ACTIVE
+wallet signature verifies: true
+app identity: a01fba325f7d965ba56ba3d4f7cfd3235f0c9036cc218faf6e7fe8be1cb502df
+smt proof found=true verifies=true (siblings=256)
+cons.Verify: <nil>
+threshold valid signatures: 1
+present.Verify(nil) rejected as expected: present: пустое предъявление
+toy probe done
+== GOOS=js GOARCH=wasm go build ==
+-rwxr-xr-x. 1 kira kira 5364846 Nov 11 07:26 toy.wasm
+== go vet (linux) ==
+probe build ok

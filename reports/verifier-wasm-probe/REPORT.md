@@ -15,7 +15,7 @@
 | `toy/go.mod`, `toy/go.sum` | вложенный go-модуль: `require` ядра + `replace github.com/rumatakira74/equality-trust-networks => ../../../` — модель «ядро как go-модульная зависимость» |
 | `toy/main.go` | игрушечный потребитель: crypto (ключ/адрес/подпись DER), wire (canonical-кодек, AttestStatement.Hash, StateLeaf roundtrip), smt (Prove/VerifyProof, 256 соседей), threshold (N-из-M), cons (Signer, Verify чекпоинта), present (AppIdentity, Verify) |
 | `build.sh` | воспроизведение: `go mod tidy` (GOPROXY=off — только кэш модулей), нативный sanity-прогон, `GOOS=js GOARCH=wasm go build`, `go vet` |
-| `build.log` | вывод прогона (ниже — те же данные) |
+| `build-output.txt` | вывод прогона (ниже — те же данные; `.log`-расширение режется глобальным .gitignore, артефакт — `.txt`) |
 
 Бюджет прогона: GOMAXPROCS=6 (≤6 ядер из 8), память свободная
 ~10 ГБ (лимит <2 ГБ не достигался).
