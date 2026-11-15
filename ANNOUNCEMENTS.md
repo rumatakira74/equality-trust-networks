@@ -2,6 +2,10 @@
 
 ## Fundraising Campaign: Physical Hardware Testing Stage
 
+![Equality Project emblem](assets/tnp-emblem.jpg)
+
+*Emblem © 2026 Kirill Lapchinsky — not covered by the repository license.*
+
 **Status: active · Estimated total: ~€2,300–2,400 · Prices may change**
 
 Equality Project has been developed and verified entirely in emulators so far: the protocol core, consensus, the Flutter application, and the closed test network have passed all automated stages on emulated devices. The remaining block — **live testing on physical hardware ("8-live")** — cannot be emulated: it requires real devices with real secure hardware. This is the last gate before real-world pilots.

@@ -5,6 +5,10 @@ description: "Trust Networks Platform — a constructor of isolated networks wit
 
 # Trust Networks Platform
 
+![Project emblem](assets/tnp-emblem.jpg)
+
+> *The project emblem ([assets/tnp-emblem.jpg](assets/tnp-emblem.jpg)) is not covered by the repository license. © 2026 Kirill Lapchinsky. The emblem may not be reproduced without written permission.*
+
 Russian original: [README.md](README.md).
 
 Documentation: for participants — [equality-user-docs](https://github.com/rumatakira74/equality-user-docs), for developers — [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs).

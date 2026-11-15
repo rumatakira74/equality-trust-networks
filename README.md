@@ -5,6 +5,10 @@ description: "Платформа сетей доверия — конструк�
 
 # Платформа сетей доверия
 
+![Эмблема проекта](assets/tnp-emblem.jpg)
+
+> *Эмблема проекта ([assets/tnp-emblem.jpg](assets/tnp-emblem.jpg)) не входит в состав лицензии репозитория. © 2026 Лапчинский Кирилл. Копирование эмблемы допускается только с письменного разрешения автора.*
+
 Английская версия документа: [README-ENG.md](README-ENG.md).
 
 Документация: для участников — [equality-user-docs](https://github.com/rumatakira74/equality-user-docs), для разработчиков — [equality-programming-docs](https://github.com/rumatakira74/equality-programming-docs).
