@@ -1,0 +1,5 @@
+всего отказов E_VOUCH_EPOCH во всех логах флота: 96
+tnp-node: узел: net: replay: cons: replay: tx 0000000000000000000000000000000000000000000000000000000000000000: E_VOUCH_EPOCH
+tnp-node: узел: net: replay: cons: replay: tx 0000000000000000000000000000000000000000000000000000000000000000: E_VOUCH_EPOCH
+tnp-node: импорт журнала из /tmp/tnp8/run2/fleet/db/node01.db: применено 143 из 143
+tnp-node: импорт журнала из /tmp/tnp8/run2/fleet/db/node48.db: применено 143 из 143
